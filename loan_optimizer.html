@@ -299,25 +299,25 @@
                 <div class="input-grid">
                     <div class="input-group">
                         <label for="principal">Principal Amount (EGP)</label>
-                        <input type="number" id="principal" value="100000" min="1" step="1000">
+                        <input type="number" id="principal" value="1000000" min="1" step="1000">
                     </div>
                     
                     <div class="input-group">
                         <label for="cdRate">Certificate (CD) Interest Rate (%)</label>
-                        <input type="number" id="cdRate" value="15" min="0" step="0.1">
+                        <input type="number" id="cdRate" value="18.5" min="0" step="0.1">
                     </div>
                     
                     <div class="input-group">
                         <label for="loanRate">Loan Interest Rate (%)</label>
-                        <input type="number" id="loanRate" value="18" min="0" step="0.1">
+                        <input type="number" id="loanRate" value="22.75" min="0" step="0.1">
                     </div>
                     
                     <div class="input-group">
                         <label for="loanTerm">Loan Term</label>
-                        <input type="number" id="loanTerm" value="12" min="1" step="1">
+                        <input type="number" id="loanTerm" value="3" min="1" step="1">
                         <div class="toggle-container">
                             <span>Months</span>
-                            <div class="toggle-switch" id="termToggle"></div>
+                            <div class="toggle-switch active" id="termToggle"></div>
                             <span>Years</span>
                         </div>
                     </div>
@@ -361,7 +361,7 @@
     </div>
 
     <script>
-        let isYears = false;
+        let isYears = true;
         
         // Toggle functionality
         document.getElementById('termToggle').addEventListener('click', function() {
@@ -420,10 +420,12 @@
             let results = [];
             let bestResult = null;
             let bestGrandTotal = -Infinity;
+            let zeroLoanTotal = 0;
             
             // Calculate for loan amounts from 0 to 90% in steps
-            const steps = Math.min(100, Math.floor(maxLoan / 1000)); // Reasonable number of steps
-            const stepSize = maxLoan / steps;
+            // Use 1000 EGP steps for better precision, but limit total calculations for performance
+            const stepSize = 1000; // 1000 EGP increments for precision
+            const steps = Math.floor(maxLoan / stepSize);
             
             for (let i = 0; i <= steps; i++) {
                 const loanAmount = i * stepSize;
@@ -443,6 +445,11 @@
                 // Net monthly profit
                 const netMonthlyProfit = totalMonthlyIncome + monthlyPayment; // PMT returns negative value
                 
+                // Stop calculating if we start losing money monthly (optimization)
+                if (loanAmount > 0 && netMonthlyProfit < 0) {
+                    break;
+                }
+                
                 // Total over the loan term
                 const totalCDIncome = totalMonthlyIncome * loanTerm;
                 const totalLoanPayments = -monthlyPayment * loanTerm;
@@ -450,6 +457,11 @@
                 
                 // Grand total (principal + loan + net profit)
                 const grandTotal = principal + loanAmount + netProfit;
+                
+                // Store zero loan scenario for comparison
+                if (loanAmount === 0) {
+                    zeroLoanTotal = grandTotal;
+                }
                 
                 results.push({
                     loanAmount,
@@ -467,10 +479,10 @@
                 }
             }
             
-            displayResults(results, bestResult);
+            displayResults(results, bestResult, principal);
         }
         
-        function displayResults(results, bestResult) {
+        function displayResults(results, bestResult, principal) {
             const tableBody = document.getElementById('tableBody');
             const summaryCards = document.getElementById('summaryCards');
             
@@ -480,6 +492,9 @@
             
             // Create summary cards
             if (bestResult) {
+                const advantageOverZero = bestResult.grandTotal - principal;
+                const percentageGain = (advantageOverZero / principal) * 100;
+                
                 summaryCards.innerHTML = `
                     <div class="summary-card">
                         <h3>Optimal Loan Amount</h3>
@@ -494,8 +509,9 @@
                         <div class="value">${formatCurrency(bestResult.grandTotal)}</div>
                     </div>
                     <div class="summary-card">
-                        <h3>Total Net Profit</h3>
-                        <div class="value">${formatCurrency(bestResult.netProfit)}</div>
+                        <h3>Advantage Over No Loan</h3>
+                        <div class="value" style="color: #059669">${formatCurrency(advantageOverZero)}</div>
+                        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">+${percentageGain.toFixed(2)}% gain</div>
                     </div>
                 `;
             }

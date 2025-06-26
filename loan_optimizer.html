@@ -479,10 +479,10 @@
                 }
             }
             
-            displayResults(results, bestResult, principal);
+            displayResults(results, bestResult, zeroLoanTotal);
         }
         
-        function displayResults(results, bestResult, principal) {
+        function displayResults(results, bestResult, zeroLoanTotal) {
             const tableBody = document.getElementById('tableBody');
             const summaryCards = document.getElementById('summaryCards');
             
@@ -492,8 +492,8 @@
             
             // Create summary cards
             if (bestResult) {
-                const advantageOverZero = bestResult.grandTotal - principal;
-                const percentageGain = (advantageOverZero / principal) * 100;
+                const advantageOverZero = bestResult.grandTotal - zeroLoanTotal;
+                const percentageGain = (advantageOverZero / zeroLoanTotal) * 100;
                 
                 summaryCards.innerHTML = `
                     <div class="summary-card">

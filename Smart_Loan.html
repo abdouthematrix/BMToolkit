@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Loan Investment Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        [dir="rtl"] body {
+            font-family: 'Segoe UI', 'Tahoma', 'Arial', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .language-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        [dir="rtl"] .language-toggle {
+            right: auto;
+            left: 20px;
+        }
+
+        .language-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .language-toggle span {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .lang-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .lang-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .lang-switch.arabic::after {
+            transform: translateX(25px);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #e3e8ff;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: left;
+        }
+
+        [dir="rtl"] .input-group input {
+            text-align: right;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        [dir="rtl"] .toggle-container {
+            flex-direction: row-reverse;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #4facfe;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(30px);
+        }
+
+        [dir="rtl"] .toggle-switch::after {
+            left: auto;
+            right: 3px;
+        }
+
+        [dir="rtl"] .toggle-switch.active::after {
+            transform: translateX(-30px);
+        }
+
+        .calculate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        .results-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+        }
+
+        .results-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #f8f9ff;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 0.9rem;
+        }
+
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: #f8f9ff;
+        }
+
+        .best-row {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+            font-weight: 600;
+            color: #8b4513;
+        }
+
+        .best-row:hover {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #4facfe;
+        }
+
+        [dir="rtl"] .summary-card {
+            border-left: none;
+            border-right: 4px solid #4facfe;
+        }
+
+        .summary-card h3 {
+            color: #374151;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4facfe;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+                font-size: 0.8rem;
+            }
+
+            .language-toggle {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 15px;
+            }
+
+            [dir="rtl"] .language-toggle {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="language-toggle" onclick="toggleLanguage()">
+                <span class="lang-en">EN</span>
+                <div class="lang-switch" id="langSwitch"></div>
+                <span class="lang-ar">عربي</span>
+            </div>
+            <h1 data-en="💰 Smart Loan Investment Calculator" data-ar="💰 حاسبة الاستثمار الذكي بالقروض">💰 Smart Loan Investment Calculator</h1>
+            <p data-en="Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns" data-ar="حسّن استراتيجية استثمارك: احسب مبلغ القرض المثالي لتعظيم عوائد الشهادات">Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="principal" data-en="Available Capital (EGP)" data-ar="رأس المال المتاح (جنيه مصري)">Available Capital (EGP)</label>
+                        <input type="number" id="principal" value="1000000" min="1000" step="1000">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="cdRate" data-en="Certificate Annual Return (%)" data-ar="العائد السنوي للشهادة (%)">Certificate Annual Return (%)</label>
+                        <input type="number" id="cdRate" value="18.5" min="0" step="0.1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="loanRate" data-en="Loan Annual Interest (%)" data-ar="الفائدة السنوية للقرض (%)">Loan Annual Interest (%)</label>
+                        <input type="number" id="loanRate" value="22.75" min="0" step="0.1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="loanTerm" data-en="Repayment Period" data-ar="فترة السداد">Repayment Period</label>
+                        <input type="number" id="loanTerm" value="3" min="1" step="1">
+                        <div class="toggle-container">
+                            <span data-en="Months" data-ar="أشهر">Months</span>
+                            <div class="toggle-switch active" id="termToggle"></div>
+                            <span data-en="Years" data-ar="سنوات">Years</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="calculate-btn" onclick="calculate()" data-en="Find Optimal Strategy" data-ar="ابحث عن الاستراتيجية المثلى">
+                    Find Optimal Strategy
+                </button>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p data-en="Analyzing your investment strategy, please wait..." data-ar="جاري تحليل استراتيجية الاستثمار، يرجى الانتظار...">Analyzing your investment strategy, please wait...</p>
+            </div>
+            
+            <div class="results-section" id="results">
+                <div class="results-header">
+                    <h2 data-en="📈 Investment Analysis Results" data-ar="📈 نتائج تحليل الاستثمار">📈 Investment Analysis Results</h2>
+                    <p data-en="Smart analysis of loan amounts from 0% to 90% of your capital" data-ar="تحليل ذكي لمبالغ القروض من 0% إلى 90% من رأس مالك">Smart analysis of loan amounts from 0% to 90% of your capital</p>
+                </div>
+                
+                <div class="summary-cards" id="summaryCards"></div>
+                
+                <div class="table-container">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Loan Amount (EGP)" data-ar="مبلغ القرض (ج.م)">Loan Amount (EGP)</th>
+                                <th data-en="Monthly Certificate Income" data-ar="دخل الشهادات الشهري">Monthly Certificate Income</th>
+                                <th data-en="Monthly Loan Installment" data-ar="القسط الشهري">Monthly Loan Installment</th>
+                                <th data-en="Net Monthly Profit" data-ar="صافي الربح الشهري">Net Monthly Profit</th>
+                                <th data-en="Total Return" data-ar="إجمالي العائد">Total Return</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isYears = true;
+        let currentLanguage = 'en';
+        
+        // Localization data
+        const translations = {
+            en: {
+                summaryCards: {
+                    optimalLoan: "Recommended Loan Amount",
+                    monthlyProfit: "Monthly Net Profit",
+                    maxTotal: "Maximum Total Return",
+                    advantage: "Strategy Advantage",
+                    gainSuffix: "% annual return"
+                }
+            },
+            ar: {
+                summaryCards: {
+                    optimalLoan: "المبلغ الأمثل للاقتراض",
+                    monthlyProfit: "صافي الربح الشهري",
+                    maxTotal: "أقصى عائد إجمالي",
+                    advantage: "الفائدة من الاستراتيجية",
+                    gainSuffix: "% عائد"
+                }
+            }
+        };
+
+        // Toggle language
+        function toggleLanguage() {
+            currentLanguage = currentLanguage === 'en' ? 'ar' : 'en';
+            const html = document.documentElement;
+            const langSwitch = document.getElementById('langSwitch');
+            
+            if (currentLanguage === 'ar') {
+                html.setAttribute('lang', 'ar');
+                html.setAttribute('dir', 'rtl');
+                langSwitch.classList.add('arabic');
+            } else {
+                html.setAttribute('lang', 'en');
+                html.setAttribute('dir', 'ltr');
+                langSwitch.classList.remove('arabic');
+            }
+            
+            // Update all translatable elements
+            const elements = document.querySelectorAll('[data-en][data-ar]');
+            elements.forEach(element => {
+                element.textContent = element.getAttribute(`data-${currentLanguage}`);
+            });
+        }
+        
+        // Toggle functionality for term
+        document.getElementById('termToggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+            isYears = this.classList.contains('active');
+        });
+
+        // PMT function (like Excel PMT)
+        function PMT(rate, nper, pv) {
+            if (rate === 0) return -pv / nper;
+            return -pv * (rate * Math.pow(1 + rate, nper)) / (Math.pow(1 + rate, nper) - 1);
+        }
+
+        // Format number as currency
+        function formatCurrency(amount) {
+            if (currentLanguage === 'ar') {
+                return new Intl.NumberFormat('ar-EG', {
+                    style: 'currency',
+                    currency: 'EGP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(amount);
+            } else {
+                return new Intl.NumberFormat('en-EG', {
+                    style: 'currency',
+                    currency: 'EGP',
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                }).format(amount);
+            }
+        }
+
+        // Format percentage
+        function formatPercent(value) {
+            const formatted = (value * 100).toFixed(2);
+            return currentLanguage === 'ar' ? `${formatted}%` : `${formatted}%`;
+        }
+
+        async function calculate() {
+            const principal = parseFloat(document.getElementById('principal').value);
+            const cdRate = parseFloat(document.getElementById('cdRate').value) / 100;
+            const loanRate = parseFloat(document.getElementById('loanRate').value) / 100;
+            let loanTerm = parseFloat(document.getElementById('loanTerm').value);
+            
+            // Convert to months if in years
+            if (isYears) {
+                loanTerm = loanTerm * 12;
+            }
+            
+            if (!principal || !cdRate || !loanRate || !loanTerm) {
+                const alertMessage = currentLanguage === 'ar' 
+                    ? 'يرجى إدخال قيم صحيحة في جميع الحقول'
+                    : 'Please enter valid values in all fields';
+                alert(alertMessage);
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            
+            // Simulate processing delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const maxLoan = principal * 0.9;
+            const monthlyRate = loanRate / 12;
+            const cdMonthlyRate = cdRate / 12;
+            
+            let results = [];
+            let bestResult = null;
+            let bestGrandTotal = -Infinity;
+            let zeroLoanTotal = 0;
+            
+            // Calculate for loan amounts from 0 to 90% in steps
+            const stepSize = 1000;
+            const steps = Math.floor(maxLoan / stepSize);
+            
+            for (let i = 0; i <= steps; i++) {
+                const loanAmount = i * stepSize;
+                
+                // Monthly CD income from principal
+                const monthlyCDIncome = principal * cdMonthlyRate;
+                
+                // Monthly CD income from reinvested loan (if any)
+                const roundedLoanAmount = Math.floor(loanAmount / 1000) * 1000;
+                const reinvestedIncome = roundedLoanAmount * cdMonthlyRate;
+                
+                // Total monthly income
+                const totalMonthlyIncome = monthlyCDIncome + reinvestedIncome;
+                
+                // Monthly loan payment
+                const monthlyPayment = loanAmount > 0 ? PMT(monthlyRate, loanTerm, loanAmount) : 0;
+                
+                // Net monthly profit
+                const netMonthlyProfit = totalMonthlyIncome + monthlyPayment;
+                
+                // Stop calculating if we start losing money monthly
+                if (loanAmount > 0 && netMonthlyProfit < 0 && i != steps) {
+                    i = steps-1;
+                    continue;
+                }
+                
+                // Total over the loan term
+                const totalCDIncome = totalMonthlyIncome * loanTerm;
+                const totalLoanPayments = -monthlyPayment * loanTerm;
+                const netProfit = totalCDIncome - totalLoanPayments;
+                
+                // Grand total
+                const grandTotal = principal + loanAmount + netProfit;
+                
+                // Store zero loan scenario for comparison
+                if (loanAmount === 0) {
+                    zeroLoanTotal = grandTotal;
+                    i += Math.floor((grandTotal - principal) / stepSize);
+                }
+                
+                results.push({
+                    loanAmount,
+                    totalMonthlyIncome,
+                    monthlyPayment: -monthlyPayment,
+                    netMonthlyProfit,
+                    grandTotal,
+                    netProfit
+                });
+                
+                // Track best result
+                if (netMonthlyProfit >= 0 && grandTotal > bestGrandTotal) {
+                    bestGrandTotal = grandTotal;
+                    bestResult = results[results.length - 1];
+                }
+            }
+            
+            displayResults(results, bestResult, zeroLoanTotal, principal, loanTerm);
+        }
+        
+        function displayResults(results, bestResult, zeroLoanTotal, principal, loanTerm) {
+            const tableBody = document.getElementById('tableBody');
+            const summaryCards = document.getElementById('summaryCards');
+            
+            // Clear previous results
+            tableBody.innerHTML = '';
+            summaryCards.innerHTML = '';
+            
+            // Create summary cards
+            if (bestResult) {
+                const advantageOverZero = bestResult.grandTotal - zeroLoanTotal;
+                const totaladvantageOverZero = bestResult.grandTotal - principal;
+                const percentageGain = (totaladvantageOverZero / principal) * 100 / (loanTerm / 12);
+                
+                const t = translations[currentLanguage].summaryCards;
+                
+                summaryCards.innerHTML = `
+                    <div class="summary-card">
+                        <h3>${t.optimalLoan}</h3>
+                        <div class="value">${formatCurrency(bestResult.loanAmount)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>${t.monthlyProfit}</h3>
+                        <div class="value">${formatCurrency(bestResult.netMonthlyProfit)}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>${t.maxTotal}</h3>
+                        <div class="value">${formatCurrency(bestResult.grandTotal)}</div>
+                        <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">+${percentageGain.toFixed(2)}${t.gainSuffix}</div>
+                    </div>
+                    <div class="summary-card">
+                        <h3>${t.advantage}</h3>
+                        <div class="value" style="color: #059669">${formatCurrency(advantageOverZero)}</div>                       
+                    </div>
+                `;
+            }
+            
+            // Populate table
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                const isBest = bestResult && Math.abs(result.loanAmount - bestResult.loanAmount) < 1;
+                
+                if (isBest) {
+                    row.classList.add('best-row');
+                }
+                
+                row.innerHTML = `
+                    <td>${formatCurrency(result.loanAmount)}</td>
+                    <td>${formatCurrency(result.totalMonthlyIncome)}</td>
+                    <td>${formatCurrency(result.monthlyPayment)}</td>
+                    <td style="color: ${result.netMonthlyProfit >= 0 ? '#059669' : '#dc2626'}">${formatCurrency(result.netMonthlyProfit)}</td>
+                    <td><strong>${formatCurrency(result.grandTotal)}</strong></td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Hide loading and show results
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Allow Enter key to trigger calculation
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculate();
+            }
+        });
+    </script>
+</body>
+</html>

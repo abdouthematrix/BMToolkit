@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Loan vs Certificate Optimizer</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input { width: 120px; margin: 5px; padding: 5px; }
+    label { display: inline-block; width: 160px; }
+    button { padding: 8px 16px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: right; }
+    th { background-color: #f2f2f2; }
+    .highlight { background-color: #d4edda; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>Loan vs Certificate Optimizer</h2>
+
+  <div>
+    <label>Principal (EGP):</label>
+    <input type="number" id="principal" value="1000000"><br>
+    <label>CD Rate (% annual):</label>
+    <input type="number" id="cdRate" step="0.01" value="18.5"><br>
+    <label>Loan Rate (% annual):</label>
+    <input type="number" id="loanRate" step="0.01" value="22.75"><br>
+    <label>Term (months):</label>
+    <input type="number" id="months" value="36"><br>
+    <button onclick="calculate()">Calculate</button>
+  </div>
+
+  <table id="results">
+    <thead>
+      <tr>
+        <th>Loan Amount</th>
+        <th>Total Monthly Income</th>
+        <th>Loan Monthly Payment</th>
+        <th>Net Profit</th>
+        <th>Grand Total</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    function PMT(rate, nper, pv) {
+      if (rate === 0) return pv / nper;
+      return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+    }
+
+    function calculate() {
+      const principal = parseFloat(document.getElementById("principal").value);
+      const cdRate = parseFloat(document.getElementById("cdRate").value) / 100 / 12;
+      const loanRate = parseFloat(document.getElementById("loanRate").value) / 100 / 12;
+      const months = parseInt(document.getElementById("months").value);
+
+      const maxLoan = principal * 0.9;
+      const tbody = document.querySelector("#results tbody");
+      tbody.innerHTML = "";
+
+      let bestLoan = 0, bestProfit = 0, bestTotal = 0;
+
+      for (let loan = 0; loan <= maxLoan; loan += 10000) {
+        const cd1Monthly = principal * cdRate;
+        const cd2Monthly = loan * cdRate;
+        const totalMonthlyIncome = cd1Monthly + cd2Monthly;
+
+        const loanPayment = PMT(loanRate, months, loan);
+        const totalLoanPayment = loanPayment * months;
+        const totalIncome = totalMonthlyIncome * months;
+        const netProfit = totalIncome - totalLoanPayment;
+        const grandTotal = principal + loan + netProfit;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${loan.toLocaleString()}</td>
+          <td>${totalMonthlyIncome.toFixed(2)}</td>
+          <td>${loanPayment.toFixed(2)}</td>
+          <td>${netProfit.toFixed(2)}</td>
+          <td>${grandTotal.toFixed(2)}</td>
+        `;
+
+        if (netProfit >= 0 && grandTotal > bestTotal) {
+          bestLoan = loan;
+          bestProfit = netProfit;
+          bestTotal = grandTotal;
+          tr.classList.add("highlight");
+        }
+
+        tbody.appendChild(tr);
+      }
+    }
+  </script>
+</body>
+</html>

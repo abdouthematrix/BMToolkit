@@ -1,3 +1,3 @@
 # BMToolkit
 
-[LoanOptimizer](https://abdouthematrix.github.io/BMToolkit/loan_optimizer)
+[Smart Loan Investment Calculator](https://abdouthematrix.github.io/BMToolkit/Smart_Loan)

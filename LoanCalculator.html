@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator - BMToolkit</title>
+    <link rel="stylesheet" href="styles.css">    
+</head>
+<body id="loanPage">
+    <div class="container">
+        <div class="header">
+            <div class="language-toggle" onclick="toggleLanguage()">
+                <span class="lang-en">EN</span>
+                <div class="lang-switch" id="langSwitch"></div>
+                <span class="lang-ar">عربي</span>
+            </div>
+            <h1 data-en="💰 Loan Calculator" data-ar="💰 حاسبة القرض">💰 Loan Calculator</h1>
+            <p data-en="Calculate your loan payments and total costs" data-ar="احسب أقساط القرض والتكاليف الإجمالية">Calculate your loan payments and total costs</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="principal" data-en="Loan Amount" data-ar="مبلغ القرض">Loan Amount</label>
+                        <input type="number" id="principal" value="100000" min="1000" step="1000">
+                    </div>
+
+                    <!-- Interest Rate -->
+                    <div class="input-group">
+                        <label for="interestRate" data-en="Interest Rate (%)" data-ar="معدل الفائدة (%)">Interest Rate (%)</label>
+                        <div class="rate-input-group">
+                            <input type="number" id="interestRate" value="22.75" min="0" step="0.01">
+                            <div class="rate-buttons">
+                                <button type="button" onclick="setPresetRate('min')" data-en="Min" data-ar="الحد الأدنى">Min</button>
+                                <button type="button" onclick="setPresetRate('private')" data-en="Private" data-ar="خاص">Private</button>
+                                <button type="button" onclick="setPresetRate('digital')" data-en="Digital" data-ar="رقمي">Digital</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="minTenor" data-en="Minimum Loan Term" data-ar="الحد الأدنى لمدة القرض">Minimum Loan Term</label>
+                        <input type="number" id="minTenor" value="1" min="1" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="maxTenor" data-en="Maximum Loan Term" data-ar="الحد الأقصى لمدة القرض">Maximum Loan Term</label>
+                        <input type="number" id="maxTenor" value="10" min="1" step="1">
+                        <div class="toggle-container">
+                            <span data-en="Months" data-ar="أشهر">Months</span>
+                            <div class="toggle-switch active" id="termToggle"></div>
+                            <span data-en="Years" data-ar="سنوات">Years</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="Loan_calculate()" data-en="Calculate Loan" data-ar="احسب القرض">
+                    Calculate Loan
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p data-en="Calculate your loan payments, please wait..." data-ar="جاري احتساب أقساط القرض ، يرجى الانتظار...">Calculate your loan payments, please wait...</p>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="results-header">
+                    <h2 data-en="📈 Loan payments Results" data-ar="📈 نتائج اقساط القرض">📈 Loan payments Results</h2>
+                </div>
+                <div class="results-grid" id="resultsGrid"></div>
+            </div>
+        </div>
+    </div>
+    <script src="toolkit_core.js"></script>
+</body>
+</html>

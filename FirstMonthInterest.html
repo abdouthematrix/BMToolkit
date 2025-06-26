@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Month Interest - BMToolkit</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body id="firstPage">
+    <div class="container">
+        <div class="header">
+            <div class="language-toggle" onclick="toggleLanguage()">
+                <span class="lang-en">EN</span>
+                <div class="lang-switch" id="langSwitch"></div>
+                <span class="lang-ar">عربي</span>
+            </div>
+            <h1 data-en="💰 First Month Interest" data-ar="💰 فائدة الشهر الأول">💰 First Month Interest</h1>
+            <p data-en="Calculate Initial  Interest" data-ar="احسب فائدة فترة السماح">Calculate Initial  Interest</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="input-grid">
+                    <!-- Principal Amount -->
+                    <div class="input-group">
+                        <label for="principal" data-en="Principal Amount" data-ar="المبلغ الأساسي">Principal Amount</label>
+                        <input type="number" id="principal" value="100000" min="1000" step="1000">
+                    </div>
+
+                    <!-- Interest Rate -->
+                    <div class="input-group">
+                        <label for="interestRate" data-en="Interest Rate (%)" data-ar="معدل الفائدة (%)">Interest Rate (%)</label>
+                        <div class="rate-input-group">
+                            <input type="number" id="interestRate" value="22.75" min="0" step="0.01">
+                            <div class="rate-buttons">
+                                <button type="button" onclick="setPresetRate('min')" data-en="Min" data-ar="الحد الأدنى">Min</button>
+                                <button type="button" onclick="setPresetRate('private')" data-en="Private" data-ar="خاص">Private</button>
+                                <button type="button" onclick="setPresetRate('digital')" data-en="Digital" data-ar="رقمي">Digital</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div class="input-group">
+                        <label for="startDate" data-en="Start Date" data-ar="تاريخ البدء">Start Date</label>
+                        <input type="date" id="startDate">
+                    </div>
+
+                    <!-- End Date (Display Only) -->
+                    <div class="input-group">
+                        <label data-en="End Date" data-ar="تاريخ الانتهاء">End Date</label>
+                        <div id="endDate" class="readonly-field"></div>
+                    </div>
+
+                    <!-- Tenor -->
+                    <div class="input-group">
+                        <label for="tenor" data-en="Tenor" data-ar="المدة">Tenor</label>
+                        <input type="number" id="tenor" value="1" min="1">
+                        <div class="toggle-container">
+                            <span data-en="Months" data-ar="أشهر">Months</span>
+                            <div class="toggle-switch active" id="termToggle"></div>
+                            <span data-en="Years" data-ar="سنوات">Years</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="first_calculate()" data-en="Calculate" data-ar="احسب">
+                    Calculate
+                </button>
+            </div>
+
+            <div class="loading" id="loading" style="display:none;">
+                <div class="loading-spinner"></div>
+                <p data-en="Calculating, please wait..." data-ar="جاري الحساب، يرجى الانتظار...">Calculating, please wait...</p>
+            </div>
+
+            <div class="results-section" id="results" style="display:none;">
+                <div class="results-header">
+                    <h2 data-en="📊 Results" data-ar="📊 النتائج">📊 Results</h2>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card" id="totalFirstMonthlyPayment" style="display:none;">
+                        <h3 data-en="First Installment Amount" data-ar="قسط الشهر الاول">First Installment Amount</h3>
+                        <div class="result-value"></div>
+                    </div>
+
+                    <div class="result-card" id="firstMonthInterest">
+                        <h3 data-en="Initial Interest" data-ar="فائدة فترة السماح">Initial Interest</h3>
+                        <div class="result-value"></div>
+                    </div>
+
+                    <div class="result-card" id="monthlyPayment" style="display:none;">
+                        <h3 data-en="Monthly Payment" data-ar="القسط الشهري">Monthly Payment</h3>
+                        <div class="result-value"></div>
+                    </div>
+
+                    <div class="calculation-details">
+                        <div class="detail-row">
+                            <span data-en="Days Between Dates" data-ar="الأيام بين التواريخ">Days Between Dates:</span>
+                            <span id="daysBetween"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span data-en="Calculation Days" data-ar="أيام الحساب">Calculation Days:</span>
+                            <span id="calculationDays"></span>
+                        </div>
+                    </div>
+
+                    <div class="formula-section">
+                        <h3 data-en="Formula" data-ar="المعادلة">Formula</h3>
+                        <div class="formula-box" data-en="Principal × (Annual Interest Rate / 365) × Days Between Disbursement and First Installment"
+                             data-ar="مبلغ القرض × (معدل الفائدة السنوي / 365) × عدد الأيام بين تاريخ صرف القرض وتاريخ أول قسط">
+                            Principal × (Annual Interest Rate / 365) × Days Between Disbursement and First Installment
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="toolkit_core.js"></script>
+</body>
+</html>

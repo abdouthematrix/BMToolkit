@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Loan Investment Calculator - BMToolkit</title>
+    <link rel="stylesheet" href="styles.css">
+   
+</head>
+<body id="smartPage">
+    <div class="container">
+        <div class="header">
+            <div class="language-toggle" onclick="toggleLanguage()">
+                <span class="lang-en">EN</span>
+                <div class="lang-switch" id="langSwitch"></div>
+                <span class="lang-ar">عربي</span>
+            </div>
+            <h1 data-en="💰 Smart Loan Investment Calculator" data-ar="💰 حاسبة الاستثمار الذكي بالقروض">💰 Smart Loan Investment Calculator</h1>
+            <p data-en="Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns" data-ar="حسّن استراتيجية استثمارك: احسب مبلغ القرض المثالي لتعظيم عوائد الشهادات">Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns</p>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="principal" data-en="Available Capital (EGP)" data-ar="رأس المال المتاح (جنيه مصري)">Available Capital (EGP)</label>
+                        <input type="number" id="principal" value="1000000" min="1000" step="1000">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="cdRate" data-en="Certificate Annual Return (%)" data-ar="العائد السنوي للشهادة (%)">Certificate Annual Return (%)</label>
+                        <input type="number" id="cdRate" value="18.5" min="0" step="0.1">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="interestRate" data-en="Loan Annual Interest (%)" data-ar="الفائدة السنوية للقرض (%)">Loan Annual Interest (%)</label>
+                        <input type="number" id="interestRate" value="22.75" min="0" step="0.1">                        
+                    </div>
+
+                    <div class="input-group">
+                        <label for="loanTerm" data-en="Repayment Period" data-ar="فترة السداد">Repayment Period</label>
+                        <input type="number" id="loanTerm" value="3" min="1" step="1">
+                        <div class="toggle-container">
+                            <span data-en="Months" data-ar="أشهر">Months</span>
+                            <div class="toggle-switch active" id="termToggle"></div>
+                            <span data-en="Years" data-ar="سنوات">Years</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="calculate-btn" onclick="smart_calculate()" data-en="Find Optimal Strategy" data-ar="ابحث عن الاستراتيجية المثلى">
+                    Find Optimal Strategy
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p data-en="Analyzing your investment strategy, please wait..." data-ar="جاري تحليل استراتيجية الاستثمار، يرجى الانتظار...">Analyzing your investment strategy, please wait...</p>
+            </div>
+
+            <div class="results-section" id="results">
+                <div class="results-header">
+                    <h2 data-en="📈 Investment Analysis Results" data-ar="📈 نتائج تحليل الاستثمار">📈 Investment Analysis Results</h2>
+                    <p data-en="Smart analysis of loan amounts from 0% to 90% of your capital" data-ar="تحليل ذكي لمبالغ القروض من 0% إلى 90% من رأس مالك">Smart analysis of loan amounts from 0% to 90% of your capital</p>
+                </div>
+
+                <div class="summary-cards" id="summaryCards"></div>
+
+                <div class="table-container">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Loan Amount (EGP)" data-ar="مبلغ القرض (ج.م)">Loan Amount (EGP)</th>
+                                <th data-en="Monthly Certificate Income" data-ar="دخل الشهادات الشهري">Monthly Certificate Income</th>
+                                <th data-en="Monthly Loan Installment" data-ar="القسط الشهري">Monthly Loan Installment</th>
+                                <th data-en="Net Monthly Profit" data-ar="صافي الربح الشهري">Net Monthly Profit</th>
+                                <th data-en="Total Return" data-ar="إجمالي العائد">Total Return</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="toolkit_core.js"></script>
+</body>
+</html>

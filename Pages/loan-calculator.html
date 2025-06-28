@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BMToolkit - Professional Loan Calculator">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="../appicon.svg">
     <title>Loan Calculator - BMToolkit</title>
-    <link rel="stylesheet" href="styles.css">    
+    <link rel="stylesheet" href="../Core/styles.css">
 </head>
-<body id="loanPage">
+<body id="loan-calculator">
     <div class="container">
         <div class="header">
-            <div class="language-toggle" onclick="toggleLanguage()">
+            <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <div class="language-toggle">
                 <span class="lang-en">EN</span>
-                <div class="lang-switch" id="langSwitch"></div>
+                    <div class="lang-switch" id="langSwitch" data-language-toggle></div>
                 <span class="lang-ar">عربي</span>
             </div>
             <h1 data-en="💰 Loan Calculator" data-ar="💰 حاسبة القرض">💰 Loan Calculator</h1>
@@ -32,9 +36,9 @@
                         <div class="rate-input-group">
                             <input type="number" id="interestRate" value="22.75" min="0" step="0.01">
                             <div class="rate-buttons">
-                                <button type="button" onclick="setPresetRate('min')" data-en="Min" data-ar="الحد الأدنى">Min</button>
-                                <button type="button" onclick="setPresetRate('private')" data-en="Private" data-ar="خاص">Private</button>
-                                <button type="button" onclick="setPresetRate('digital')" data-en="Digital" data-ar="رقمي">Digital</button>
+                                <button type="button" data-preset-rate="min" data-en="Min" data-ar="الحد الأدنى">Min</button>
+                                <button type="button" data-preset-rate="private" data-en="Private" data-ar="خاص">Private</button>
+                                <button type="button" data-preset-rate="digital" data-en="Digital" data-ar="رقمي">Digital</button>
                             </div>
                         </div>
                     </div>
@@ -54,7 +58,7 @@
                     </div>
                 </div>
 
-                <button class="calculate-btn" onclick="Loan_calculate()" data-en="Calculate Loan" data-ar="احسب القرض">
+                <button class="calculate-btn" data-en="Calculate Loan" data-ar="احسب القرض">
                     Calculate Loan
                 </button>
             </div>
@@ -72,6 +76,6 @@
             </div>
         </div>
     </div>
-    <script src="toolkit_core.js"></script>
+    <script type="module"  src="../Core/main.js"></script>
 </body>
 </html>

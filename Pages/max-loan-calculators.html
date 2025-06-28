@@ -3,57 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BMToolkit - Professional Loan Calculator">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="../appicon.svg">
     <title>Max Loan Calculators</title>
-    <link rel="stylesheet" href="styles.css">   
-    <style>
-        /* Minimal inline styles for clarity; use your styles.css for full styling */
-        .mode-switch {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1em;
-        }
-
-        .error-frame {
-            background: #ffeaea;
-            color: #b00;
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 1em;
-            display: none;
-        }
-
-        .reset-btn {
-            background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: block;
-            margin: 0 auto;
-            box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4);
-        }
-
-            .reset-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(229, 57, 53, 0.5);
-            }
-
-            .reset-btn:active {
-                transform: translateY(0);
-            }
-    </style>
+    <link rel="stylesheet" href="../Core/styles.css">
 </head>
-<body id="maxloanPage">
+<body id="max-loan-calculators">
     <div class="container">
         <div class="header">
-            <div class="language-toggle" onclick="toggleLanguage()">
+            <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <div class="language-toggle">
                 <span class="lang-en">EN</span>
-                <div class="lang-switch" id="langSwitch"></div>
+                    <div class="lang-switch" id="langSwitch" data-language-toggle></div>
                 <span class="lang-ar">عربي</span>
             </div>
             <h1 data-en="Max Loan Calculators" data-ar="حاسبة الحد الأقصى للقرض">Max Loan Calculators</h1>
@@ -63,8 +25,8 @@
         <div class="content">
             <!-- Mode Switch -->
             <div class="mode-switch input-section">
-                <span id="currentModeTitle" style="font-weight:bold;font-size:18px"></span>
-                <button id="switchModeBtn"></button>
+                <span data-mode-title style="font-weight:bold;font-size:18px"></span>
+                <button data-mode-toggle></button>
             </div>
 
             <!-- Error Display -->
@@ -74,7 +36,7 @@
 
             <!-- Input Section -->
             <div class="input-section">
-                <form id="maxLoanForm" onsubmit="event.preventDefault(); maxLoan_calculate();">
+                <form id="maxLoanForm">
                     <div id="incomeModeInputs">
                         <div class="input-grid">
                             <div class="input-group">
@@ -106,9 +68,9 @@
                             <div class="rate-input-group">
                                 <input type="number" id="interestRate" value="22.75" min="0" step="0.01">
                                 <div class="rate-buttons">
-                                    <button type="button" onclick="setPresetRate('min')" data-en="Min" data-ar="الحد الأدنى">Min</button>
-                                    <button type="button" onclick="setPresetRate('private')" data-en="Private" data-ar="خاص">Private</button>
-                                    <button type="button" onclick="setPresetRate('digital')" data-en="Digital" data-ar="رقمي">Digital</button>
+                                    <button type="button" data-preset-rate="min" data-en="Min" data-ar="الحد الأدنى">Min</button>
+                                    <button type="button" data-preset-rate="private" data-en="Private" data-ar="خاص">Private</button>
+                                    <button type="button" data-preset-rate="digital" data-en="Digital" data-ar="رقمي">Digital</button>
                                 </div>
                             </div>
                         </div>
@@ -129,8 +91,9 @@
                         </div>
                     </div>
                     <div class="action-buttons">
-                        <button type="submit" class="calculate-btn" id="calculateBtn"></button>
-                        <button type="button" class="reset-btn" onclick="resetInputs()" id="resetBtn"></button>
+                        <button class="calculate-btn" data-en="Calculate" data-ar="احسب">
+                            Calculate
+                        </button>
                     </div>
                 </form>
             </div>
@@ -151,11 +114,11 @@
             <!-- Settings Info -->
             <div class="settings-frame">
                 <span style="font-weight:bold;" data-en="Current Settings" data-ar="الإعدادات الحالية">Current Settings</span>
-                <span id="maxDBRRatioLabel"></span>
-                <span id="minInterestRateLabel"></span>
+                <span data-mode-ratio>maxDBR</span>
+                <span data-mode-rate>minRate</span>
             </div>
         </div>
     </div>
-    <script src="toolkit_core.js"></script>    
+    <script type="module"  src="../Core/main.js"></script>    
 </body>
 </html>

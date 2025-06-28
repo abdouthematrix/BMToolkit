@@ -1,0 +1,50 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<!-- Gold Gradient -->
+		<linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+			<stop offset="0%" stop-color="#FFD700"/>
+			<stop offset="50%" stop-color="#FFC200"/>
+			<stop offset="100%" stop-color="#FFB300"/>
+		</linearGradient>
+	</defs>
+	<!-- Circular Background -->
+	<circle cx="128" cy="128" r="128" fill="#2C6DB2"/>
+	<g transform="translate(40, 40)">
+		<!-- Chart + Checklist -->
+		<rect x="70" y="10" width="80" height="90" rx="8" fill="white"/>
+		<g stroke="#2C6DB2" stroke-width="4" stroke-linecap="round">
+			<path d="M85 30 L88 35 L100 22"/>
+			<path d="M85 55 L88 60 L100 47"/>
+		</g>
+		<g fill="#2C6DB2">
+			<rect x="105" y="50" width="10" height="15"/>
+			<rect x="120" y="40" width="10" height="25"/>
+			<rect x="135" y="30" width="10" height="35"/>
+		</g>
+		<!-- Calculator -->
+		<rect x="20" y="40" width="60" height="80" rx="8" fill="white" stroke="#2C6DB2" stroke-width="2"/>
+		<rect x="30" y="50" width="40" height="20" rx="3" fill="#2C6DB2" stroke="#2C6DB2" stroke-width="1"/>
+
+		<g fill="#2C6DB2" stroke="#2C6DB2" stroke-width="1">
+			<rect x="30" y="75" width="10" height="10"/>
+			<rect x="45" y="75" width="10" height="10"/>
+			<rect x="60" y="75" width="10" height="10"/>
+			<rect x="30" y="90" width="10" height="10"/>
+			<rect x="45" y="90" width="10" height="10"/>
+			<rect x="60" y="90" width="10" height="25"/>
+			<rect x="30" y="105" width="10" height="10"/>
+			<rect x="45" y="105" width="10" height="10"/>			
+		</g>
+
+		<!-- Dollar Coin with Hollow Center -->
+		<circle cx="115" cy="100" r="30" fill="white" stroke="#2C6DB2" stroke-width="5"/>		
+		<circle cx="115" cy="100" r="23" fill="#2C6DB2"/>
+		<text x="115" y="110" text-anchor="middle" font-size="30" font-weight="bold" fill="white">$</text>
+		<!-- Inner hollow -->		
+	</g>
+
+	<!-- App Label -->
+	<text x="128" y="220" font-size="30" font-family="Arial, sans-serif" font-weight="bold" text-anchor="middle" fill="white">
+		BMToolkit
+	</text>
+</svg>

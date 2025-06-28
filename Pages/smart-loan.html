@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BMToolkit - Professional Loan Calculator">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="../appicon.svg">
     <title>Smart Loan Investment Calculator - BMToolkit</title>
-    <link rel="stylesheet" href="styles.css">
-   
+    <link rel="stylesheet" href="../Core/styles.css">
 </head>
-<body id="smartPage">
+<body id="smart-loan">
     <div class="container">
         <div class="header">
-            <div class="language-toggle" onclick="toggleLanguage()">
+            <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <div class="language-toggle">
                 <span class="lang-en">EN</span>
-                <div class="lang-switch" id="langSwitch"></div>
+                <div class="lang-switch" id="langSwitch" data-language-toggle></div>
                 <span class="lang-ar">عربي</span>
             </div>
             <h1 data-en="💰 Smart Loan Investment Calculator" data-ar="💰 حاسبة الاستثمار الذكي بالقروض">💰 Smart Loan Investment Calculator</h1>
@@ -48,7 +51,7 @@
                     </div>
                 </div>
 
-                <button class="calculate-btn" onclick="smart_calculate()" data-en="Find Optimal Strategy" data-ar="ابحث عن الاستراتيجية المثلى">
+                <button class="calculate-btn" data-en="Find Optimal Strategy" data-ar="ابحث عن الاستراتيجية المثلى">
                     Find Optimal Strategy
                 </button>
             </div>
@@ -84,6 +87,6 @@
             </div>
         </div>
     </div>
-    <script src="toolkit_core.js"></script>
+    <script type="module"  src="../Core/main.js"></script>
 </body>
 </html>

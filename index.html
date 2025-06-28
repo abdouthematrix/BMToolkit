@@ -1,46 +1,50 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BMToolkit - Professional Loan Calculator">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="icon" type="image/x-icon" href="appicon.svg">
     <title>BMToolkit</title>
-    <link rel="stylesheet" href="styles.css">   
+    <link rel="stylesheet" href="Core/styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="language-toggle" onclick="toggleLanguage()">
+            <div class="language-toggle">
                 <span class="lang-en">EN</span>
-                <div class="lang-switch" id="langSwitch"></div>
+                <div class="lang-switch" id="langSwitch" data-language-toggle></div>
                 <span class="lang-ar">عربي</span>
             </div>
-            <h1 data-en="Welcome" data-ar="مرحبًا"></h1>
+            <h1>BMToolkit</h1>
+            <h2 data-en="Welcome" data-ar="مرحبًا"></h2>
             <p data-en="Your smart loan assistant." data-ar="مساعدك الذكي للقروض."></p>
         </div>
         <div class="content">
             <h2 data-en="Quick Actions" data-ar="إجراءات سريعة"></h2>
             <div class="card-grid">
-                <div class="card" onclick="navigate('SmartLoan')">
+                <div class="card" data-navigate="smart-loan">
                     <div>📈 💰</div>
-                    <strong data-en="💰 Smart Loan Investment Calculator" data-ar="💰 حاسبة الاستثمار الذكي بالقروض">></strong>
+                    <strong data-en="Smart Loan Investment Calculator" data-ar="حاسبة الاستثمار الذكي بالقروض">></strong>
                     <small data-en="Calculate the perfect loan amount to maximize certificate returns" data-ar="احسب مبلغ القرض المثالي لتعظيم عوائد الشهادات"></small>
                 </div>
-                <div class="card" onclick="navigate('LoanCalculator')">
+                <div class="card" data-navigate="loan-calculator">
                     <div>💰</div>
                     <strong data-en="Loan Calculator" data-ar="حاسبة القرض"></strong>
                     <small data-en="Calculate payments and schedules" data-ar="احسب المدفوعات والجدول الزمني"></small>
                 </div>
-                <div class="card" onclick="navigate('MaxLoanCalculators')">
+                <div class="card" data-navigate="max-loan-calculators">
                     <div>🔝💰</div>
                     <strong data-en="Max Loan Calculator" data-ar="الحد الأقصى للقرض"></strong>
                     <small data-en="Find your maximum eligible loan" data-ar="احسب الحد الأقصى للقرض المتاح لك"></small>
                 </div>
-                <div class="card" onclick="navigate('FirstMonthInterest')">
+                <div class="card" data-navigate="first-month-interest">
                     <div>📅💰</div>
                     <strong data-en="First Month Interest" data-ar="فائدة الشهر الأول"></strong>
                     <small data-en="Estimate your first interest payment" data-ar="احسب الفائدة الشهرية الأولى"></small>
                 </div>
-                <div class="card" onclick="showAppInfo()">
+                <div class="card" data-app-info>
                     <div>ℹ️</div>
                     <strong data-en="About" data-ar="حول التطبيق"></strong>
                     <small data-en="Learn more about BMToolkit" data-ar="معلومات حول BMToolkit"></small>
@@ -53,6 +57,6 @@
             </div>
         </div>
     </div>
-    <script src="toolkit_core.js"></script>
+    <script type="module"  src="Core/main.js"></script>
 </body>
 </html>

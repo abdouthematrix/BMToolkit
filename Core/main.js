@@ -5,8 +5,8 @@ import { translate } from './translations.js';
 
 class BMToolkitApp {
     constructor() {
-        this.appState = new AppState();
-        this.uiManager = new UIManager(this.appState, translate);
+        this.appState = new AppState(translate);
+        this.uiManager = new UIManager(this.appState);
         this.version = '1.0';
         this.author = 'AbdouMatrix ®';
     }
@@ -14,21 +14,20 @@ class BMToolkitApp {
     async initialize() {
         // Set initial language
         this.setInitialLanguage();
-        
-        // Setup real-time validation
-        this.setupValidation();
-        
-        // Setup navigation handlers
-        this.setupNavigation();
-        
-        // Setup app info handler
-        this.setupAppInfo();
-        
-        // Focus first input
-        this.focusFirstInput();
-        
         // Setup language toggle handler
         this.setupLanguageToggle();
+
+        // Setup real-time validation
+        this.setupValidation();
+
+        // Setup navigation handlers
+        this.setupNavigation();
+
+        // Setup app info handler
+        this.setupAppInfo();
+
+        // Focus first input
+        this.focusFirstInput();
 
         this.setupPresetRateButtons();
     }
@@ -39,15 +38,32 @@ class BMToolkitApp {
         this.appState.updateLanguage(savedLang);
         this.updateHTMLAttributes(savedLang);
     }
+    setupLanguageToggle() {
+        // Setup language toggle event listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.hasAttribute('data-language-toggle')) {
+                e.preventDefault();
+                this.toggleLanguage();
+            }
+        });
+
+        // Add keyboard shortcut for language toggle (Ctrl+L)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                this.toggleLanguage();
+            }
+        });
+    }
 
     toggleLanguage() {
         const newLang = this.appState.currentLanguage === 'en' ? 'ar' : 'en';
         this.appState.updateLanguage(newLang);
         this.updateHTMLAttributes(newLang);
-        
+
         // Save language preference
         localStorage.setItem('bmtoolkit-language', newLang);
-        
+
         // Trigger UI update
         this.uiManager.updateLanguage(newLang);
     }
@@ -60,24 +76,24 @@ class BMToolkitApp {
 
     setupValidation() {
         // Debounced validation setup
-        const debouncedValidation = this.debounce((input) => {
-            this.validateInput(input);
+        const debouncedValidation = this.debounce((input) => {           
+            this.validateInput(input);           
         }, 300);
-        
+
         document.querySelectorAll('input[type="number"]').forEach(input => {
             input.addEventListener('input', () => debouncedValidation(input));
             input.addEventListener('blur', () => this.validateInput(input));
         });
-    }
+    }    
 
     validateInput(input) {
         const value = parseFloat(input.value);
         const min = parseFloat(input.min);
         const max = parseFloat(input.max);
-        
+
         // Remove existing validation classes
         input.classList.remove('valid', 'invalid');
-        
+
         // Validate range
         if (isNaN(value) || (min && value < min) || (max && value > max)) {
             input.classList.add('invalid');
@@ -91,19 +107,19 @@ class BMToolkitApp {
     showValidationError(input) {
         const errorId = `${input.id}-error`;
         let errorElement = document.getElementById(errorId);
-        
+
         if (!errorElement) {
             errorElement = document.createElement('div');
             errorElement.id = errorId;
             errorElement.className = 'validation-error';
             input.parentNode.insertBefore(errorElement, input.nextSibling);
         }
-        
+
         const lang = this.appState.currentLanguage;
-        const errorMessage = lang === 'ar' 
-            ? 'قيمة غير صحيحة' 
+        const errorMessage = lang === 'ar'
+            ? 'قيمة غير صحيحة'
             : 'Invalid value';
-        
+
         errorElement.textContent = errorMessage;
         errorElement.style.display = 'block';
     }
@@ -119,12 +135,13 @@ class BMToolkitApp {
     setupNavigation() {
         // Add navigation function to global scope for backward compatibility
         window.navigate = this.navigate.bind(this);
-        
+
         // Setup navigation event listeners for modern approach
         document.addEventListener('click', (e) => {
-            if (e.target.hasAttribute('data-navigate')) {
+            const targetEl = e.target.closest('[data-navigate]');
+            if (targetEl) {
                 e.preventDefault();
-                const target = e.target.getAttribute('data-navigate');
+                const target = targetEl.getAttribute('data-navigate');
                 this.navigate(target);
             }
         });
@@ -136,10 +153,10 @@ class BMToolkitApp {
             console.error('Invalid navigation target');
             return;
         }
-        
+
         // Save current state before navigation
         this.saveAppState();
-        
+
         // Navigate to target page
         window.location.href = `Pages/${target}.html`;
     }
@@ -147,7 +164,7 @@ class BMToolkitApp {
     setupAppInfo() {
         // Add showAppInfo function to global scope for backward compatibility
         window.showAppInfo = this.showAppInfo.bind(this);
-        
+
         // Setup app info event listeners for modern approach
         document.addEventListener('click', (e) => {
             if (e.target.hasAttribute('data-app-info')) {
@@ -159,47 +176,10 @@ class BMToolkitApp {
 
     showAppInfo() {
         const lang = this.appState.currentLanguage;
-        const message = lang === "ar" 
+        const message = lang === "ar"
             ? `BMToolkit الإصدار ${this.version}\n${this.author}`
             : `BMToolkit v${this.version}\n${this.author}`;
-            alert(message);        
-    }   
-
-    setupLanguageToggle() {
-        // Setup language toggle event listeners
-        document.addEventListener('click', (e) => {
-            if (e.target.hasAttribute('data-language-toggle')) {
-                e.preventDefault();
-                this.toggleLanguage();
-            }
-        });
-        
-        // Add keyboard shortcut for language toggle (Ctrl+L)
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'l') {
-                e.preventDefault();
-                this.toggleLanguage();
-            }
-        });
-    }
-    setupPresetRateButtons() {
-        document.addEventListener('click', (e) => {
-            const presetType = e.target.getAttribute('data-preset-rate');
-            if (presetType) {
-                e.preventDefault();
-                this.setPresetRate(presetType);
-            }
-         });
-    }
-
-
-    setPresetRate(type) {
-        const rate = CONFIG.PRESET_RATES[type] || 0;
-        const rateInput = document.getElementById('interestRate');
-        if (rateInput) {
-            rateInput.value = rate;
-            rateInput.dispatchEvent(new Event('input')); // Trigger validation if needed
-        }
+        alert(message);
     }
 
     focusFirstInput() {
@@ -207,6 +187,25 @@ class BMToolkitApp {
         if (firstInput) {
             // Small delay to ensure page is fully rendered
             setTimeout(() => firstInput.focus(), 100);
+        }
+    }
+
+    setupPresetRateButtons() {
+        document.addEventListener('click', (e) => {
+            const presetType = e.target.getAttribute('data-preset-rate');
+            if (presetType) {
+                e.preventDefault();
+                this.setPresetRate(presetType);
+            }
+        });
+    }
+
+    setPresetRate(type) {
+        const rate = CONFIG.PRESET_RATES[type] || 0;
+        const rateInput = document.getElementById('interestRate');
+        if (rateInput) {
+            rateInput.value = rate;
+            rateInput.dispatchEvent(new Event('input')); // Trigger validation if needed
         }
     }
 
@@ -253,20 +252,20 @@ class BMToolkitApp {
     }
 
     // Utility method to get translation
-    translate(key, params = {}) {
-        return translate(key, this.appState.currentLanguage, params);
+    translate(key) {
+        return translate(key, this.appState.currentLanguage);
     }
 
     // Method to handle errors gracefully
     handleError(error, context = '') {
         console.error(`BMToolkit Error ${context}:`, error);
-        
+
         const lang = this.appState.currentLanguage;
-        const message = lang === 'ar' 
-            ? 'حدث خطأ غير متوقع' 
+        const message = lang === 'ar'
+            ? 'حدث خطأ غير متوقع'
             : 'An unexpected error occurred';
-             alert(message);  
-        
+        alert(message);
+
     }
 }
 
@@ -275,17 +274,15 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
         const app = new BMToolkitApp();
         app.initialize();
-        
+
         const bodyId = document.body.id;
         if (bodyId == 'max-loan-calculators') {
             app.uiManager.updateModeUI();
-         }
+        }
         // Make app globally accessible
         window.app = app;
         globalThis.app = app;
 
-        
-        
         console.log('BMToolkit initialized successfully');
     } catch (error) {
         console.error('Failed to initialize BMToolkit:', error);

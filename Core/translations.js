@@ -1,4 +1,4 @@
-﻿export function translate(key, lang = 'en') {
+﻿export function translate(key, lang) {
     return translations[lang][key] || key;
 }
 export const translations = {
@@ -10,11 +10,14 @@ export const translations = {
             advantage: "Strategy Advantage",
             gainSuffix: "% annual return"
         },
-        loanTerm: "Loan Term",
-        monthlyPayment: "Monthly Payment",
-        totalPayment: "Total Payment",
-        totalInterest: "Total Interest",
-        flatRate: "Flat Rate",
+        loan: {
+            loanTerm: "Loan Term",
+            monthlyPayment: "Monthly Payment",
+            totalPayment: "Total Payment",
+            totalInterest: "Total Interest",
+            flatRate: "Flat Rate",
+            maxLoanAmount: "Max Loan Amount",
+        },
         invalidInput: "Please enter valid values for all fields",
         incomeMode: "Max Loan by Income",
         paymentMode: "Max Loan by Payment",
@@ -22,8 +25,7 @@ export const translations = {
         switchToIncome: "Switch to Income Mode",
         calculate: "Calculate",
         reset: "Reset",
-        errorInvalid: "Please enter valid values for all fields.",
-        maxLoanAmount: "Max Loan Amount",
+        errorInvalid: "Please enter valid values for all fields.",       
         tenor: "Tenor",
         payment: "Payment",
         interest: "Interest",
@@ -43,11 +45,14 @@ export const translations = {
             advantage: "الفائدة من الاستراتيجية",
             gainSuffix: "% عائد"
         },
-        loanTerm: "مدة القرض",
-        monthlyPayment: "القسط الشهري",
-        totalPayment: "إجمالي المدفوعات",
-        totalInterest: "إجمالي الفائدة",
-        flatRate: "المعدل الثابت",
+        loan: {
+            loanTerm: "مدة القرض",
+            monthlyPayment: "القسط الشهري",
+            totalPayment: "إجمالي المدفوعات",
+            totalInterest: "إجمالي الفائدة",
+            flatRate: "المعدل الثابت",
+            maxLoanAmount: "الحد الأقصى لمبلغ القرض",
+        },        
         invalidInput: "يرجى إدخال قيم صحيحة في جميع الحقول",
         incomeMode: "الحد الأقصى للقرض حسب الدخل",
         paymentMode: "الحد الأقصى للقرض حسب القسط",
@@ -55,8 +60,7 @@ export const translations = {
         switchToIncome: "التبديل إلى وضع الدخل",
         calculate: "احسب",
         reset: "إعادة تعيين",
-        errorInvalid: "يرجى إدخال قيم صحيحة في جميع الحقول.",
-        maxLoanAmount: "الحد الأقصى لمبلغ القرض",
+        errorInvalid: "يرجى إدخال قيم صحيحة في جميع الحقول.",        
         tenor: "المدة",
         payment: "القسط",
         interest: "الفائدة",

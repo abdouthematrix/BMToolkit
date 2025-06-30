@@ -1,21 +1,15 @@
 ﻿export class UIManager {
-    constructor(appState, translate) {
+    constructor(appState) {
         this.appState = appState;
-        this.translate = translate;
-        this.modalContainer = null;
-        this.setupEventListeners();       
+        this.setupEventListeners();
         // Subscribe to state changes
         appState.subscribe(this.handleStateChange.bind(this));
     }
 
     handleStateChange(event, state) {
-        switch(event) {
+        switch (event) {
             case 'languageChanged':
                 this.updateLanguageUI();
-                const bodyId = document.body.id;
-                if (bodyId == 'max-loan-calculators') {
-                    this.updateModeUI();
-                }
                 break;
             case 'modeChanged':
                 this.updateModeUI();
@@ -26,6 +20,167 @@
             case 'validationError':
                 this.showValidationFeedback(state);
                 break;
+        }
+    }
+
+    setupEventListeners() {
+        // Centralized event listener setup
+        this.addCalculateListener();
+        this.addTermToggleListener();
+        this.addModeToggleListener();
+        this.addKeyboardShortcuts();
+        this.addFormValidationListeners();
+    }
+
+    addCalculateListener() {
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.triggerCalculation();
+            }
+        });
+        // Add click listeners for calculate buttons
+        document.addEventListener('click', (e) => {
+            if (e.target.hasAttribute('data-calculate') || e.target.classList.contains('calculate-btn')) {
+                e.preventDefault();
+                this.triggerCalculation();
+            }
+        });
+    }   
+
+    addTermToggleListener() {
+        document.addEventListener('click', (e) => {
+            if (e.target.hasAttribute('data-tenor-toggle')) {
+                e.preventDefault();
+                this.appState.toggleTerm();
+                this.updateTenorUI(e.target);
+            }
+        });         
+    }
+    updateTenorUI(toggleElement) {
+        // Toggle the active state
+        toggleElement.classList.toggle('active');
+        this.isYears = toggleElement.classList.contains('active');
+    }
+   
+    addModeToggleListener() {
+        document.addEventListener('click', (e) => {
+            if (e.target.hasAttribute('data-mode-toggle')) {
+                e.preventDefault();
+                this.appState.toggleMode();
+            }
+        });
+        const bodyId = document.body.id;
+        if (bodyId == 'max-loan-calculators') {
+            const startDateInput = document.getElementById('startDate');
+            if (startDateInput) {
+                const today = new Date();
+                const dateString = today.toISOString().split('T')[0];
+                startDateInput.value = dateString;
+
+
+                const tempDate = new Date(today);
+                tempDate.setMonth(tempDate.getMonth() + 2);
+                const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), 6);
+                const endDateEl = document.getElementById('endDate');
+                if (endDateEl) {
+                    const dateString2 = endDate.toISOString().split('T')[0];
+                    endDateEl.textContent = dateString2;
+                }
+
+                // Add date validation
+                startDateInput.addEventListener('change', function () {
+                    const startDateObj = new Date(this.value); const tempDate = new Date(startDateObj);
+
+                    tempDate.setMonth(tempDate.getMonth() + 2);
+                    const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), 5);
+                    const endDateEl = document.getElementById('endDate');
+                    if (endDateEl) {
+                        const locale = app.appState.currentLanguage === 'ar' ? 'ar-EG' : 'en-EG';
+                        endDateEl.textContent = endDate.toLocaleDateString(locale);
+                    }
+                });
+            }
+        }
+    }
+
+    addKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Enter for calculate
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                this.triggerCalculation();
+            }
+
+            // Ctrl+M for mode toggle
+            if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                this.appState.toggleMode();
+            }
+            // Ctrl+Y for mode toggle
+            if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                this.appState.toggleTerm();
+            }
+        });
+    }
+
+    addFormValidationListeners() {
+        // Real-time form validation feedback
+        document.addEventListener('input', (e) => {
+            if (e.target.type === 'number') {
+                this.validateField(e.target);
+            }
+        });
+
+        document.addEventListener('blur', (e) => {
+            if (e.target.type === 'number') {
+                this.validateField(e.target);
+            }
+        });
+    }
+
+    triggerCalculation() {
+        // Validate all inputs before calculation
+        const inputs = document.querySelectorAll('input[type="number"]');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!this.validateField(input)) {
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            alert(this.appState.currentLanguage === 'ar'
+                ? 'يرجى تصحيح الأخطاء قبل المتابعة'
+                : 'Please correct the errors before proceeding');
+            return;
+        }
+
+        const bodyId = document.body.id;
+        const calculators = {
+            'first-month-interest': () => import('./calculators/first-month-interest-calculator.js'),
+            'loan-calculator': () => import('./calculators/loan-calculator.js'),
+            'max-loan-calculators': () => import('./calculators/max-loan-calculator.js'),
+            'smart-loan': () => import('./calculators/smart-loan-calculator.js')
+        };
+
+        const calculatorLoader = calculators[bodyId];
+        if (calculatorLoader) {
+            // Show loading indicator
+            this.showLoadingIndicator();
+
+            calculatorLoader().then(module => {
+                this.hideLoadingIndicator();
+                module.calculate(this.appState);
+            }).catch(error => {
+                this.hideLoadingIndicator();
+                console.error('Calculator loading error:', error);
+                alert(this.appState.currentLanguage === 'ar'
+                    ? 'حدث خطأ أثناء تحميل الحاسبة'
+                    : 'An error occurred while loading the calculator');
+            });
         }
     }
 
@@ -69,7 +224,7 @@
     updateModeUI() {
         const incomeModeInputs = document.getElementById('incomeModeInputs');
         const paymentModeInputs = document.getElementById('paymentModeInputs');
-        
+
         if (incomeModeInputs && paymentModeInputs) {
             incomeModeInputs.style.display = this.appState.isIncomeMode ? 'block' : 'none';
             paymentModeInputs.style.display = this.appState.isIncomeMode ? 'none' : 'block';
@@ -77,31 +232,27 @@
 
         // Update mode toggle button text
         const modeToggle = document.querySelector('[data-mode-toggle]');
-        if (modeToggle) {
-            const lang = this.appState.currentLanguage;
-            const text = this.appState.isIncomeMode 
-                ? this.translate('switchToPayment', lang)
-                : this.translate('switchToIncome', lang);
+        if (modeToggle) {           
+            const text = this.appState.isIncomeMode
+                ? this.appState.translate('switchToPayment')
+                : this.appState.translate('switchToIncome');
             modeToggle.textContent = text;
         }
         const modeTitle = document.querySelector('[data-mode-title]');
         if (modeTitle) {
-            const lang = this.appState.currentLanguage;
-            const text = this.appState.isIncomeMode 
-                ? this.translate('incomeMode', lang)
-                : this.translate('paymentMode', lang);
+            const text = this.appState.isIncomeMode
+                ? this.appState.translate('incomeMode')
+                : this.appState.translate('paymentMode');
             modeTitle.textContent = text;
         }
         const modeRatio = document.querySelector('[data-mode-ratio]');
         if (modeRatio) {
-            const lang = this.appState.currentLanguage;
-            const text = `${this.translate('maxDBR', lang)}: ${this.appState.maxDBRRatio}%`;              
+            const text = `${this.appState.translate('maxDBR')}: ${this.appState.maxDBRRatio}%`;
             modeRatio.textContent = text;
         }
         const modeRate = document.querySelector('[data-mode-rate]');
         if (modeRate) {
-            const lang = this.appState.currentLanguage;
-            const text = `${this.translate('minRate', lang)}: ${this.appState.minInterestRate}%`;         
+            const text = `${this.appState.translate('minRate')}: ${this.appState.minInterestRate}%`;
             modeRate.textContent = text;
         }
     }
@@ -109,119 +260,11 @@
     updateLanguage(newLanguage) {
         // This method is called from main.js when language changes
         this.updateLanguageUI();
-        
-        // Update any existing modals
-        if (this.modalContainer && this.modalContainer.style.display !== 'none') {
-            this.updateModalLanguage();
+
+        const bodyId = document.body.id;
+        if (bodyId == 'max-loan-calculators') {
+            this.updateModeUI();
         }
-    }
-
-    setupEventListeners() {
-        // Centralized event listener setup
-        this.addCalculateListener();
-        this.addModeToggleListener();
-        this.addKeyboardShortcuts();
-        this.addFormValidationListeners();
-    }
-
-    addCalculateListener() {
-        document.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.triggerCalculation();
-            }
-        });
-
-        // Add click listeners for calculate buttons
-        document.addEventListener('click', (e) => {
-            if (e.target.hasAttribute('data-calculate') || e.target.classList.contains('calculate-btn')) {
-                e.preventDefault();
-                this.triggerCalculation();
-            }
-        });
-        const startDateInput = document.getElementById('startDate');       
-        
-       if (startDateInput) {
-           const today = new Date();
-           const dateString = today.toISOString().split('T')[0];
-           startDateInput.value = dateString;
-
-           
-            const tempDate = new Date(today);      
-            tempDate.setMonth(tempDate.getMonth() + 2);
-            const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), 6);
-            const endDateEl = document.getElementById('endDate');
-               if (endDateEl) {        
-                   const dateString2 = endDate.toISOString().split('T')[0];
-                   endDateEl.textContent = dateString2;
-               }
-           
-           // Add date validation
-           startDateInput.addEventListener('change', function() {
-               const startDateObj = new Date(this.value);              
-               const tempDate = new Date(startDateObj);
-               tempDate.setMonth(tempDate.getMonth() + 2);
-               const endDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), 5);
-               const endDateEl = document.getElementById('endDate');
-               if (endDateEl) {
-                   const locale = app.appState.currentLanguage === 'ar' ? 'ar-EG' : 'en-EG';
-                   endDateEl.textContent = endDate.toLocaleDateString(locale);
-               }
-          //     const selectedDate = new Date(this.value);
-          //     const today = new Date();
-          //     today.setHours(0, 0, 0, 0);
-               
-           //    if (selectedDate < today) {
-           //        alert(currentLanguage === 'ar' ? 'لا يمكن اختيار تاريخ في الماضي' : 'Cannot select a date in the past');
-           //        this.value = dateString;
-           //    }
-               });
-         }
-    }
-
-    addModeToggleListener() {       
-        document.addEventListener('click', (e) => {
-            if (e.target.hasAttribute('data-mode-toggle')) {
-                e.preventDefault();
-                this.appState.toggleMode();
-            }
-        });
-    }
-
-    addKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
-            // Ctrl+Enter for calculate
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                this.triggerCalculation();
-            }
-            
-            // Ctrl+M for mode toggle
-            if (e.ctrlKey && e.key === 'm') {
-                e.preventDefault();
-                this.appState.toggleMode();
-            }
-
-            // Escape to close modals
-            if (e.key === 'Escape') {
-                this.closeModal();
-            }
-        });
-    }
-
-    addFormValidationListeners() {
-        // Real-time form validation feedback
-        document.addEventListener('input', (e) => {
-            if (e.target.type === 'number') {
-                this.validateField(e.target);
-            }
-        });
-
-        document.addEventListener('blur', (e) => {
-            if (e.target.type === 'number') {
-                this.validateField(e.target);
-            }
-        });
     }
 
     validateField(field) {
@@ -258,12 +301,6 @@
                 this.showFieldMessage(field, this.getValidationMessage('max_value', { max }), 'error');
                 return false;
             }
-
-            // Show warning for edge cases
-          //  if (min !== undefined && value === min) {
-         //       field.classList.add('warning');
-         //       this.showFieldMessage(field, this.getValidationMessage('min_warning'), 'warning');
-        //    }
             else {
                 field.classList.add('valid');
             }
@@ -322,56 +359,12 @@
         if (messageElement) {
             messageElement.style.display = 'none';
         }
-    }
-
-    triggerCalculation() {
-        // Validate all inputs before calculation
-        const inputs = document.querySelectorAll('input[type="number"]');
-        let isValid = true;
-
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
-                isValid = false;
-            }
-        });
-
-        if (!isValid) {
-            alert(this.appState.currentLanguage === 'ar' 
-                    ? 'يرجى تصحيح الأخطاء قبل المتابعة'
-                    : 'Please correct the errors before proceeding'); 
-            return;
-        }
-
-        const bodyId = document.body.id;
-        const calculators = {
-            'first-month-interest': () => import('./calculators/first-month-interest-calculator.js'),
-            'loan-calculator': () => import('./calculators/loan-calculator.js'),
-            'max-loan-calculators': () => import('./calculators/max-loan-calculator.js'),
-            'smart-loan': () => import('./calculators/smart-loan-calculator.js')
-        };
-
-        const calculatorLoader = calculators[bodyId];
-        if (calculatorLoader) {
-            // Show loading indicator
-            this.showLoadingIndicator();
-            
-            calculatorLoader().then(module => {
-                this.hideLoadingIndicator();
-                module.calculate(this.appState);
-            }).catch(error => {
-                this.hideLoadingIndicator();
-                console.error('Calculator loading error:', error);
-                alert(this.appState.currentLanguage === 'ar' 
-                        ? 'حدث خطأ أثناء تحميل الحاسبة'
-                        : 'An error occurred while loading the calculator');               
-            });
-        }
-    }
+    }  
 
     handleCalculationResult(result) {
         // Handle calculation results - could display in modal or update UI
         if (result.error) {
-            alert(result.error);           
+            alert(result.error);
         } else {
             // Update results display
             this.updateResultsDisplay(result);
@@ -401,7 +394,7 @@
                 <p>${this.appState.currentLanguage === 'ar' ? 'جارٍ الحساب...' : 'Calculating...'}</p>
             </div>
         `;
-        
+
         const loadingContainer = document.createElement('div');
         loadingContainer.id = 'loading-overlay';
         loadingContainer.className = 'loading-overlay';
@@ -428,23 +421,5 @@
                 }
             });
         }
-    }
-
-    // Utility method to show toast notifications
-    showToast(message, type = 'info', duration = 3000) {
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        
-        document.body.appendChild(toast);
-        
-        // Trigger animation
-        setTimeout(() => toast.classList.add('show'), 10);
-        
-        // Auto remove
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, duration);
     }
 }

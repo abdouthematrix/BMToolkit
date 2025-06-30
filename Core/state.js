@@ -1,10 +1,15 @@
 ﻿export class AppState {
-    constructor() {
+    constructor(translater) {
+        this.translater = translater; 
         this.maxDBRRatio = 50;
         this.minInterestRate = 22.75;
         this.isIncomeMode = true;
         this.currentLanguage = "ar";
         this.isYears = true;
+    }
+
+    translate(key) {
+        return this.translater(key, this.currentLanguage);
     }
 
     updateLanguage(lang) {
@@ -15,6 +20,11 @@
     toggleMode() {
         this.isIncomeMode = !this.isIncomeMode;
         this.notifyObservers('modeChanged');
+    }
+
+    toggleTerm() {
+        this.isYears = !this.isYears;
+        this.notifyObservers('termChanged');
     }
 
     // Observer pattern for state changes

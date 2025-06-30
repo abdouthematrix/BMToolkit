@@ -1,7 +1,6 @@
 ﻿// calculators/first-month-interest-calculator.js
 import { BaseCalculator } from './base-calculator.js';
 import { FinancialCalculator } from '../financial-calculations.js';
-import { translate } from '../translations.js';
 
 export class FirstMonthInterestCalculator extends BaseCalculator {
     async calculate() {

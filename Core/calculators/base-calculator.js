@@ -1,9 +1,6 @@
-﻿import { InputValidator } from '../input-validator.js';
-
-export class BaseCalculator {
+﻿export class BaseCalculator {
     constructor(appState) {
         this.appState = appState;
-        this.validator = new InputValidator();
     }
 
     showLoading() {

@@ -1,7 +1,6 @@
 ﻿    // calculators/max-loan-calculator.js
 import { BaseCalculator } from './base-calculator.js';
 import { FinancialCalculator } from '../financial-calculations.js';
-import { translate } from '../translations.js';
 
 export class MaxLoanCalculator extends BaseCalculator {
     async calculate() {
@@ -69,7 +68,7 @@ export class MaxLoanCalculator extends BaseCalculator {
         const { annualRate, minTenor, maxTenor } = inputs;
         
         if (!annualRate || annualRate <= 0 || !minTenor || !maxTenor || minTenor < 1 || maxTenor < 1) {
-            this.showError(translate('errorInvalid', this.appState.currentLanguage));
+            this.showError(this.appState.translate('errorInvalid'));
             return false;
         }
 
@@ -89,13 +88,13 @@ export class MaxLoanCalculator extends BaseCalculator {
         if (this.appState.isIncomeMode) {
             const { monthlyIncome, maxDTI } = inputs;
             if (!monthlyIncome || monthlyIncome <= 0 || !maxDTI || maxDTI <= 0 || maxDTI > 1) {
-                this.showError(translate('errorInvalid', this.appState.currentLanguage));
+                this.showError(this.appState.translate('errorInvalid'));
                 return false;
             }
         } else {
             const { fixedPayment } = inputs;
             if (!fixedPayment || fixedPayment <= 0) {
-                this.showError(translate('errorInvalid', this.appState.currentLanguage));
+                this.showError(this.appState.translate('errorInvalid'));
                 return false;
             }
         }
@@ -152,7 +151,7 @@ export class MaxLoanCalculator extends BaseCalculator {
     }
 
     displayResults(results) {
-        const t = translate('', this.appState.currentLanguage);
+        const t = this.appState.translate('loan');
         const resultsGrid = document.getElementById('resultsGrid');
         
         const html = this.generateResultsTable(results, t);
@@ -168,12 +167,12 @@ export class MaxLoanCalculator extends BaseCalculator {
                 <table id="resultsTable">
                     <thead>
                         <tr>
-                            <th>${translations.loanTerm}</th>
-                            <th>${translations.maxLoanAmount}</th>
-                            <th>${translations.monthlyPayment}</th>
-                            <th>${translations.totalPayment}</th>
-                            <th>${translations.totalInterest}</th>
-                            <th>${translations.flatRate}</th>
+                        <th data-en="Loan Term" data-ar="مدة القرض">${translations.loanTerm}</th>
+                         <th data-en="Max Loan Amount" data-ar="الحد الأقصى لمبلغ القرض">${translations.maxLoanAmount}</th>
+                        <th data-en="Monthly Payment" data-ar="القسط الشهري">${translations.monthlyPayment}</th>
+                        <th data-en="Total Payment" data-ar="إجمالي المدفوعات">${translations.totalPayment}</th>
+                        <th data-en="Total Interest" data-ar="إجمالي الفائدة">${translations.totalInterest}</th>
+                        <th data-en="Flat Rate" data-ar="المعدل الثابت">${translations.flatRate}</th> 
                         </tr>
                     </thead>
                     <tbody>

@@ -14,15 +14,29 @@
         <div class="header">
             <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
             <div class="language-toggle">
-                <span class="lang-en">EN</span>
-                <div class="lang-switch" id="langSwitch" data-language-toggle></div>
-                <span class="lang-ar">عربي</span>
+                <span>EN</span>
+                <div class="lang-switch" data-language-toggle></div>
+                <span>عربي</span>
             </div>
             <h1 data-en="💰 Smart Loan Investment Calculator" data-ar="💰 حاسبة الاستثمار الذكي بالقروض">💰 Smart Loan Investment Calculator</h1>
             <p data-en="Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns" data-ar="حسّن استراتيجية استثمارك: احسب مبلغ القرض المثالي لتعظيم عوائد الشهادات">Optimize your investment strategy: Calculate the perfect loan amount to maximize certificate returns</p>
         </div>
 
         <div class="content">
+            <!-- Error Display -->
+            <div class="error-frame" id="errorFrame" style="display: none;">
+                <div class="error-content">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-text">
+                        <h3 data-en="Error" data-ar="خطأ">Error</h3>
+                        <p id="errorMessage"></p>
+                    </div>
+                    <button class="error-close" onclick="this.parentElement.parentElement.style.display='none'">
+                        <span data-en="×" data-ar="×">×</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Input Section -->
             <div class="input-section">
                 <div class="input-grid">
                     <div class="input-group">
@@ -37,15 +51,15 @@
 
                     <div class="input-group">
                         <label for="interestRate" data-en="Loan Annual Interest (%)" data-ar="الفائدة السنوية للقرض (%)">Loan Annual Interest (%)</label>
-                        <input type="number" id="interestRate" value="22.75" min="0" step="0.1">                        
+                        <input type="number" id="interestRate" value="22.75" min="0" step="0.1">
                     </div>
 
                     <div class="input-group">
-                        <label for="loanTerm" data-en="Repayment Period" data-ar="فترة السداد">Repayment Period</label>
+                        <label for="loanTerm" data-en="Payment Period" data-ar="فترة السداد">Payment Period</label>
                         <input type="number" id="loanTerm" value="3" min="1" step="1">
                         <div class="toggle-container">
                             <span data-en="Months" data-ar="أشهر">Months</span>
-                            <div class="toggle-switch active" id="termToggle"></div>
+                            <div class="toggle-switch active" data-tenor-toggle></div>
                             <span data-en="Years" data-ar="سنوات">Years</span>
                         </div>
                     </div>
@@ -56,18 +70,22 @@
                 </button>
             </div>
 
+            <!-- loading Section -->
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
                 <p data-en="Analyzing your investment strategy, please wait..." data-ar="جاري تحليل استراتيجية الاستثمار، يرجى الانتظار...">Analyzing your investment strategy, please wait...</p>
             </div>
 
+            <!-- Results Section -->
             <div class="results-section" id="results">
                 <div class="results-header">
                     <h2 data-en="📈 Investment Analysis Results" data-ar="📈 نتائج تحليل الاستثمار">📈 Investment Analysis Results</h2>
                     <p data-en="Smart analysis of loan amounts from 0% to 90% of your capital" data-ar="تحليل ذكي لمبالغ القروض من 0% إلى 90% من رأس مالك">Smart analysis of loan amounts from 0% to 90% of your capital</p>
                 </div>
 
-                <div class="summary-cards" id="summaryCards"></div>
+                <div class="summary-cards" id="summaryCards">
+
+                </div>
 
                 <div class="table-container">
                     <table id="resultsTable">
@@ -87,6 +105,6 @@
             </div>
         </div>
     </div>
-    <script type="module"  src="../Core/main.js"></script>
+    <script type="module" src="../Core/main.js"></script>
 </body>
 </html>

@@ -1,7 +1,6 @@
 ﻿// calculators/smart-loan-calculator.js
 import { BaseCalculator } from './base-calculator.js';
 import { FinancialCalculator } from '../financial-calculations.js';
-import { translate } from '../translations.js';
 
 export class SmartLoanCalculator extends BaseCalculator {
     async calculate() {
@@ -61,14 +60,29 @@ export class SmartLoanCalculator extends BaseCalculator {
             return false;
         }
 
-        if (loanRate <= cdRate) {
+        if (loanRate < cdRate) {
             const message = this.appState.currentLanguage === 'ar'
-                ? 'معدل القرض يجب أن يكون أعلى من معدل الوديعة لتحقيق ربح'
-                : 'Loan rate should be higher than CD rate to make profit';
+                ? 'معدل القرض يجب أن يكون أعلى من معدل الوديعة '
+                : 'Loan rate should be higher than CD rate';
             this.showError(message);
             return false;
         }
-
+        if (loanRate < cdRate) {
+            const message = this.appState.currentLanguage === 'ar'
+                ? 'معدل القرض يجب أن يكون أعلى من معدل الوديعة '
+                : 'Loan rate should be higher than CD rate';
+            this.showError(message);
+            return false;
+        }
+        if (!this.appState.isYears) {
+            if (loanTerm < 6) {
+                const message = this.appState.currentLanguage === 'ar'
+                    ? 'مدة القرض لابد ان تكون اكثر من 6 اشهر'
+                    : 'Loan term should be higher than 6 Months';
+                this.showError(message);
+                return false;
+            }
+        }
         return true;
     }
 
@@ -85,10 +99,11 @@ export class SmartLoanCalculator extends BaseCalculator {
         let zeroLoanTotal = 0;
 
         // Optimized calculation with adaptive step size
-        const baseStepSize = Math.max(1000, Math.floor(maxLoan / 100));
-        let stepSize = baseStepSize;
-        
-        for (let loanAmount = 0; loanAmount <= maxLoan; loanAmount += stepSize) {
+        const baseStepSize = Math.max(1000, Math.floor(principal / 200));
+        let stepSize = baseStepSize;        
+        const steps = Math.floor(maxLoan / stepSize);
+        for (let i = 0; i <= steps; i++) {
+            const loanAmount = i * stepSize;
             // Monthly CD income from principal
             const monthlyCDIncome = principal * cdMonthlyRate;
 
@@ -107,18 +122,12 @@ export class SmartLoanCalculator extends BaseCalculator {
             // Net monthly profit
             const netMonthlyProfit = totalMonthlyIncome - monthlyPayment;
 
-            // Adaptive optimization: if we're losing money, reduce step size for precision
-            if (loanAmount > 0 && netMonthlyProfit < 0 && stepSize > 100) {
-                stepSize = 100;
-                loanAmount -= baseStepSize - 100; // Backtrack with smaller steps
+            // Stop calculating if we start losing money monthly
+            if (loanAmount > 0 && netMonthlyProfit < 0 && i != steps) {
+                i = steps - 1;
                 continue;
             }
-
-            // Stop if consistently losing money
-            if (loanAmount > maxLoan * 0.5 && netMonthlyProfit < 0) {
-                break;
-            }
-
+                       
             // Total over the loan term
             const totalCDIncome = totalMonthlyIncome * loanTerm;
             const totalLoanPayments = monthlyPayment * loanTerm;
@@ -130,6 +139,7 @@ export class SmartLoanCalculator extends BaseCalculator {
             // Store zero loan scenario for comparison
             if (loanAmount === 0) {
                 zeroLoanTotal = grandTotal;
+                i += Math.floor((grandTotal - principal) / stepSize) - 1;
             }
 
             results.push({
@@ -163,7 +173,7 @@ export class SmartLoanCalculator extends BaseCalculator {
             principal,
             loanTerm
         };
-    }
+    }       
 
     displayResults(data) {
         const { results, bestResult, zeroLoanTotal, principal, loanTerm } = data;
@@ -186,24 +196,24 @@ export class SmartLoanCalculator extends BaseCalculator {
             const totalAdvantageOverZero = bestResult.grandTotal - principal;
             const percentageGain = (totalAdvantageOverZero / principal) * 100 / (loanTerm / 12);
 
-            const t = translate('summaryCards', this.appState.currentLanguage);
+            const t = this.appState.translate('summaryCards');
 
             summaryCards.innerHTML = `
                 <div class="summary-card">
-                    <h3>${t.optimalLoan}</h3>
+                    <h3 data-en="Recommended Loan Amount" data-ar="المبلغ الأمثل للاقتراض">${t.optimalLoan}</h3>
                     <div class="value">${this.formatCurrency(bestResult.loanAmount)}</div>
                 </div>
                 <div class="summary-card">
-                    <h3>${t.monthlyProfit}</h3>
+                    <h3 data-en="Monthly Net Profit" data-ar="صافي الربح الشهري">${t.monthlyProfit}</h3>
                     <div class="value">${this.formatCurrency(bestResult.netMonthlyProfit)}</div>
                 </div>
                 <div class="summary-card">
-                    <h3>${t.maxTotal}</h3>
+                    <h3 data-en="Maximum Total Return" data-ar="أقصى عائد إجمالي">${t.maxTotal}</h3>
                     <div class="value">${this.formatCurrency(bestResult.grandTotal)}</div>
                     <div style="font-size: 0.8rem; color: #6b7280; margin-top: 5px;">+${percentageGain.toFixed(2)}${t.gainSuffix}</div>
                 </div>
                 <div class="summary-card">
-                    <h3>${t.advantage}</h3>
+                    <h3 ata-en="Strategy Advantage" data-ar="الفائدة من الاستراتيجية">${t.advantage}</h3>
                     <div class="value" style="color: #059669">${this.formatCurrency(advantageOverZero)}</div>
                 </div>
             `;

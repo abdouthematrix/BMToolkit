@@ -13,9 +13,10 @@
     <div class="container">
         <div class="header">
             <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <button data-en="Share 🔗" data-ar="مشاركة 🔗" class="share-button" data-share-calculator></button>
             <div class="language-toggle">
                 <span>EN</span>
-                    <div class="lang-switch" data-language-toggle></div>
+                <div class="lang-switch" data-language-toggle></div>
                 <span>عربي</span>
             </div>
             <h1 data-en="💰 Loan Calculator" data-ar="💰 حاسبة القرض">💰 Loan Calculator</h1>
@@ -23,6 +24,15 @@
         </div>
 
         <div class="content">
+            <!-- Share Success Notification -->
+            <div class="notification" id="shareNotification" style="display: none;">
+                <div class="notification-content success">
+                    <div class="notification-icon">✅</div>
+                    <div class="notification-text">
+                        <span data-en="Link copied to clipboard!" data-ar="تم نسخ الرابط!">Link copied to clipboard!</span>
+                    </div>
+                </div>
+            </div>
             <!-- Error Display -->
             <div class="error-frame" id="errorFrame" style="display: none;">
                 <div class="error-content">
@@ -56,7 +66,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="input-group">
                         <label for="minTenor" data-en="Minimum Loan Term" data-ar="الحد الأدنى لمدة القرض">Minimum Loan Term</label>
                         <input type="number" id="minTenor" value="1" min="1" step="1">
@@ -90,6 +99,6 @@
             </div>
         </div>
     </div>
-    <script type="module"  src="../Core/main.js"></script>
+    <script type="module" src="../Core/main.js"></script>
 </body>
 </html>

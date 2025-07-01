@@ -29,7 +29,7 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
             principal: this.getNumericValue('principal'),
             annualRate: this.getNumericValue('interestRate'),
             startDate: this.getDateValue('startDate'),
-            tenor: this.getNumericValue('tenor')
+            loanTerm: this.getNumericValue('loanTerm')
         };
     }
 
@@ -44,7 +44,7 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
     }
 
     validateInputs(inputs) {
-        const { principal, annualRate, startDate, tenor } = inputs;
+        const { principal, annualRate, startDate, loanTerm } = inputs;
         
         if (!principal || principal <= 0 || !annualRate || annualRate <= 0 || !startDate) {
             const message = this.appState.currentLanguage === 'ar' 
@@ -66,7 +66,7 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
     }
 
     calculateFirstMonthInterest(inputs) {
-        const { principal, annualRate, startDate, tenor } = inputs;
+        const { principal, annualRate, startDate, loanTerm } = inputs;
         
         const startDateObj = new Date(startDate);
         const tempDate = new Date(startDateObj);
@@ -83,8 +83,8 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
         let monthlyPayment = 0;
         let totalFirstMonthlyPayment = 0;
         
-        if (tenor > 0) {
-            const numberOfPayments = this.appState.isYears ? tenor * 12 : tenor;
+        if (loanTerm > 0) {
+            const numberOfPayments = this.appState.isYears ? loanTerm * 12 : loanTerm;
             const loanMonthlyRate = annualRate / 100 / 12;
             monthlyPayment = FinancialCalculator.PMT(loanMonthlyRate, numberOfPayments, principal);
             totalFirstMonthlyPayment = firstMonthInterest + monthlyPayment;
@@ -97,13 +97,13 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
             calculationDays,
             monthlyPayment,
             totalFirstMonthlyPayment,
-            tenor
+            loanTerm
         };
     }
 
     displayResults(results) {
         const { endDate, firstMonthInterest, daysBetween, calculationDays, 
-                monthlyPayment, totalFirstMonthlyPayment, tenor } = results;
+            monthlyPayment, totalFirstMonthlyPayment, loanTerm } = results;
 
         // Update UI elements
         const endDateEl = document.getElementById('endDate');
@@ -128,7 +128,7 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
         const monthlyPaymentEl = document.getElementById('monthlyPayment');
         const totalFirstMonthlyPaymentEl = document.getElementById('totalFirstMonthlyPayment');
         
-        if (tenor > 0 && monthlyPaymentEl && totalFirstMonthlyPaymentEl) {
+        if (loanTerm > 0 && monthlyPaymentEl && totalFirstMonthlyPaymentEl) {
             monthlyPaymentEl.style.display = '';
             const monthlyValueEl = monthlyPaymentEl.querySelector('.result-value');
             if (monthlyValueEl) monthlyValueEl.textContent = this.formatCurrency(monthlyPayment);

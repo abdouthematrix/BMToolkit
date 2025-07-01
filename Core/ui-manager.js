@@ -1,6 +1,7 @@
 ﻿export class UIManager {
-    constructor(appState) {
+    constructor(appState, urlParamsManager) {
         this.appState = appState;
+        this.urlParamsManager = urlParamsManager;
         this.setupEventListeners();
         // Subscribe to state changes
         appState.subscribe(this.handleStateChange.bind(this));
@@ -48,21 +49,24 @@
         });
     }   
 
-    addTermToggleListener() {
+    addTermToggleListener() {       
         document.addEventListener('click', (e) => {
-            if (e.target.hasAttribute('data-tenor-toggle')) {
+            if (e.target.hasAttribute('data-tenor-toggle') ||
+                e.target.closest('[data-tenor-toggle]')) {
                 e.preventDefault();
+
+                // Toggle the state
                 this.appState.toggleTerm();
-                this.updateTenorUI(e.target);
+
+                // Update UI
+                this.urlParamsManager.updateToggleUI(this.appState.isYears);
+
+                // Update URL
+                this.urlParamsManager.updateURL();
             }
-        });         
+        });
     }
-    updateTenorUI(toggleElement) {
-        // Toggle the active state
-        toggleElement.classList.toggle('active');
-        this.isYears = toggleElement.classList.contains('active');
-    }
-   
+
     addModeToggleListener() {
         document.addEventListener('click', (e) => {
             if (e.target.hasAttribute('data-mode-toggle')) {
@@ -71,7 +75,7 @@
             }
         });
         const bodyId = document.body.id;
-        if (bodyId == 'max-loan-calculators') {
+        if (bodyId == 'first-month-interest') {
             const startDateInput = document.getElementById('startDate');
             if (startDateInput) {
                 const today = new Date();

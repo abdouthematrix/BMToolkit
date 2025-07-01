@@ -2,11 +2,13 @@
 import { AppState } from './state.js';
 import { UIManager } from './ui-manager.js';
 import { translate } from './translations.js';
+import { URLParamsManager } from './url-params.js';
 
 class BMToolkitApp {
     constructor() {
         this.appState = new AppState(translate);
-        this.uiManager = new UIManager(this.appState);
+        this.urlParamsManager = new URLParamsManager(this.appState); 
+        this.uiManager = new UIManager(this.appState, this.urlParamsManager);
         this.version = '1.0';
         this.author = 'AbdouMatrix ®';
     }
@@ -14,6 +16,10 @@ class BMToolkitApp {
     async initialize() {
         // Set initial language
         this.setInitialLanguage();
+
+        // Setup URL parameters
+        this.setupURLParams();
+
         // Setup language toggle handler
         this.setupLanguageToggle();
 
@@ -30,7 +36,22 @@ class BMToolkitApp {
         this.focusFirstInput();
 
         this.setupPresetRateButtons();
+
+        this.setupShareButton();
     }
+
+    // Add this new method
+    setupURLParams() {
+        // Load parameters from URL on page load
+        this.urlParamsManager.loadFromURL();
+
+        // Setup event listeners for real-time URL updates
+        this.urlParamsManager.setupEventListeners();
+    }
+    // Add this method to get shareable URL
+    getShareableURL() {
+        return this.urlParamsManager.getShareableURL();
+    }   
 
     setInitialLanguage() {
         // Check for saved language preference or default to English
@@ -38,6 +59,7 @@ class BMToolkitApp {
         this.appState.updateLanguage(savedLang);
         this.updateHTMLAttributes(savedLang);
     }
+
     setupLanguageToggle() {
         // Setup language toggle event listeners
         document.addEventListener('click', (e) => {
@@ -266,6 +288,132 @@ class BMToolkitApp {
             : 'An unexpected error occurred';
         alert(message);
 
+    }
+
+    setupShareButton() {
+        // Setup share button event listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.hasAttribute('data-share-calculator') ||
+                e.target.closest('[data-share-calculator]')) {
+                e.preventDefault();
+                this.shareCalculator();
+            }
+        });
+    }
+
+    async shareCalculator() {
+        try {
+            // Get the shareable URL with current form values
+            const shareableURL = this.urlParamsManager.getShareableURL();
+
+            // Prepare share data
+            const lang = this.appState.currentLanguage;
+            const shareData = {
+                title: lang === 'ar' ? 'حاسبة القرض - BMToolkit' : 'Loan Calculator - BMToolkit',
+                text: lang === 'ar'
+                    ? 'احسب أقساط القرض والتكاليف الإجمالية باستخدام هذه الحاسبة المتقدمة'
+                    : 'Calculate your loan payments and total costs with this advanced calculator',
+                url: shareableURL
+            };
+
+            // Try to use Web Share API if available (mobile devices)
+            if (navigator.share && this.isMobileDevice()) {
+                await navigator.share(shareData);
+                this.showShareSuccess('shared');
+            } else {
+                // Fallback to clipboard
+                await this.copyToClipboard(shareableURL);
+                this.showShareSuccess('copied');
+            }
+        } catch (error) {
+            console.error('Share failed:', error);
+            this.handleShareError(error);
+        }
+    }
+
+    async copyToClipboard(text) {
+        try {
+            // Try modern clipboard API first
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.opacity = '0';
+                textArea.style.pointerEvents = 'none';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        } catch (error) {
+            throw new Error('Failed to copy to clipboard');
+        }
+    }
+
+    showShareSuccess(type = 'copied') {
+        const notification = document.getElementById('shareNotification');
+        if (!notification) return;
+
+        const lang = this.appState.currentLanguage;
+        const textElement = notification.querySelector('.notification-text span');
+
+        if (textElement) {
+            const message = type === 'shared'
+                ? (lang === 'ar' ? 'تم المشاركة بنجاح!' : 'Shared successfully!')
+                : (lang === 'ar' ? 'تم نسخ الرابط!' : 'Link copied to clipboard!');
+
+            textElement.textContent = message;
+        }
+
+        // Show notification
+        notification.style.display = 'block';
+        notification.style.animation = 'slideInRight 0.3s ease';
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 300);
+        }, 3000);
+    }
+
+    handleShareError(error) {
+        console.error('Share error:', error);
+        const lang = this.appState.currentLanguage;
+        const message = lang === 'ar'
+            ? 'فشل في المشاركة. يرجى المحاولة مرة أخرى.'
+            : 'Failed to share. Please try again.';
+
+        this.showError(message);
+    }
+
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+    }
+
+    // Enhanced error display method
+    showError(message) {
+        const errorFrame = document.getElementById('errorFrame');
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (errorFrame && errorMessage) {
+            errorMessage.textContent = message;
+            errorFrame.style.display = 'block';
+
+            // Auto-hide error after 5 seconds
+            setTimeout(() => {
+                errorFrame.style.display = 'none';
+            }, 5000);
+        } else {
+            // Fallback to alert
+            alert(message);
+        }
     }
 }
 

@@ -24,12 +24,13 @@ export class LoanCalculator extends BaseCalculator {
 
             // Display results
             this.displayResults(results);
+                      
             
         } catch (error) {
             this.handleError(error);
         }
     }
-
+   
     getInputs() {
         return {
             principal: this.getNumericValue('principal'),

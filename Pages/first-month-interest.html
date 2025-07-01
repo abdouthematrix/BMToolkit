@@ -12,10 +12,11 @@
 <body id="first-month-interest">
     <div class="container">
         <div class="header">
-            <a  data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <a data-en="Back to Home" data-ar="العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
+            <button data-en="Share 🔗" data-ar="مشاركة 🔗" class="share-button" data-share-calculator></button>
             <div class="language-toggle">
                 <span>EN</span>
-                    <div class="lang-switch" data-language-toggle></div>
+                <div class="lang-switch" data-language-toggle></div>
                 <span>عربي</span>
             </div>
             <h1 data-en="💰 First Month Interest" data-ar="💰 فائدة الشهر الأول">💰 First Month Interest</h1>
@@ -23,6 +24,15 @@
         </div>
 
         <div class="content">
+            <!-- Share Success Notification -->
+            <div class="notification" id="shareNotification" style="display: none;">
+                <div class="notification-content success">
+                    <div class="notification-icon">✅</div>
+                    <div class="notification-text">
+                        <span data-en="Link copied to clipboard!" data-ar="تم نسخ الرابط!">Link copied to clipboard!</span>
+                    </div>
+                </div>
+            </div>
             <!-- Error Display -->
             <div class="error-frame" id="errorFrame" style="display: none;">
                 <div class="error-content">
@@ -71,8 +81,8 @@
 
                     <!-- Tenor -->
                     <div class="input-group">
-                        <label for="tenor" data-en="Tenor" data-ar="المدة">Tenor</label>
-                        <input type="number" id="tenor" value="1" min="1">
+                        <label for="loanTerm" data-en="Loan Term" data-ar="المدة">Loan Term</label>
+                        <input type="number" id="loanTerm" value="1" min="1">
                         <div class="toggle-container">
                             <span data-en="Months" data-ar="أشهر">Months</span>
                             <div class="toggle-switch active" data-tenor-toggle></div>

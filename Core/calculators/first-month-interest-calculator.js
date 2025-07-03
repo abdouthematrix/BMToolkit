@@ -46,7 +46,7 @@ export class FirstMonthInterestCalculator extends BaseCalculator {
     validateInputs(inputs) {
         const { principal, annualRate, startDate, loanTerm } = inputs;
         
-        if (!principal || principal <= 0 || !annualRate || annualRate <= 0 || !startDate) {
+        if (!principal || principal <= 0 || !annualRate || annualRate <= 0 || !startDate || !loanTerm || loanTerm <= 0) {
             const message = this.appState.currentLanguage === 'ar' 
                 ? 'يرجى إدخال جميع القيم بشكل صحيح وأن تكون أكبر من الصفر'
                 : 'Please enter all values correctly and ensure they are greater than zero';

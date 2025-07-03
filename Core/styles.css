@@ -137,26 +137,33 @@ body {
 
 .back-button {
     position: absolute;
-    top: 80px;
-    right: 20px;
+    top: 70px; /* Moved down to avoid overlap */
+    right: 15px;
     padding: 10px 16px;
-    background-color: #3498db;
+    background: rgba(255, 255, 255, 0.15);
     color: white;
-    border: none;
-    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
     text-decoration: none;
     font-size: 14px;
-    z-index: 1000;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
 }
+
+    .back-button:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
 
 [dir="rtl"] .back-button {
     right: auto;
-    left: 20px;
+    left: 15px;
 }
 
 .error-frame {
@@ -498,6 +505,7 @@ tr:hover {
 @media (max-width: 768px) {
     .header h1 {
         font-size: 2rem;
+        margin-top: 65px; /* Add some top margin for mobile */
     }
 
     .content {
@@ -514,36 +522,44 @@ tr:hover {
         font-size: 0.8rem;
     }
 
-    .language-toggle {
-        position: relative;
-        top: 0;
-        right: 0;
-        margin-bottom: 15px;
+    .share-button {
+        padding: 6px 12px;
+        font-size: 13px;
+        top: 15px;
     }
-
+    .language-toggle {
+        top: 15px;
+        padding: 6px 10px;
+    }   
+    .back-button {
+        top: 60px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
     [dir="rtl"] .language-toggle {
         left: 0;
     }
 }
 
-
-
 .share-button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 16px;
-        border-radius: 8px;
-        text-decoration: none;
-        border: none;
-        font-family: inherit;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        white-space: nowrap;  
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
 }
 [dir="rtl"] .share-button {
     right: 20px;
@@ -614,10 +630,6 @@ tr:hover {
 }
 
 /* RTL Support */
-[dir="rtl"] .header-actions {
-    flex-direction: row-reverse;
-}
-
 [dir="rtl"] .notification {
     right: auto;
     left: 20px;
@@ -637,25 +649,11 @@ tr:hover {
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
-    .header-actions {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-        .header-actions .back-button,
-        .header-actions .share-button {
+@media (max-width: 768px) { 
+        .share-button {
             padding: 6px 12px;
             font-size: 13px;
         }
-
-    .button-text {
-        display: none;
-    }
-
-    .button-icon {
-        font-size: 18px;
-    }
 
     .notification {
         top: 10px;

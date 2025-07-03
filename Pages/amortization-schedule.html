@@ -6,10 +6,10 @@
     <meta name="description" content="BMToolkit - Professional Loan Calculator">
     <meta name="theme-color" content="#ffffff">
     <link rel="icon" type="image/x-icon" href="../appicon.svg">       
-    <title>First Month Interest - BMToolkit</title>
+    <title>Amortization Schedule - BMToolkit</title>
     <link rel="stylesheet" href="../Core/styles.css">
 </head>
-<body id="first-month-interest">
+<body id="amortization-schedule">
     <div class="container">
         <div class="header">
             <a data-en="← Back to Home" data-ar="→ العودة الي الرئيسية" href="../index.html" class="back-button">Back to Home</a>
@@ -19,8 +19,8 @@
                 <div class="lang-switch" data-language-toggle></div>
                 <span>عربي</span>
             </div>
-            <h1 data-en="💰 First Month Interest" data-ar="💰 فائدة الشهر الأول">💰 First Month Interest</h1>
-            <p data-en="Calculate Initial  Interest" data-ar="احسب فائدة فترة السماح">Calculate Initial  Interest</p>
+            <h1 data-en="📊 Amortization Schedule" data-ar="📊 جدول الاستهلاك">📊 Amortization Schedule</h1>
+            <p data-en="Generate detailed payment schedule with stamp duty" data-ar="إنشاء جدول دفع مفصل مع الدمغة النسبية">Generate detailed payment schedule with stamp duty</p>
         </div>
 
         <div class="content">
@@ -79,6 +79,12 @@
                         <div id="endDate" class="readonly-field"></div>
                     </div>
 
+                    <!-- Stamp Duty Rate -->
+                    <div class="input-group">
+                        <label for="stampDutyRate" data-en="Stamp Duty Rate (%)/ 1000" data-ar="معدل الدمغة النسبية (%) / 1000">Stamp Duty Rate (%) / 1000</label>
+                        <input type="number" id="stampDutyRate" value="0.5" min="0" step="0.1">
+                    </div>
+
                     <!-- Tenor -->
                     <div class="input-group">
                         <label for="loanTerm" data-en="Loan Term" data-ar="المدة">Loan Term</label>
@@ -101,45 +107,32 @@
                 <p data-en="Calculating, please wait..." data-ar="جاري الحساب، يرجى الانتظار...">Calculating, please wait...</p>
             </div>
 
-            <div class="results-section" id="results" style="display:none;">
+            <!-- Results Section -->
+            <div class="results-section" id="results">
                 <div class="results-header">
-                    <h2 data-en="📊 Results" data-ar="📊 النتائج">📊 Results</h2>
+                   <h2 data-en="📋 Amortization Schedule" data-ar="📋 جدول الاستهلاك">📋 Amortization Schedule</h2>
                 </div>
 
-                <div class="results-grid">
-                    <div class="result-card" id="totalFirstMonthlyPayment" style="display:none;">
-                        <h3 data-en="First Installment Amount" data-ar="قسط الشهر الاول">First Installment Amount</h3>
-                        <div class="result-value"></div>
-                    </div>
+                <div class="summary-cards" id="summaryCards">
+                </div>
 
-                    <div class="result-card" id="firstMonthInterest">
-                        <h3 data-en="Initial Interest" data-ar="فائدة فترة السماح">Initial Interest</h3>
-                        <div class="result-value"></div>
-                    </div>
-
-                    <div class="result-card" id="monthlyPayment" style="display:none;">
-                        <h3 data-en="Monthly Payment" data-ar="القسط الشهري">Monthly Payment</h3>
-                        <div class="result-value"></div>
-                    </div>
-
-                    <div class="calculation-details">
-                        <div class="detail-row">
-                            <span data-en="Days Between Dates" data-ar="الأيام بين التواريخ">Days Between Dates:</span>
-                            <span id="daysBetween"></span>
-                        </div>
-                        <div class="detail-row">
-                            <span data-en="Calculation Days" data-ar="أيام الحساب">Calculation Days:</span>
-                            <span id="calculationDays"></span>
-                        </div>
-                    </div>
-
-                    <div class="formula-section">
-                        <h3 data-en="Formula" data-ar="المعادلة">Formula</h3>
-                        <div class="formula-box" data-en="Principal × (Annual Interest Rate / 365) × Days Between Disbursement and First Installment"
-                             data-ar="مبلغ القرض × (معدل الفائدة السنوي / 365) × عدد الأيام بين تاريخ صرف القرض وتاريخ أول قسط">
-                            Principal × (Annual Interest Rate / 365) × Days Between Disbursement and First Installment
-                        </div>
-                    </div>
+                <div class="table-container">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th data-en="Payment #" data-ar="رقم القسط">Payment #</th>
+                                <th data-en="Payment Date" data-ar="تاريخ القسط">Payment Date</th>
+                                <th data-en="Beginning Balance" data-ar="الرصيد الابتدائي">Beginning Balance</th>
+                                <th data-en="Monthly Payment" data-ar="إجمالي القسط">Monthly Payment</th>
+                                <th data-en="Interest" data-ar="الفائدة">Interest</th>
+                                <th data-en="Principal" data-ar="الاصل">Principal</th>
+                                <th data-en="Remaining Balance" data-ar="الرصيد المتبقي">Remaining Balance</th>
+                                <th data-en="Stamp Duty Amount" data-ar="مبلغ الدمغة النسبية">Stamp Duty Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

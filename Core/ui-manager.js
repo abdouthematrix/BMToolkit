@@ -75,7 +75,7 @@
             }
         });
         const bodyId = document.body.id;
-        if (bodyId == 'first-month-interest') {
+        if (bodyId == 'first-month-interest' || bodyId == 'amortization-schedule') {
             const startDateInput = document.getElementById('startDate');
             if (startDateInput) {
                 const today = new Date();
@@ -165,6 +165,7 @@
         const bodyId = document.body.id;
         const calculators = {
             'first-month-interest': () => import('./calculators/first-month-interest-calculator.js'),
+            'amortization-schedule': () => import('./calculators/amortization-schedule-calculator.js'),
             'loan-calculator': () => import('./calculators/loan-calculator.js'),
             'max-loan-calculators': () => import('./calculators/max-loan-calculator.js'),
             'smart-loan': () => import('./calculators/smart-loan-calculator.js')

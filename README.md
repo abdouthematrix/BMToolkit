@@ -10,7 +10,7 @@ Designed for flexibility and financial clarity.
 - 🌐 **Bilingual Support**: English and Arabic
 - ⚙️ **App Settings Page** with configurable values:
   - Max DTI Ratio (e.g., 50%)
-  - Min Interest Rate (e.g., 22.75%)
+  - Min Interest Rate (e.g., 22.5%)
   - Unsecured Loan Interest Rates:
     - Private Sector: 24%
     - Digital: 24.5%

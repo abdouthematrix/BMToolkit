@@ -2,7 +2,7 @@
     constructor(translater) {
         this.translater = translater; 
         this.maxDBRRatio = 50;
-        this.minInterestRate = 22.75;
+        this.minInterestRate = 22.5;
         this.isIncomeMode = true;
         this.currentLanguage = "ar";
         this.isYears = true;

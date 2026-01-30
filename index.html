@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMToolkit - Bank Products Calculator</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="BMToolkit - User-friendly financial calculators for bank loans and investments. Compare secured and unsecured loans, calculate returns, and make informed decisions.">
+    <meta name="keywords" content="loan calculator, investment calculator, bank products, secured loans, unsecured loans, financial tools">
+    <meta name="author" content="AbdouMatrix">
+    <link rel="canonical" href="https://abdouthematrix.github.io/BMToolkit/">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English, Arabic">
+
+    <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://abdouthematrix.github.io/BMToolkit/">
+    <meta property="og:title" content="BMToolkit - Bank Products Calculator">
+    <meta property="og:description" content="BMToolkit - User-friendly financial calculators for bank loans and investments. Compare secured and unsecured loans, calculate returns, and make informed decisions.">
+    <meta property="og:image" content="https://abdouthematrix.github.io/BMToolkit/icons/icon-512x512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:site_name" content="BMToolkit">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:locale:alternate" content="ar_EG">
+
+    <!-- PWA Support -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="BMToolkit">
+
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180x180.png">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/rtl.css">
+
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="container">
+            <div class="header-content">
+                <!-- Logo/Brand -->
+                <div class="brand">
+                    <a href="#home" class="brand-logo">
+                        <i class="fas fa-calculator"></i>
+                        <span class="brand-text" data-i18n="app-name">BMToolkit</span>
+                    </a>
+                </div>
+
+                <!-- Main Navigation -->
+                <nav class="main-nav" id="main-nav">
+                    <a href="#home" data-route="home" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        <span data-i18n="nav-home">Home</span>
+                    </a>
+                    <a href="#secured-loans" data-route="secured-loans" class="nav-link">
+                        <i class="fas fa-shield-alt"></i>
+                        <span data-i18n="nav-secured">Secured Loans</span>
+                    </a>
+                    <a href="#unsecured-loans" data-route="unsecured-loans" class="nav-link">
+                        <i class="fas fa-handshake"></i>
+                        <span data-i18n="nav-unsecured">Unsecured Loans</span>
+                    </a>
+                    <a href="#admin" data-route="admin" class="nav-link admin-only" style="display: none;">
+                        <i class="fas fa-cog"></i>
+                        <span data-i18n="nav-admin">Admin</span>
+                    </a>
+                </nav>
+
+                <!-- Header Actions -->
+                <div class="header-actions">
+                    <!-- Language Toggle -->
+                    <button id="lang-toggle" class="btn-icon" aria-label="Toggle language" title="Toggle language">
+                        <i class="fas fa-language"></i>
+                        <span id="lang-text">AR</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme" title="Toggle theme">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+
+                    <!-- User Menu -->
+                    <div class="user-menu" id="user-menu" style="display: none;">
+                        <button class="user-menu-btn" id="user-menu-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="user-name">Admin</span>
+                        </button>
+                        <div class="user-menu-dropdown" id="user-menu-dropdown">
+                            <button id="logout-btn" class="menu-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span data-i18n="logout">Logout</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button id="login-btn" class="btn-primary" style="display: none;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span data-i18n="login">Login</span>
+                    </button>
+
+                    <!-- Mobile Menu Toggle -->
+                    <button id="mobile-menu-toggle" class="btn-icon mobile-only">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="app-content" class="app-content">
+        <!-- Content will be rendered here -->
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p data-i18n="loading">Loading...</p>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container">
+            <p>&copy; 2025 <span data-i18n="app-name">BMToolkit</span> - <span data-i18n="footer-text">Financial Calculators for Everyone</span></p>
+        </div>
+    </footer>
+
+    <!-- App Script -->
+    <script type="module" src="./js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.warn('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

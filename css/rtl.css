@@ -1,0 +1,62 @@
+/* RTL Overrides for Arabic Language */
+
+[dir="rtl"] {
+    direction: rtl;
+}
+
+/* Navigation */
+[dir="rtl"] .main-nav {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-content {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .header-actions {
+    flex-direction: row-reverse;
+}
+
+/* Text Alignment */
+[dir="rtl"] .text-left {
+    text-align: right;
+}
+
+[dir="rtl"] .text-right {
+    text-align: left;
+}
+
+/* Flex Direction */
+[dir="rtl"] .flex-row {
+    flex-direction: row-reverse;
+}
+
+/* Grid Items */
+[dir="rtl"] .grid {
+    direction: rtl;
+}
+
+/* Form Elements */
+[dir="rtl"] .form-label {
+    text-align: right;
+}
+
+/* User Menu Dropdown Position */
+[dir="rtl"] .user-menu-dropdown {
+    right: auto;
+    left: 0;
+}
+
+/* Card Elements */
+[dir="rtl"] .card-header,
+[dir="rtl"] .card-body,
+[dir="rtl"] .card-footer {
+    text-align: right;
+}
+
+/* Numbers remain LTR */
+[dir="rtl"] .number-display,
+[dir="rtl"] .results-table td.number {
+    direction: ltr;
+    text-align: right;
+}

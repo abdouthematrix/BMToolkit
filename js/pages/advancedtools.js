@@ -1,19 +1,34 @@
-// advancedtools.js - advancedtools Page (Advanced Calculators)
+//  .js - advancedtools Page (Advanced Calculators)
 
 import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
 import { FirestoreService } from '../services/firestore.js';
 
 export class AdvancedToolsPage {
+    static STORAGE_KEY = 'advancedtools-active-tab';
+    static activeTab = 'first-month'; // Track active tab
+
     static async init() {
         const router = window.app?.router;
         if (router) {
+            // Determine active tab BEFORE rendering
+            this.determineActiveTab();
+            
             router.render(this.render());
             i18n.updatePageText();
             await this.loadConstants();
             this.attachEventListeners();
             this.setDefaultDates();
+            this.autoCalculateIfNeeded();
         }
+    }
+
+    static determineActiveTab() {
+        const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        
+        // URL parameter takes precedence over saved tab
+        this.activeTab = urlParams.tab || savedTab || 'first-month';
     }
 
     static async loadConstants() {
@@ -33,11 +48,11 @@ export class AdvancedToolsPage {
                 <!-- Calculators Tabs -->
                 <div class="card">
                     <div style="border-bottom: 2px solid var(--border-color); padding: var(--spacing-md); display: flex; gap: var(--spacing-sm); overflow-x: auto;">
-                        <button class="tab-btn active" data-tab="first-month">
+                        <button class="tab-btn ${this.activeTab === 'first-month' ? 'active' : ''}" data-tab="first-month">
                             <i class="fas fa-calendar-day"></i>
                             <span data-i18n="tab-first-month">First Month Interest</span>
                         </button>
-                        <button class="tab-btn" data-tab="amortization">
+                        <button class="tab-btn ${this.activeTab === 'amortization' ? 'active' : ''}" data-tab="amortization">
                             <i class="fas fa-table"></i>
                             <span data-i18n="tab-amortization">Amortization Schedule</span>
                         </button>
@@ -55,7 +70,7 @@ export class AdvancedToolsPage {
 
     static renderFirstMonthTab() {
         return `
-            <div class="tab-content active" data-tab-content="first-month">
+            <div class="tab-content ${this.activeTab === 'first-month' ? 'active' : ''}" data-tab-content="first-month">
                 <div class="card-body">
                     <h3 data-i18n="first-month-interest">First Month Interest Calculator</h3>
                     <p class="text-muted" data-i18n="first-month-interest-desc">Calculate initial interest payment based on loan start date</p>
@@ -110,7 +125,7 @@ export class AdvancedToolsPage {
 
     static renderAmortizationTab() {
         return `
-            <div class="tab-content" data-tab-content="amortization">
+            <div class="tab-content ${this.activeTab === 'amortization' ? 'active' : ''}" data-tab-content="amortization">
                 <div class="card-body">
                     <h3 data-i18n="amortization-schedule">Amortization Schedule</h3>
                     <p class="text-muted" data-i18n="amortization-schedule-desc">Detailed payment schedule with stamp duty calculations</p>
@@ -173,6 +188,8 @@ export class AdvancedToolsPage {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.dataset.tab;
                 this.switchTab(tab);
+                // Save tab preference
+                this.saveTabState(tab);
             });
         });
 
@@ -188,12 +205,51 @@ export class AdvancedToolsPage {
         });
     }
 
-    static switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    static saveTabState(tab) {
+        this.activeTab = tab;
+        sessionStorage.setItem(this.STORAGE_KEY, tab);
+    }
 
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+    static switchTab(tab) {
+        const tabBtn = document.querySelector(`[data-tab="${tab}"]`);
+        const tabContent = document.querySelector(`[data-tab-content="${tab}"]`);
+
+        if (tabBtn && tabContent) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            tabBtn.classList.add('active');
+            tabContent.classList.add('active');
+        }
+    }
+
+    static autoCalculateIfNeeded() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        const tab = urlParams.tab;
+
+        if (!tab) return;
+
+        // Populate form fields and calculate based on tab type
+        switch (tab) {
+            case 'first-month':
+                if (urlParams.principal) document.getElementById('principal-first').value = urlParams.principal;
+                if (urlParams.rate) document.getElementById('rate-first').value = urlParams.rate;
+                if (urlParams.startDate) document.getElementById('start-date-first').value = urlParams.startDate;
+                if (urlParams.term) document.getElementById('loan-term-first').value = urlParams.term;
+                if (urlParams.unit) document.getElementById('is-years-first').checked = urlParams.unit === 'months';
+                this.calculateFirstMonth();
+                break;
+
+            case 'amortization':
+                if (urlParams.principal) document.getElementById('principal-amort').value = urlParams.principal;
+                if (urlParams.rate) document.getElementById('rate-amort').value = urlParams.rate;
+                if (urlParams.startDate) document.getElementById('start-date-amort').value = urlParams.startDate;
+                if (urlParams.term) document.getElementById('loan-term-amort').value = urlParams.term;
+                if (urlParams.stampDuty) document.getElementById('stamp-duty-rate').value = urlParams.stampDuty;
+                if (urlParams.unit) document.getElementById('is-years-amort').checked = urlParams.unit === 'months';
+                this.calculateAmortization();
+                break;
+        }
     }
 
     static setDefaultDates() {
@@ -209,11 +265,11 @@ export class AdvancedToolsPage {
         const loanTerm = parseInt(document.getElementById('loan-term-first').value);
         const isYears = !document.getElementById('is-years-first').checked; // Inverted checkbox
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'first-month',
+                tab: 'first-month',
                 principal: principal,
                 rate: annualRate.toFixed(2),
                 startDate: startDate,
@@ -285,11 +341,11 @@ export class AdvancedToolsPage {
         const stampDutyRate = parseFloat(document.getElementById('stamp-duty-rate').value);
         const isYears = !document.getElementById('is-years-amort').checked; // Inverted checkbox
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'amortization',
+                tab: 'amortization',
                 principal: principal,
                 rate: annualRate.toFixed(2),
                 startDate: startDate,

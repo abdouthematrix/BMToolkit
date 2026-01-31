@@ -6,15 +6,29 @@ import { FirestoreService } from '../services/firestore.js';
 
 export class SecuredLoansPage {
     static constants = null;
+    static STORAGE_KEY = 'secured-loans-active-tab';
+    static activeTab = 'smart-investment'; // Track active tab
 
     static async init() {
         const router = window.app?.router;
         if (router) {
+            // Determine active tab BEFORE rendering
+            this.determineActiveTab();
+            
             router.render(this.render());
             i18n.updatePageText();
             await this.loadConstants();
             this.attachEventListeners();
+            this.autoCalculateIfNeeded();
         }
+    }
+
+    static determineActiveTab() {
+        const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        
+        // URL parameter takes precedence over saved tab
+        this.activeTab = urlParams.tab || savedTab || 'smart-investment';
     }
 
     static async loadConstants() {
@@ -38,19 +52,19 @@ export class SecuredLoansPage {
                 <!-- Calculators Tabs -->
                 <div class="card">
                     <div style="border-bottom: 2px solid var(--border-color); padding: var(--spacing-md); display: flex; gap: var(--spacing-sm); overflow-x: auto;">
-                        <button class="tab-btn active" data-tab="smart-investment">
+                        <button class="tab-btn ${this.activeTab === 'smart-investment' ? 'active' : ''}" data-tab="smart-investment">
                             <i class="fas fa-chart-line"></i>
                             <span data-i18n="smart-investment">Smart Investment Tool</span>
                         </button>
-                        <button class="tab-btn" data-tab="smart-optimizer">
+                        <button class="tab-btn ${this.activeTab === 'smart-optimizer' ? 'active' : ''}" data-tab="smart-optimizer">
                             <i class="fas fa-sliders-h"></i>
                             <span data-i18n="smart-optimizer">Smart Loan Optimizer</span>
                         </button>
-                        <button class="tab-btn" data-tab="loan-calculator">
+                        <button class="tab-btn ${this.activeTab === 'loan-calculator' ? 'active' : ''}" data-tab="loan-calculator">
                             <i class="fas fa-calculator"></i>
                             <span data-i18n="loan-calculator">Loan Calculator</span>
                         </button>
-                        <button class="tab-btn" data-tab="max-loan">
+                        <button class="tab-btn ${this.activeTab === 'max-loan' ? 'active' : ''}" data-tab="max-loan">
                             <i class="fas fa-money-bill-wave"></i>
                             <span data-i18n="max-loan-calc">Max Loan</span>
                         </button>
@@ -79,7 +93,7 @@ export class SecuredLoansPage {
 
     static renderSmartInvestmentTab() {
         return `
-            <div class="tab-content active" data-tab-content="smart-investment">
+            <div class="tab-content ${this.activeTab === 'smart-investment' ? 'active' : ''}" data-tab-content="smart-investment">
                 <div class="card-body">
                     <h3 data-i18n="smart-investment">Smart Investment Tool</h3>
                     <p class="text-muted" data-i18n="smart-investment-desc">Compare 4 investment scenarios with your certificate</p>
@@ -121,7 +135,7 @@ export class SecuredLoansPage {
 
     static renderSmartOptimizerTab() {
         return `
-            <div class="tab-content" data-tab-content="smart-optimizer">
+            <div class="tab-content ${this.activeTab === 'smart-optimizer' ? 'active' : ''}" data-tab-content="smart-optimizer">
                 <div class="card-body">
                     <h3 data-i18n="smart-optimizer">Smart Loan Optimizer</h3>
                     <p class="text-muted" data-i18n="smart-optimizer-desc">Find the optimal loan amount (0-90%)</p>
@@ -163,7 +177,7 @@ export class SecuredLoansPage {
 
     static renderLoanCalculatorTab() {
         return `
-            <div class="tab-content" data-tab-content="loan-calculator">
+            <div class="tab-content ${this.activeTab === 'loan-calculator' ? 'active' : ''}" data-tab-content="loan-calculator">
                 <div class="card-body">
                     <h3 data-i18n="loan-calculator">Loan Calculator</h3>
                     <p class="text-muted" data-i18n="loan-calculator-desc">Calculate monthly payments for different tenors</p>
@@ -214,7 +228,7 @@ export class SecuredLoansPage {
 
     static renderMaxLoanTab() {
         return `
-            <div class="tab-content" data-tab-content="max-loan">
+            <div class="tab-content ${this.activeTab === 'max-loan' ? 'active' : ''}" data-tab-content="max-loan">
                 <div class="card-body">
                     <h3 data-i18n="max-loan-calc">Maximum Loan Calculator</h3>
                     <p class="text-muted" data-i18n="max-loan-calc-desc">Calculate maximum loan based on monthly payment</p>
@@ -268,13 +282,9 @@ export class SecuredLoansPage {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.dataset.tab;
-
-                // Update active states
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-                e.currentTarget.classList.add('active');
-                document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+                this.switchTab(tab);
+                // Save tab preference
+                this.saveTabState(tab);
             });
         });
 
@@ -300,16 +310,76 @@ export class SecuredLoansPage {
         });
     }
 
+    static saveTabState(tab) {
+        this.activeTab = tab;
+        sessionStorage.setItem(this.STORAGE_KEY, tab);
+    }
+
+    static switchTab(tab) {
+        const tabBtn = document.querySelector(`[data-tab="${tab}"]`);
+        const tabContent = document.querySelector(`[data-tab-content="${tab}"]`);
+
+        if (tabBtn && tabContent) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            tabBtn.classList.add('active');
+            tabContent.classList.add('active');
+        }
+    }
+
+    static autoCalculateIfNeeded() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        const tab = urlParams.tab;
+
+        if (!tab) return;
+
+        // Populate form fields and calculate based on tab type
+        switch (tab) {
+            case 'smart-investment':
+                if (urlParams.amount) document.getElementById('td-amount').value = urlParams.amount;
+                if (urlParams.rate) document.getElementById('cd-rate').value = urlParams.rate;
+                if (urlParams.years) document.getElementById('td-years').value = urlParams.years;
+                this.calculateSmartInvestment();
+                break;
+
+            case 'smart-optimizer':
+                if (urlParams.principal) document.getElementById('principal-optimizer').value = urlParams.principal;
+                if (urlParams.cdRate) document.getElementById('cd-rate-optimizer').value = urlParams.cdRate;
+                if (urlParams.term) document.getElementById('loan-term-optimizer').value = urlParams.term;
+                this.calculateSmartOptimizer();
+                break;
+
+            case 'loan-calculator':
+                if (urlParams.principal) document.getElementById('principal-loan').value = urlParams.principal;
+                if (urlParams.rate) document.getElementById('rate-loan').value = urlParams.rate;
+                if (urlParams.minTenor) document.getElementById('min-tenor-loan').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('max-tenor-loan').value = urlParams.maxTenor;
+                if (urlParams.unit) document.getElementById('is-years-loan').checked = urlParams.unit === 'years';
+                this.calculateLoan();
+                break;
+
+            case 'max-loan':
+                if (urlParams.payment) document.getElementById('monthly-payment-max').value = urlParams.payment;
+                if (urlParams.rate) document.getElementById('rate-max').value = urlParams.rate;
+                if (urlParams.minTenor) document.getElementById('min-tenor-max').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('max-tenor-max').value = urlParams.maxTenor;
+                if (urlParams.unit) document.getElementById('is-years-max').checked = urlParams.unit === 'years';
+                this.calculateMaxLoan();
+                break;
+        }
+    }
+
     static calculateSmartInvestment() {
         const tdAmount = parseFloat(document.getElementById('td-amount').value);
         const tdRate = parseFloat(document.getElementById('cd-rate').value) / 100;
         const years = parseInt(document.getElementById('td-years').value);
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'smart-investment',
+                tab: 'smart-investment',
                 amount: tdAmount,
                 rate: (tdRate * 100).toFixed(2),
                 years: years
@@ -363,11 +433,11 @@ export class SecuredLoansPage {
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'smart-optimizer',
+                tab: 'smart-optimizer',
                 principal: principal,
                 cdRate: (cdRate * 100).toFixed(2),
                 term: loanTerm
@@ -383,7 +453,7 @@ export class SecuredLoansPage {
 
         const resultsHtml = `
             <div class="highlight-box">
-                <h3><i class="fas fa-trophy"></i> <span data-i18n="optimalLoanConfig">Optimal Loan Configuration<</span></h3>
+                <h3><i class="fas fa-trophy"></i> <span data-i18n="optimalLoanConfig">Optimal Loan Configuration</span></h3>
                 <div class="grid grid-2" style="margin-top: var(--spacing-md);">
                     <div>
                         <p style="margin: 0; opacity: 0.9;" data-i18n="optimalLoanAmount">Optimal Loan Amount:</p>
@@ -439,11 +509,11 @@ export class SecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-loan').value);
         const isYears = document.getElementById('is-years-loan').checked;
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'loan-calculator',
+                tab: 'loan-calculator',
                 principal: principal,
                 rate: (annualRate * 100).toFixed(2),
                 minTenor: minTenor,
@@ -494,11 +564,11 @@ export class SecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-max').value);
         const isYears = document.getElementById('is-years-max').checked;
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'max-loan',
+                tab: 'max-loan',
                 payment: monthlyPayment,
                 rate: (annualRate * 100).toFixed(2),
                 minTenor: minTenor,

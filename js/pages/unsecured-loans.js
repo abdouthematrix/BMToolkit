@@ -8,16 +8,30 @@ export class UnsecuredLoansPage {
     static products = [];
     static selectedProduct = null;
     static constants = null;
+    static STORAGE_KEY = 'unsecured-loans-active-tab';
+    static activeTab = 'by-income'; // Track active tab
 
     static async init() {
         const router = window.app?.router;
         if (router) {
+            // Determine active tab BEFORE rendering
+            this.determineActiveTab();
+            
             router.render(this.render());
             i18n.updatePageText();
             await this.loadProducts();
             await this.loadConstants();
             this.attachEventListeners();
+            this.autoCalculateIfNeeded();
         }
+    }
+
+    static determineActiveTab() {
+        const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        
+        // URL parameter takes precedence over saved tab
+        this.activeTab = urlParams.tab || savedTab || 'by-income';
     }
 
     static async loadConstants() {
@@ -97,15 +111,15 @@ export class UnsecuredLoansPage {
                 <!-- Calculators Tabs -->
                 <div class="card">
                     <div style="border-bottom: 2px solid var(--border-color); padding: var(--spacing-md); display: flex; gap: var(--spacing-sm); overflow-x: auto;">
-                        <button class="tab-btn active" data-tab="by-income">
+                        <button class="tab-btn ${this.activeTab === 'by-income' ? 'active' : ''}" data-tab="by-income">
                             <i class="fas fa-money-bill-wave"></i>
                             <span data-i18n="tab-by-income">Max Loan by Income</span>
                         </button>
-                        <button class="tab-btn" data-tab="by-installment">
+                        <button class="tab-btn ${this.activeTab === 'by-installment' ? 'active' : ''}" data-tab="by-installment">
                             <i class="fas fa-receipt"></i>
                             <span data-i18n="tab-by-installment">Max Loan by Installment</span>
                         </button>
-                        <button class="tab-btn" data-tab="loan-schedule">
+                        <button class="tab-btn ${this.activeTab === 'loan-schedule' ? 'active' : ''}" data-tab="loan-schedule">
                             <i class="fas fa-calculator"></i>
                             <span data-i18n="loan-calculator">Loan Calculator</span>
                         </button>
@@ -133,7 +147,7 @@ export class UnsecuredLoansPage {
 
     static renderByIncomeTab() {
         return `
-            <div class="tab-content active" data-tab-content="by-income">
+            <div class="tab-content ${this.activeTab === 'by-income' ? 'active' : ''}" data-tab-content="by-income">
                 <div class="card-body">
                     <h3 data-i18n="max-loan-by-income">Max Loan by Income</h3>
                     <p class="text-muted" data-i18n="max-loan-by-income-desc">Calculate maximum loan based on your monthly income</p>
@@ -188,7 +202,7 @@ export class UnsecuredLoansPage {
 
     static renderByInstallmentTab() {
         return `
-            <div class="tab-content" data-tab-content="by-installment">
+            <div class="tab-content ${this.activeTab === 'by-installment' ? 'active' : ''}" data-tab-content="by-installment">
                 <div class="card-body">
                     <h3 data-i18n="max-loan-by-installment">Max Loan by Monthly Installment</h3>
                     <p class="text-muted" data-i18n="max-loan-by-installment-desc">Calculate maximum loan based on your monthly payment capacity</p>
@@ -235,7 +249,7 @@ export class UnsecuredLoansPage {
 
     static renderLoanScheduleTab() {
         return `
-            <div class="tab-content" data-tab-content="loan-schedule">
+            <div class="tab-content ${this.activeTab === 'loan-schedule' ? 'active' : ''}" data-tab-content="loan-schedule">
                 <div class="card-body">
                     <h3 data-i18n="loan-calculator">Loan Calculator</h3>
                     <p class="text-muted" data-i18n="loan-calculator-desc">Calculate payments for a specific loan amount</p>
@@ -284,6 +298,8 @@ export class UnsecuredLoansPage {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.dataset.tab;
                 this.switchTab(tab);
+                // Save tab preference
+                this.saveTabState(tab);
             });
         });
 
@@ -310,12 +326,67 @@ export class UnsecuredLoansPage {
         });
     }
 
-    static switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+    static saveTabState(tab) {
+        this.activeTab = tab;
+        sessionStorage.setItem(this.STORAGE_KEY, tab);
+    }
 
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+    static switchTab(tab) {
+        const tabBtn = document.querySelector(`[data-tab="${tab}"]`);
+        const tabContent = document.querySelector(`[data-tab-content="${tab}"]`);
+
+        if (tabBtn && tabContent) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            tabBtn.classList.add('active');
+            tabContent.classList.add('active');
+        }
+    }
+
+    static autoCalculateIfNeeded() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        const tab = urlParams.tab;
+
+        if (!tab) return;
+
+        // Select product if specified in URL
+        if (urlParams.product) {
+            const productIndex = this.products.findIndex(p => p.ubsCode === urlParams.product);
+            if (productIndex !== -1) {
+                document.getElementById('product-select').value = productIndex;
+                this.selectProduct(productIndex);
+            }
+        }
+
+        // Populate form fields and calculate based on tab type
+        switch (tab) {
+            case 'by-income':
+                if (urlParams.income) document.getElementById('monthly-income').value = urlParams.income;
+                if (urlParams.installments) document.getElementById('monthly-installments').value = urlParams.installments;
+                if (urlParams.dti) document.getElementById('max-dti').value = urlParams.dti;
+                if (urlParams.minTenor) document.getElementById('min-tenor-income').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('max-tenor-income').value = urlParams.maxTenor;
+                if (urlParams.unit) document.getElementById('is-years-income').checked = urlParams.unit === 'years';
+                this.calculateByIncome();
+                break;
+
+            case 'by-installment':
+                if (urlParams.payment) document.getElementById('monthly-payment-installment').value = urlParams.payment;
+                if (urlParams.minTenor) document.getElementById('min-tenor-installment').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('max-tenor-installment').value = urlParams.maxTenor;
+                if (urlParams.unit) document.getElementById('is-years-installment').checked = urlParams.unit === 'years';
+                this.calculateByInstallment();
+                break;
+
+            case 'loan-schedule':
+                if (urlParams.principal) document.getElementById('principal-schedule').value = urlParams.principal;
+                if (urlParams.minTenor) document.getElementById('min-tenor-schedule').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('max-tenor-schedule').value = urlParams.maxTenor;
+                if (urlParams.unit) document.getElementById('is-years-schedule').checked = urlParams.unit === 'years';
+                this.calculateLoanSchedule();
+                break;
+        }
     }
 
     static populateProductSelect() {
@@ -441,11 +512,11 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-income').value);
         const isYears = document.getElementById('is-years-income').checked;
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'by-income',
+                tab: 'by-income',
                 income: monthlyIncome,
                 installments: monthlyInstallments,
                 dti: (maxDTI * 100).toFixed(0),
@@ -468,7 +539,7 @@ export class UnsecuredLoansPage {
                 monthlyInstallments,
                 maxDTI,
                 isYears
-            }, this.constants); // Pass constants
+            }, this.constants);
 
             if (!result.error && result.length > 0) {
                 results.push(...result);
@@ -526,11 +597,11 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-installment').value);
         const isYears = document.getElementById('is-years-installment').checked;
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'by-installment',
+                tab: 'by-installment',
                 payment: monthlyPayment,
                 minTenor: minTenor,
                 maxTenor: maxTenor,
@@ -593,11 +664,11 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-schedule').value);
         const isYears = document.getElementById('is-years-schedule').checked;
 
-        // Update URL parameters
+        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
             router.updateQueryParams({
-                calc: 'loan-schedule',
+                tab: 'loan-schedule',
                 principal: principal,
                 minTenor: minTenor,
                 maxTenor: maxTenor,

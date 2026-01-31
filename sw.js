@@ -1,6 +1,7 @@
 // sw.js - Service Worker for PWA
 
 const CACHE_NAME = 'bmtoolkit-v1';
+const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v1';
 const urlsToCache = [
   './',
   './index.html',
@@ -22,17 +23,36 @@ const urlsToCache = [
   './js/pages/admin.js'
 ];
 
+// Google Fonts to cache
+const fontsToCache = [
+  'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap',
+  'https://fonts.gstatic.com/s/manrope/v15/cHpsfuQw1Vc86XVj_dCyVIVIGQkD7IrY.0.woff2',
+  'https://fonts.gstatic.com/s/manrope/v15/cHpsfuQw1Vc86XVj_dCyVIVIGQkD7IrY.1.woff2',
+  'https://fonts.gstatic.com/s/cairo/v28/SLXsc1NY6HkvangtZmHyx44.0.woff2',
+  'https://fonts.gstatic.com/s/cairo/v28/SLXsc1NZ6HkvangtZmHyV4YE.0.woff2'
+];
+
 // Install event - cache resources
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.error('Cache installation failed:', error);
-      })
+    Promise.all([
+      caches.open(CACHE_NAME)
+        .then((cache) => {
+          console.log('Opened cache');
+          return cache.addAll(urlsToCache);
+        })
+        .catch((error) => {
+          console.error('Cache installation failed:', error);
+        }),
+      caches.open(FONTS_CACHE_NAME)
+        .then((cache) => {
+          console.log('Opened fonts cache');
+          return cache.addAll(fontsToCache);
+        })
+        .catch((error) => {
+          console.error('Fonts cache installation failed:', error);
+        })
+    ])
   );
   self.skipWaiting();
 });
@@ -42,12 +62,41 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
 
-  // Skip Firebase and external API calls
+  // Handle Google Fonts with stale-while-revalidate strategy
+  if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          if (response) {
+            return response;
+          }
+
+          return fetch(event.request).then((response) => {
+            if (!response || response.status !== 200) {
+              return response;
+            }
+
+            const responseToCache = response.clone();
+            caches.open(FONTS_CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          });
+        })
+        .catch(() => {
+          console.warn('Fonts unavailable offline');
+        })
+    );
+    return;
+  }
+
+  // Skip Firebase and other external API calls
   if (
     event.request.url.includes('firebase') ||
     event.request.url.includes('firestore') ||
     event.request.url.includes('googleapis') ||
-    event.request.url.includes('gstatic') ||
     event.request.url.includes('cdnjs')
   ) {
     return;
@@ -94,7 +143,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== FONTS_CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }

@@ -55,5 +55,46 @@
   "categories": ["finance", "business", "productivity"],
   "screenshots": [],
   "related_applications": [],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Secured Loans",
+      "short_name": "Secured",
+      "description": "Calculate secured loan payments and compare options",
+      "url": "./index.html#secured-loans",
+      "icons": [
+        {
+          "src": "./icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Unsecured Loans",
+      "short_name": "Unsecured",
+      "description": "Calculate unsecured loan payments and compare options",
+      "url": "./index.html#unsecured-loans",
+      "icons": [
+        {
+          "src": "./icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Advanced Tools",
+      "short_name": "Advanced",
+      "description": "Access advanced financial calculation tools",
+      "url": "./index.html#advancedtools",
+      "icons": [
+        {
+          "src": "./icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
 }

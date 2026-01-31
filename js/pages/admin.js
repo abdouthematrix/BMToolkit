@@ -22,7 +22,7 @@ export class AdminPage {
             await this.loadConstants();
             await this.loadProducts();
             this.attachEventListeners();
-            
+
             // Expose to window for onclick handlers
             window.adminPage = this;
         }
@@ -43,7 +43,7 @@ export class AdminPage {
             <div class="container">
                 <div style="margin-bottom: var(--spacing-2xl);">
                     <h1><i class="fas fa-cog" style="color: var(--primary);"></i> <span data-i18n="admin-panel">Admin Panel</span></h1>
-                    <p class="text-muted">Manage rates, margins, and constants for all calculators</p>
+                    <p class="text-muted" data-i18n="admin-desc">Manage rates, margins, and constants for all calculators</p>
                 </div>
 
                 <!-- Constants Management -->
@@ -54,12 +54,12 @@ export class AdminPage {
                     <div class="card-body">
                         <div class="warning-box">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <strong>Important:</strong> Changes made here will affect all users and all calculations globally.
+                            <strong data-i18n="important-note">Important:</strong> <span data-i18n="admin-warning">Changes made here will affect all users and all calculations globally.</span>
                         </div>
 
                         <form id="constants-form" style="margin-top: var(--spacing-lg);">
                             <!-- Secured Loans Constants -->
-                            <h4>Secured Loans</h4>
+                            <h4 data-i18n="secured-loans-constants">Secured Loans</h4>
                             <div class="grid grid-3">
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="cd-rate-label">CD Rate (%)</label>
@@ -74,13 +74,13 @@ export class AdminPage {
                                     <input type="number" id="min-rate-admin" class="form-input" min="0" max="100" step="0.01" required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Max Loan Percent (%)</label>
+                                    <label class="form-label" data-i18n="max-loan-percent">Max Loan Percent (%)</label>
                                     <input type="number" id="max-loan-percent-admin" class="form-input" min="0" max="100" step="1" required>
                                 </div>
                             </div>
 
                             <!-- Unsecured Loans Constants -->
-                            <h4 style="margin-top: var(--spacing-xl);">Unsecured Loans</h4>
+                            <h4 style="margin-top: var(--spacing-xl);" data-i18n="unsecured-loans-constants">Unsecured Loans</h4>
                             <div class="grid grid-2">
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="max-dti-label">Max DTI Ratio (%)</label>
@@ -99,7 +99,7 @@ export class AdminPage {
                                 </button>
                                 <button type="button" id="reset-constants" class="btn-secondary">
                                     <i class="fas fa-undo"></i>
-                                    Reset to Defaults
+                                    <span data-i18n="reset-defaults">Reset to Defaults</span>
                                 </button>
                             </div>
                         </form>
@@ -110,15 +110,15 @@ export class AdminPage {
                 <div class="card" style="margin-top: var(--spacing-lg);">
                     <div class="card-header">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--spacing-sm);">
-                            <h3 class="card-title">Unsecured Loan Products</h3>
+                            <h3 class="card-title" data-i18n="unsecured-products">Unsecured Loan Products</h3>
                             <div style="display: flex; gap: var(--spacing-sm);">
                                 <button id="import-csv-btn" class="btn-secondary">
                                     <i class="fas fa-file-import"></i>
-                                    Import CSV
+                                    <span data-i18n="import-csv">Import CSV</span>
                                 </button>
                                 <button id="add-product-btn" class="btn-primary">
                                     <i class="fas fa-plus"></i>
-                                    Add Product
+                                    <span data-i18n="add-product">Add Product</span>
                                 </button>
                             </div>
                         </div>
@@ -147,39 +147,39 @@ export class AdminPage {
                                 <input type="hidden" id="product-id">
                                 <div class="grid grid-2">
                                     <div class="form-group">
-                                        <label class="form-label">Product Name (Arabic)</label>
+                                        <label class="form-label" data-i18n="product-name-ar">Product Name (Arabic)</label>
                                         <input type="text" id="product-name-ar" class="form-input" required>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Product Name (English)</label>
+                                        <label class="form-label" data-i18n="product-name-en">Product Name (English)</label>
                                         <input type="text" id="product-name-en" class="form-input" required>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">UBS Code</label>
+                                        <label class="form-label" data-i18n="ubs-code">UBS Code</label>
                                         <input type="text" id="product-ubs" class="form-input" required>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Sector</label>
+                                        <label class="form-label" data-i18n="sector">Sector</label>
                                         <select id="product-sector" class="form-select" required>
-                                            <option value="">Select...</option>
+                                            <option value="" data-i18n="select-product-placeholder">Select...</option>
                                             <option value="Government/Public">Government/Public</option>
                                             <option value="Private">Private</option>
                                             <option value="Not Specified">Not Specified</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Payroll Type</label>
+                                        <label class="form-label" data-i18n="payroll">Payroll Type</label>
                                         <select id="product-payroll" class="form-select" required>
-                                            <option value="">Select...</option>
+                                            <option value="" data-i18n="select-product-placeholder">Select...</option>
                                             <option value="Contracted">Contracted</option>
                                             <option value="Non-Contracted">Non-Contracted</option>
                                             <option value="Not Specified">Not Specified</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="form-label">Company Segment</label>
+                                        <label class="form-label" data-i18n="company-segment">Company Segment</label>
                                         <select id="product-segment" class="form-select" required>
-                                            <option value="">Select...</option>
+                                            <option value="" data-i18n="select-product-placeholder">Select...</option>
                                             <option value="A+">A+</option>
                                             <option value="A">A</option>
                                             <option value="B">B</option>
@@ -204,7 +204,7 @@ export class AdminPage {
                                     <button type="button" class="btn-secondary" id="cancel-product">Cancel</button>
                                     <button type="submit" class="btn-primary">
                                         <i class="fas fa-save"></i>
-                                        Save Product
+                                        <span data-i18n="save-product">Save Product</span>
                                     </button>
                                 </div>
                             </form>
@@ -297,7 +297,7 @@ export class AdminPage {
             container.innerHTML = `
                 <div class="info-box">
                     <i class="fas fa-info-circle"></i>
-                    No products found. Click "Add Product" to create your first product.
+                    ${i18n.t('no-products')}. ${i18n.t('add-product')} to create your first product.
                 </div>
             `;
             return;
@@ -308,15 +308,15 @@ export class AdminPage {
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th>UBS Code</th>
-                            <th>Product Name (EN)</th>
-                            <th>Sector</th>
-                            <th>Payroll</th>
-                            <th>Segment</th>
-                            <th>1-5Y Rate</th>
-                            <th>5-8Y Rate</th>
-                            <th>8+Y Rate</th>
-                            <th>Actions</th>
+                            <th>${i18n.t('ubs-code')}</th>
+                            <th>${i18n.t('product')}</th>
+                            <th>${i18n.t('sector')}</th>
+                            <th>${i18n.t('payroll')}</th>
+                            <th>${i18n.t('company-segment')}</th>
+                            <th>${i18n.t('rate-1-5')}</th>
+                            <th>${i18n.t('rate-5-8')}</th>
+                            <th>${i18n.t('rate-8-plus')}</th>
+                            <th>${i18n.t('actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -331,10 +331,10 @@ export class AdminPage {
                                 <td>${product.rate5_8 || '-'}</td>
                                 <td>${product.rate8Plus || '-'}</td>
                                 <td>
-                                    <button class="btn-icon" onclick="window.adminPage.editProduct('${product.id}')" title="Edit">
+                                    <button class="btn-icon" onclick="window.adminPage.editProduct('${product.id}')" title="${i18n.t('edit-product')}">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn-icon" onclick="window.adminPage.deleteProduct('${product.id}')" title="Delete">
+                                    <button class="btn-icon" onclick="window.adminPage.deleteProduct('${product.id}')" title="${i18n.t('delete-product')}">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -351,9 +351,9 @@ export class AdminPage {
     static openProductModal(productId = null) {
         const modal = document.getElementById('product-modal');
         const title = document.getElementById('modal-title');
-        
+
         if (productId) {
-            title.textContent = 'Edit Product';
+            title.textContent = i18n.t('edit-product');
             const product = this.products.find(p => p.id === productId);
             if (product) {
                 document.getElementById('product-id').value = product.id;
@@ -368,7 +368,7 @@ export class AdminPage {
                 document.getElementById('product-rate3').value = product.rate8Plus || '';
             }
         } else {
-            title.textContent = 'Add Product';
+            title.textContent = i18n.t('add-product');
             document.getElementById('product-form').reset();
             document.getElementById('product-id').value = '';
         }
@@ -398,11 +398,12 @@ export class AdminPage {
         const result = await FirestoreService.saveProduct(productData, productId || null);
 
         if (result.success) {
-            window.app.showToast(productId ? 'Product updated successfully' : 'Product added successfully', 'success');
+            const message = productId ? i18n.t('product-updated') : i18n.t('product-added');
+            window.app.showToast(message, 'success');
             this.closeProductModal();
             await this.loadProducts();
         } else {
-            window.app.showToast(result.error || 'Failed to save product', 'error');
+            window.app.showToast(result.error || i18n.t('save-failed'), 'error');
         }
     }
 
@@ -411,17 +412,17 @@ export class AdminPage {
     }
 
     static async deleteProduct(productId) {
-        if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        if (!confirm(i18n.t('delete-confirm'))) {
             return;
         }
 
         const result = await FirestoreService.deleteProduct(productId);
 
         if (result.success) {
-            window.app.showToast('Product deleted successfully', 'success');
+            window.app.showToast(i18n.t('product-deleted'), 'success');
             await this.loadProducts();
         } else {
-            window.app.showToast(result.error || 'Failed to delete product', 'error');
+            window.app.showToast(result.error || i18n.t('delete-failed'), 'error');
         }
     }
 
@@ -433,7 +434,7 @@ export class AdminPage {
         event.target.value = '';
 
         if (!file.name.endsWith('.csv')) {
-            window.app.showToast('Please select a valid CSV file', 'error');
+            window.app.showToast(i18n.t('invalid-csv'), 'error');
             return;
         }
 
@@ -442,11 +443,11 @@ export class AdminPage {
             const products = this.parseCsv(text);
 
             if (products.length === 0) {
-                window.app.showToast('No valid products found in CSV', 'warning');
+                window.app.showToast(i18n.t('no-products-found'), 'warning');
                 return;
             }
 
-            if (!confirm(`Import ${products.length} products? This will add them to your existing products.`)) {
+            if (!confirm(`${i18n.t('import-confirm').replace('products?', `${products.length} products?`)}`)) {
                 return;
             }
 
@@ -465,17 +466,30 @@ export class AdminPage {
             await this.loadProducts();
 
             if (errorCount === 0) {
-                window.app.showToast(`Successfully imported ${successCount} products`, 'success');
+                window.app.showToast(i18n.t('import-success').replace('products', `${successCount} products`), 'success');
             } else {
-                window.app.showToast(`Imported ${successCount} products, ${errorCount} failed`, 'warning');
+                window.app.showToast(`${i18n.t('import-success').split(' ')[0]} ${successCount} ${i18n.t('product')}, ${errorCount} failed`, 'warning');
             }
 
         } catch (error) {
             console.error('CSV import error:', error);
-            window.app.showToast('Failed to import CSV: ' + error.message, 'error');
+            window.app.showToast(i18n.t('import-failed') + ': ' + error.message, 'error');
         }
     }
 
+    static async resetConstants() {
+        const defaults = FirestoreService.getDefaultConstants();
+        const result = await FirestoreService.updateConstants(defaults);
+
+        if (result.success) {
+            window.app.showToast(i18n.t('constants-reset'), 'success');
+            this.constants = defaults;
+            this.populateForm();
+        } else {
+            window.app.showToast(result.error || i18n.t('reset-failed'), 'error');
+        }
+    }
+    
     static parseCsv(text) {
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
@@ -524,7 +538,7 @@ export class AdminPage {
 
         for (let i = 0; i < line.length; i++) {
             const char = line[i];
-            
+
             if (char === '"') {
                 inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
@@ -534,7 +548,7 @@ export class AdminPage {
                 current += char;
             }
         }
-        
+
         result.push(current);
         return result;
     }
@@ -556,19 +570,6 @@ export class AdminPage {
             this.constants = constants;
         } else {
             window.app.showToast(result.error || 'Failed to save', 'error');
-        }
-    }
-
-    static async resetConstants() {
-        const defaults = FirestoreService.getDefaultConstants();
-        const result = await FirestoreService.updateConstants(defaults);
-
-        if (result.success) {
-            window.app.showToast('Constants reset to defaults', 'success');
-            this.constants = defaults;
-            this.populateForm();
-        } else {
-            window.app.showToast(result.error || 'Failed to reset', 'error');
         }
     }
 }

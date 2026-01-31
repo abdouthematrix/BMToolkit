@@ -76,19 +76,19 @@ export class HomePage {
                             <ul style="list-style: none; padding: 0; margin-top: var(--spacing-md);">
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    Salary Transfer Loans
+                                    <span data-i18n="salary-transfer-loans">Salary Transfer Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    Income Proof Loans
+                                    <span data-i18n="income-proof-loans">Income Proof Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    Business Owner Loans
+                                    <span data-i18n="business-owner-loans">Business Owner Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0;">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    Pension Loans
+                                    <span data-i18n="pension-loans">Pension Loans</span>
                                 </li>
                             </ul>
                         </div>
@@ -105,10 +105,8 @@ export class HomePage {
                 <div style="margin-top: var(--spacing-2xl); text-align: center;">
                     <div class="info-box" style="max-width: 800px; margin: 0 auto;">
                         <i class="fas fa-info-circle" style="font-size: 1.5rem; color: var(--secondary);"></i>
-                        <p style="margin: var(--spacing-md) 0 0 0;">
-                            ${i18n.currentLanguage === 'ar' 
-                                ? 'استخدم حاسباتنا المالية لاتخاذ قرارات مستنيرة. جميع الحسابات دقيقة وتعتمد على أحدث المعدلات من البنك.'
-                                : 'Use our financial calculators to make informed decisions. All calculations are accurate and based on the latest bank rates.'}
+                        <p style="margin: var(--spacing-md) 0 0 0;" data-i18n="use-calculators">
+                            Use our financial calculators to make informed decisions. All calculations are accurate and based on the latest bank rates.
                         </p>
                     </div>
                 </div>

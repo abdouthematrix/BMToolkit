@@ -57,37 +57,37 @@ export class UnsecuredLoansPage {
                             <div class="form-group">
                                 <label class="form-label" data-i18n="sector">Sector</label>
                                 <select id="sector-filter" class="form-select">
-                                    <option value="">All</option>
-                                    <option value="Government/Public">Government/Public</option>
-                                    <option value="Private">Private</option>
-                                    <option value="Not Specified">Not Specified</option>
+                                    <option value="" data-i18n="all">All</option>
+                                    <option value="Government/Public" data-i18n="government-public">Government/Public</option>
+                                    <option value="Private" data-i18n="private">Private</option>
+                                    <option value="Not Specified" data-i18n="not-specified">Not Specified</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="payroll">Payroll Type</label>
                                 <select id="payroll-filter" class="form-select">
-                                    <option value="">All</option>
-                                    <option value="Contracted">Contracted</option>
-                                    <option value="Non-Contracted">Non-Contracted</option>
-                                    <option value="Not Specified">Not Specified</option>
+                                    <option value="" data-i18n="all">All</option>
+                                    <option value="Contracted" data-i18n="contracted">Contracted</option>
+                                    <option value="Non-Contracted" data-i18n="non-contracted">Non-Contracted</option>
+                                    <option value="Not Specified" data-i18n="not-specified">Not Specified</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="company-segment">Company Segment</label>
                                 <select id="segment-filter" class="form-select">
-                                    <option value="">All</option>
+                                    <option value="" data-i18n="all">All</option>
                                     <option value="A+">A+</option>
                                     <option value="A">A</option>
                                     <option value="B">B</option>
                                     <option value="C">C</option>
-                                    <option value="Not Specified">Not Specified</option>
+                                    <option value="Not Specified" data-i18n="not-specified">Not Specified</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label" data-i18n="product">Product</label>
                             <select id="product-select" class="form-select">
-                                <option value="">Select a product</option>
+                                <option value="" data-i18n="select-product-placeholder">Select a product</option>
                             </select>
                         </div>
                         <div id="product-info" style="display: none; margin-top: var(--spacing-md);"></div>
@@ -99,11 +99,11 @@ export class UnsecuredLoansPage {
                     <div style="border-bottom: 2px solid var(--border-color); padding: var(--spacing-md); display: flex; gap: var(--spacing-sm); overflow-x: auto;">
                         <button class="tab-btn active" data-tab="by-income">
                             <i class="fas fa-money-bill-wave"></i>
-                            <span>Max Loan by Income</span>
+                            <span data-i18n="tab-by-income">Max Loan by Income</span>
                         </button>
                         <button class="tab-btn" data-tab="by-installment">
                             <i class="fas fa-receipt"></i>
-                            <span>Max Loan by Installment</span>
+                            <span data-i18n="tab-by-installment">Max Loan by Installment</span>
                         </button>
                         <button class="tab-btn" data-tab="loan-schedule">
                             <i class="fas fa-calculator"></i>
@@ -123,8 +123,8 @@ export class UnsecuredLoansPage {
                 <div class="info-box" style="margin-top: var(--spacing-lg);">
                     <i class="fas fa-info-circle"></i>
                     <p style="margin: 0;">
-                        <strong>Need First Month Interest or Amortization Schedule?</strong><br>
-                        Visit the <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a> page for advanced calculators.
+                        <strong data-i18n="extensions-info">Need First Month Interest or Amortization Schedule?</strong><br>
+                        <span data-i18n="extensions-link">Visit the Extensions page for advanced calculators.</span> <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a>
                     </p>
                 </div>
             </div>
@@ -135,8 +135,8 @@ export class UnsecuredLoansPage {
         return `
             <div class="tab-content active" data-tab-content="by-income">
                 <div class="card-body">
-                    <h3>Max Loan by Income</h3>
-                    <p class="text-muted">Calculate maximum loan based on your monthly income</p>
+                    <h3 data-i18n="max-loan-by-income">Max Loan by Income</h3>
+                    <p class="text-muted" data-i18n="max-loan-by-income-desc">Calculate maximum loan based on your monthly income</p>
 
                     <!-- Form -->
                     <form id="by-income-form" style="margin-top: var(--spacing-lg);">
@@ -154,10 +154,10 @@ export class UnsecuredLoansPage {
                                 <input type="number" id="max-dti" class="form-input" value="50" min="0" max="100" step="1" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Tenor Range</label>
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
-                                    <input type="number" id="min-tenor-income" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
-                                    <input type="number" id="max-tenor-income" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
+                                    <input type="number" id="min-tenor-income" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="max-tenor-income" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
                         </div>
@@ -190,8 +190,8 @@ export class UnsecuredLoansPage {
         return `
             <div class="tab-content" data-tab-content="by-installment">
                 <div class="card-body">
-                    <h3>Max Loan by Monthly Installment</h3>
-                    <p class="text-muted">Calculate maximum loan based on your monthly payment capacity</p>
+                    <h3 data-i18n="max-loan-by-installment">Max Loan by Monthly Installment</h3>
+                    <p class="text-muted" data-i18n="max-loan-by-installment-desc">Calculate maximum loan based on your monthly payment capacity</p>
 
                     <!-- Form -->
                     <form id="by-installment-form" style="margin-top: var(--spacing-lg);">
@@ -201,10 +201,10 @@ export class UnsecuredLoansPage {
                                 <input type="number" id="monthly-payment-installment" class="form-input" value="5000" min="0" step="100" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Tenor Range</label>
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
-                                    <input type="number" id="min-tenor-installment" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
-                                    <input type="number" id="max-tenor-installment" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
+                                    <input type="number" id="min-tenor-installment" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="max-tenor-installment" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
                         </div>
@@ -238,7 +238,7 @@ export class UnsecuredLoansPage {
             <div class="tab-content" data-tab-content="loan-schedule">
                 <div class="card-body">
                     <h3 data-i18n="loan-calculator">Loan Calculator</h3>
-                    <p class="text-muted">Calculate payments for a specific loan amount</p>
+                    <p class="text-muted" data-i18n="loan-calculator-desc">Calculate payments for a specific loan amount</p>
 
                     <form id="loan-schedule-form" style="margin-top: var(--spacing-lg);">
                         <div class="grid grid-2">
@@ -247,10 +247,10 @@ export class UnsecuredLoansPage {
                                 <input type="number" id="principal-schedule" class="form-input" value="100000" min="0" step="1000" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Tenor Range</label>
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
-                                    <input type="number" id="min-tenor-schedule" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
-                                    <input type="number" id="max-tenor-schedule" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
+                                    <input type="number" id="min-tenor-schedule" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="max-tenor-schedule" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
                         </div>
@@ -320,7 +320,7 @@ export class UnsecuredLoansPage {
 
     static populateProductSelect() {
         const select = document.getElementById('product-select');
-        select.innerHTML = '<option value="">Select a product</option>';
+        select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
         this.products.forEach((product, index) => {
             const option = document.createElement('option');
@@ -344,7 +344,7 @@ export class UnsecuredLoansPage {
         });
 
         const select = document.getElementById('product-select');
-        select.innerHTML = '<option value="">Select a product</option>';
+        select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
         filtered.forEach((product, index) => {
             const option = document.createElement('option');
@@ -365,26 +365,46 @@ export class UnsecuredLoansPage {
         this.selectedProduct = this.products[index];
         const product = this.selectedProduct;
 
+        // Helper function to get translation key for sector
+        const getSectorKey = (sector) => {
+            const sectorMap = {
+                'Government/Public': 'government-public',
+                'Private': 'private',
+                'Not Specified': 'not-specified'
+            };
+            return sectorMap[sector] || sector;
+        };
+
+        // Helper function to get translation key for payroll type
+        const getPayrollKey = (payrollType) => {
+            const payrollMap = {
+                'Contracted': 'contracted',
+                'Non-Contracted': 'non-contracted',
+                'Not Specified': 'not-specified'
+            };
+            return payrollMap[payrollType] || payrollType;
+        };
+
         const infoHtml = `
             <div class="info-box">
                 <h4>${i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn}</h4>
                 <div class="grid grid-3" style="margin-top: var(--spacing-md);">
                     <div>
-                        <strong>UBS Code:</strong> ${product.ubsCode || 'N/A'}
+                        <strong data-i18n="ubs-code">${i18n.t('ubs-code')}:</strong> ${product.ubsCode || 'N/A'}
                     </div>
                     <div>
-                        <strong>Sector:</strong> ${product.sector || 'N/A'}
+                        <strong data-i18n="sector">${i18n.t('sector')}:</strong> <span data-i18n="${product.sector ? getSectorKey(product.sector) : 'not-specified'}">${product.sector || 'N/A'}</span>
                     </div>
                     <div>
-                        <strong>Payroll:</strong> ${product.payrollType || 'N/A'}
+                        <strong data-i18n="payroll">${i18n.t('payroll')}:</strong> <span data-i18n="${product.payrollType ? getPayrollKey(product.payrollType) : 'not-specified'}">${product.payrollType || 'N/A'}</span>
                     </div>
                 </div>
                 <div style="margin-top: var(--spacing-md);">
-                    <strong>Rates:</strong>
+                    <strong data-i18n="rates">${i18n.t('rates')}:</strong>
                     <ul style="margin: var(--spacing-sm) 0 0 0; padding-left: var(--spacing-lg);">
-                        ${product.rate1_5 ? `<li>1-5 years: ${product.rate1_5}</li>` : ''}
-                        ${product.rate5_8 ? `<li>5-8 years: ${product.rate5_8}</li>` : ''}
-                        ${product.rate8Plus ? `<li>8+ years: ${product.rate8Plus}</li>` : ''}
+                        ${product.rate1_5 ? `<li><span data-i18n="rate-1-5">${i18n.t('rate-1-5')}</span> ${product.rate1_5}</li>` : ''}
+                        ${product.rate5_8 ? `<li><span data-i18n="rate-5-8">${i18n.t('rate-5-8')}</span> ${product.rate5_8}</li>` : ''}
+                        ${product.rate8Plus ? `<li><span data-i18n="rate-8-plus">${i18n.t('rate-8-plus')}</span> ${product.rate8Plus}</li>` : ''}
                     </ul>
                 </div>
             </div>
@@ -392,6 +412,7 @@ export class UnsecuredLoansPage {
 
         document.getElementById('product-info').innerHTML = infoHtml;
         document.getElementById('product-info').style.display = 'block';
+        i18n.updatePageText();
     }
 
     static getProductRate(tenorYears) {
@@ -460,13 +481,13 @@ export class UnsecuredLoansPage {
         }
 
         const resultsHtml = `
-            <h4>Maximum Loan by Income</h4>
+            <h4 data-i18n="max-loan-by-income">Maximum Loan by Income</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
                             <th data-i18n="tenor">Tenor</th>
-                            <th>Max Loan</th>
+                            <th data-i18n="max-loan">Max Loan</th>
                             <th data-i18n="monthly-payment">Monthly Payment</th>
                             <th data-i18n="total-payment">Total Payment</th>
                             <th data-i18n="total-interest">Total Interest</th>
@@ -527,13 +548,13 @@ export class UnsecuredLoansPage {
         }
 
         const resultsHtml = `
-            <h4>Maximum Loan by Installment</h4>
+            <h4 data-i18n="max-loan-by-installment">Maximum Loan by Installment</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
                             <th data-i18n="tenor">Tenor</th>
-                            <th>Max Loan</th>
+                            <th data-i18n="max-loan">Max Loan</th>
                             <th data-i18n="monthly-payment">Monthly Payment</th>
                             <th data-i18n="total-payment">Total Payment</th>
                             <th data-i18n="total-interest">Total Interest</th>
@@ -593,7 +614,7 @@ export class UnsecuredLoansPage {
         }
 
         const resultsHtml = `
-            <h4>Loan Payment Schedule</h4>
+            <h4 data-i18n="payment-schedule">Loan Payment Schedule</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>

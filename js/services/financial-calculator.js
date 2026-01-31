@@ -223,8 +223,7 @@ export class FinancialCalculator {
             bestResult,
             zeroLoanTotal,
             principal,
-            loanTerm,
-            loanRate // Include calculated loan rate in results
+            loanTerm
         };
     }
 

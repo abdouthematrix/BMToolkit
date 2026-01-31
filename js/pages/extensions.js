@@ -26,8 +26,8 @@ export class ExtensionsPage {
         return `
             <div class="container">
                 <div style="margin-bottom: var(--spacing-2xl);">
-                    <h1><i class="fas fa-puzzle-piece" style="color: var(--accent);"></i> Extensions</h1>
-                    <p class="text-muted">Advanced calculators for both secured and unsecured loans</p>
+                    <h1><i class="fas fa-puzzle-piece" style="color: var(--accent);"></i> <span data-i18n="extensions-title">Extensions</span></h1>
+                    <p class="text-muted" data-i18n="extensions-desc">Advanced calculators for both secured and unsecured loans</p>
                 </div>
 
                 <!-- Calculators Tabs -->
@@ -35,11 +35,11 @@ export class ExtensionsPage {
                     <div style="border-bottom: 2px solid var(--border-color); padding: var(--spacing-md); display: flex; gap: var(--spacing-sm); overflow-x: auto;">
                         <button class="tab-btn active" data-tab="first-month">
                             <i class="fas fa-calendar-day"></i>
-                            <span>First Month Interest</span>
+                            <span data-i18n="tab-first-month">First Month Interest</span>
                         </button>
                         <button class="tab-btn" data-tab="amortization">
                             <i class="fas fa-table"></i>
-                            <span>Amortization Schedule</span>
+                            <span data-i18n="tab-amortization">Amortization Schedule</span>
                         </button>
                     </div>
 
@@ -57,12 +57,12 @@ export class ExtensionsPage {
         return `
             <div class="tab-content active" data-tab-content="first-month">
                 <div class="card-body">
-                    <h3>First Month Interest Calculator</h3>
-                    <p class="text-muted">Calculate initial interest payment based on loan start date</p>
+                    <h3 data-i18n="first-month-interest">First Month Interest Calculator</h3>
+                    <p class="text-muted" data-i18n="first-month-interest-desc">Calculate initial interest payment based on loan start date</p>
 
                     <div class="info-box" style="margin-top: var(--spacing-lg);">
                         <i class="fas fa-info-circle"></i>
-                        <strong>How it works:</strong> When a loan starts mid-month, the first payment includes extra interest for the days between the start date and the first regular payment date (typically the 5th of the second month following the start date).
+                        <strong data-i18n="first-month-how-it-works">How it works:</strong> <span data-i18n="first-month-explanation">When a loan starts mid-month, the first payment includes extra interest for the days between the start date and the first regular payment date (typically the 5th of the second month following the start date).</span>
                     </div>
 
                     <form id="first-month-form" style="margin-top: var(--spacing-lg);">
@@ -87,7 +87,7 @@ export class ExtensionsPage {
                         <div class="form-group">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="is-years-first">
-                                <span data-i18n="months">Months (vs Years)</span>
+                                <span data-i18n="months-vs-years">Months (vs Years)</span>
                             </label>
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
@@ -112,12 +112,12 @@ export class ExtensionsPage {
         return `
             <div class="tab-content" data-tab-content="amortization">
                 <div class="card-body">
-                    <h3>Amortization Schedule</h3>
-                    <p class="text-muted">Detailed payment schedule with stamp duty calculations</p>
+                    <h3 data-i18n="amortization-schedule">Amortization Schedule</h3>
+                    <p class="text-muted" data-i18n="amortization-schedule-desc">Detailed payment schedule with stamp duty calculations</p>
 
                     <div class="info-box" style="margin-top: var(--spacing-lg);">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Stamp Duty:</strong> Applied quarterly (March, June, September, December) on the remaining balance at a rate per thousand.
+                        <strong data-i18n="stamp-duty-info">Stamp Duty:</strong> <span data-i18n="stamp-duty-explanation">Applied quarterly (March, June, September, December) on the remaining balance at a rate per thousand.</span>
                     </div>
 
                     <form id="amortization-form" style="margin-top: var(--spacing-lg);">
@@ -146,7 +146,7 @@ export class ExtensionsPage {
                         <div class="form-group">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="is-years-amort">
-                                <span data-i18n="months">Months (vs Years)</span>
+                                <span data-i18n="months-vs-years">Months (vs Years)</span>
                             </label>
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
@@ -230,40 +230,46 @@ export class ExtensionsPage {
             isYears
         });
 
+        // Create message with translated template
+        const firstPaymentMessage = i18n.t('first-payment-message')
+            .replace('{payment}', i18n.formatCurrency(result.totalFirstMonthlyPayment))
+            .replace('{interest}', i18n.formatCurrency(result.firstMonthInterest))
+            .replace('{days}', result.calculationDays);
+
         const resultsHtml = `
             <div class="highlight-box">
-                <h3><i class="fas fa-calendar-check"></i> First Month Calculation</h3>
+                <h3 data-i18n="first-month-calculation"><i class="fas fa-calendar-check"></i> ${i18n.t('first-month-calculation')}</h3>
                 <div class="grid grid-2" style="margin-top: var(--spacing-md);">
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">First Payment Date:</p>
+                        <p style="margin: 0; opacity: 0.9;">${i18n.t('first-payment-date')}</p>
                         <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${result.endDate.toLocaleDateString()}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Days Between Start and First Payment:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${result.daysBetween} days</p>
+                        <p style="margin: 0; opacity: 0.9;">${i18n.t('days-between')}</p>
+                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${result.daysBetween} ${i18n.t('table-number')}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Days Used for Interest Calculation:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${result.calculationDays} days</p>
+                        <p style="margin: 0; opacity: 0.9;">${i18n.t('calculation-days')}</p>
+                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${result.calculationDays} ${i18n.t('table-number')}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">First Month Interest:</p>
+                        <p style="margin: 0; opacity: 0.9;">${i18n.t('first-month-interest-amount')}</p>
                         <p style="font-size: 1.25rem; font-weight: 600; margin: 0; color: var(--accent);">${i18n.formatCurrency(result.firstMonthInterest)}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Regular Monthly Payment:</p>
+                        <p style="margin: 0; opacity: 0.9;">${i18n.t('regular-monthly-payment')}</p>
                         <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.monthlyPayment)}</p>
                     </div>
                 </div>
                 <div style="margin-top: var(--spacing-lg); padding-top: var(--spacing-lg); border-top: 1px solid rgba(255,255,255,0.3);">
-                    <p style="margin: 0; opacity: 0.9; font-size: 1.125rem;">Total First Month Payment:</p>
+                    <p style="margin: 0; opacity: 0.9; font-size: 1.125rem;">${i18n.t('total-first-payment')}</p>
                     <p style="font-size: 2rem; font-weight: 700; margin: var(--spacing-sm) 0 0 0; color: white;">${i18n.formatCurrency(result.totalFirstMonthlyPayment)}</p>
                 </div>
             </div>
 
             <div class="warning-box" style="margin-top: var(--spacing-lg);">
                 <i class="fas fa-exclamation-triangle"></i>
-                <strong>Note:</strong> Your first payment will be ${i18n.formatCurrency(result.totalFirstMonthlyPayment)}, which includes ${i18n.formatCurrency(result.firstMonthInterest)} in additional interest for the ${result.calculationDays} days before your regular payment schedule begins.
+                <strong>${i18n.t('first-payment-note')}</strong> ${firstPaymentMessage}
             </div>
         `;
 
@@ -302,37 +308,41 @@ export class ExtensionsPage {
             isYears
         });
 
+        // Create message with translated template
+        const stampDutyMessage = i18n.t('stamp-duty-message')
+            .replace('{rate}', stampDutyRate);
+
         const resultsHtml = `
             <div class="info-box">
-                <h4><i class="fas fa-chart-bar"></i> Summary</h4>
+                <h4><i class="fas fa-chart-bar"></i> ${i18n.t('summary')}</h4>
                 <div class="grid grid-3" style="margin-top: var(--spacing-md);">
                     <div>
-                        <strong>Regular Monthly Payment:</strong><br>
+                        <strong>${i18n.t('regular-monthly-payment')}</strong><br>
                         <span style="font-size: 1.25rem; color: var(--primary);">${i18n.formatCurrency(result.monthlyPayment)}</span>
                     </div>
                     <div>
-                        <strong>Total Interest:</strong><br>
+                        <strong>${i18n.t('total-interest')}</strong><br>
                         <span style="font-size: 1.25rem; color: var(--accent);">${i18n.formatCurrency(result.totalInterest)}</span>
                     </div>
                     <div>
-                        <strong>Total Stamp Duty:</strong><br>
+                        <strong>${i18n.t('total-stamp-duty')}</strong><br>
                         <span style="font-size: 1.25rem; color: var(--secondary);">${i18n.formatCurrency(result.totalStampDuty)}</span>
                     </div>
                 </div>
             </div>
 
-            <h4 style="margin-top: var(--spacing-xl);"><i class="fas fa-table"></i> Payment Schedule</h4>
+            <h4 style="margin-top: var(--spacing-xl);"><i class="fas fa-table"></i> ${i18n.t('payment-schedule')}</h4>
             <div class="results-table-wrapper" style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
                 <table class="results-table">
                     <thead style="position: sticky; top: 0; background: var(--bg-tertiary); z-index: 10;">
                         <tr>
-                            <th>#</th>
-                            <th>Payment Date</th>
-                            <th>Monthly Payment</th>
-                            <th>Interest</th>
-                            <th>Principal</th>
-                            <th>Stamp Duty</th>
-                            <th>Remaining Balance</th>
+                            <th>${i18n.t('table-number')}</th>
+                            <th>${i18n.t('payment-date')}</th>
+                            <th>${i18n.t('monthly-payment')}</th>
+                            <th>${i18n.t('interest')}</th>
+                            <th>${i18n.t('principal')}</th>
+                            <th>${i18n.t('stamp-duty')}</th>
+                            <th>${i18n.t('remaining-balance')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -353,7 +363,7 @@ export class ExtensionsPage {
 
             <div class="warning-box" style="margin-top: var(--spacing-lg);">
                 <i class="fas fa-info-circle"></i>
-                <strong>Stamp Duty Note:</strong> Stamp duty is charged quarterly on the remaining loan balance at ${stampDutyRate}‰ (per thousand). Highlighted rows show months where stamp duty is applied.
+                <strong>${i18n.t('stamp-duty-note')}</strong> ${stampDutyMessage}
             </div>
         `;
 

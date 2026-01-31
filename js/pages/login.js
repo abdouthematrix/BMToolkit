@@ -20,7 +20,7 @@ export class LoginPage {
                     <div class="card-header" style="text-align: center;">
                         <i class="fas fa-lock" style="font-size: 3rem; color: var(--primary); margin-bottom: var(--spacing-md);"></i>
                         <h2 class="card-title" data-i18n="admin-panel">Admin Panel</h2>
-                        <p class="text-muted">Login to manage rates and products</p>
+                        <p class="text-muted" data-i18n="login-panel-desc">Login to manage rates and products</p>
                     </div>
                     <div class="card-body">
                         <form id="login-form">
@@ -42,7 +42,7 @@ export class LoginPage {
                         <p class="text-muted" style="margin: 0;">
                             <a href="#home" style="color: var(--primary);">
                                 <i class="fas fa-arrow-left"></i>
-                                Back to Home
+                                <span data-i18n="back-to-home">Back to Home</span>
                             </a>
                         </p>
                     </div>
@@ -73,7 +73,7 @@ export class LoginPage {
                 window.location.hash = 'admin';
             }, 1000);
         } else {
-            window.app.showToast(result.error || 'Login failed', 'error');
+            window.app.showToast(result.error || i18n.t('login-failed'), 'error');
         }
     }
 }

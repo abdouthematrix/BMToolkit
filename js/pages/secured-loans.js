@@ -69,8 +69,8 @@ export class SecuredLoansPage {
                 <div class="info-box" style="margin-top: var(--spacing-lg);">
                     <i class="fas fa-info-circle"></i>
                     <p style="margin: 0;">
-                        <strong>Need First Month Interest or Amortization Schedule?</strong><br>
-                        Visit the <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a> page for advanced calculators that work with both secured and unsecured loans.
+                        <strong data-i18n="extensions-info">Need First Month Interest or Amortization Schedule?</strong><br>
+                        <span data-i18n="extensions-link-secured">Visit the Extensions page for advanced calculators that work with both secured and unsecured loans.</span> <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a>
                     </p>
                 </div>
             </div>
@@ -182,8 +182,8 @@ export class SecuredLoansPage {
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
-                                    <input type="number" id="min-tenor-loan" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
-                                    <input type="number" id="max-tenor-loan" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
+                                    <input type="number" id="min-tenor-loan" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="max-tenor-loan" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
                         </div>
@@ -217,7 +217,7 @@ export class SecuredLoansPage {
             <div class="tab-content" data-tab-content="max-loan">
                 <div class="card-body">
                     <h3 data-i18n="max-loan-calc">Maximum Loan Calculator</h3>
-                    <p class="text-muted" data-i18n="max-loan-desc">Calculate maximum loan based on monthly payment capacity</p>
+                    <p class="text-muted" data-i18n="max-loan-calc-desc">Calculate maximum loan based on monthly payment</p>
 
                     <!-- Form -->
                     <form id="max-loan-form" style="margin-top: var(--spacing-lg);">
@@ -233,8 +233,8 @@ export class SecuredLoansPage {
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
-                                    <input type="number" id="min-tenor-max" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
-                                    <input type="number" id="max-tenor-max" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
+                                    <input type="number" id="min-tenor-max" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="max-tenor-max" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
                         </div>
@@ -320,19 +320,19 @@ export class SecuredLoansPage {
         const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, tdRate, years, this.constants);
 
         const resultsHtml = `
-            <h4>Investment Scenarios Comparison</h4>
+            <h4 data-i18n="investment-scenarios">Investment Scenarios Comparison</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th>Scenario</th>
-                            <th>Loan Amount</th>
-                            <th>Monthly Interest</th>
-                            <th>Monthly Installment</th>
-                            <th>Net Monthly Payment</th>
-                            <th>Total Interest</th>
-                            <th>Loan Interest</th>
-                            <th>Final Amount</th>
+                            <th data-i18n="scenario">Scenario</th>
+                            <th data-i18n="loan-amount">Loan Amount</th>
+                            <th data-i18n="monthly-interest">Monthly Interest</th>
+                            <th data-i18n="monthly-payment">Monthly Installment</th>
+                            <th data-i18n="net-monthly">Net Monthly Payment</th>
+                            <th data-i18n="total-interest">Total Interest</th>
+                            <th data-i18n="loan-interest">Loan Interest</th>
+                            <th data-i18n="final-amount">Final Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -383,37 +383,33 @@ export class SecuredLoansPage {
 
         const resultsHtml = `
             <div class="highlight-box">
-                <h3><i class="fas fa-trophy"></i> Optimal Loan Configuration</h3>
+                <h3><i class="fas fa-trophy"></i> <span data-i18n="optimalLoanConfig">Optimal Loan Configuration<</span></h3>
                 <div class="grid grid-2" style="margin-top: var(--spacing-md);">
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Optimal Loan Amount:</p>
+                        <p style="margin: 0; opacity: 0.9;" data-i18n="optimalLoanAmount">Optimal Loan Amount:</p>
                         <p style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--primary);">${i18n.formatCurrency(result.bestResult.loanAmount)}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Monthly Net Profit:</p>
+                       <p style="margin:0; opacity:0.9;" data-i18n="monthlyNetProfit">Monthly Net Profit:</p>
                         <p style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--accent);">${i18n.formatCurrency(result.bestResult.netMonthlyProfit)}</p>
-                    </div>
+                    </div>                  
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Calculated Loan Rate:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${(result.loanRate * 100).toFixed(2)}%</p>
-                    </div>
-                    <div>
-                        <p style="margin: 0; opacity: 0.9;">Grand Total:</p>
+                        <p style="margin:0; opacity:0.9;" data-i18n="grandTotal">Grand Total:</p>
                         <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.bestResult.grandTotal)}</p>
                     </div>
                 </div>
             </div>
 
-            <h4 style="margin-top: var(--spacing-xl);">Detailed Results</h4>
+            <h4 style="margin-top: var(--spacing-xl);" data-i18n="detailed-results">Detailed Results</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th>Loan Amount</th>
-                            <th>Monthly Income</th>
-                            <th>Monthly Payment</th>
-                            <th>Net Monthly Profit</th>
-                            <th>Grand Total</th>
+                            <th data-i18n="loan-amount">Loan Amount</th>
+                            <th data-i18n="monthly-income-amount">Monthly Income</th>
+                            <th data-i18n="monthly-payment">Monthly Payment</th>
+                            <th data-i18n="net-monthly-profit">Net Monthly Profit</th>
+                            <th data-i18n="grand-total">Grand Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -459,7 +455,7 @@ export class SecuredLoansPage {
         const results = FinancialCalculator.calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears);
 
         const resultsHtml = `
-            <h4>Loan Payment Schedule</h4>
+            <h4 data-i18n="payment-schedule">Loan Payment Schedule</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
@@ -514,13 +510,13 @@ export class SecuredLoansPage {
         const results = FinancialCalculator.generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears);
 
         const resultsHtml = `
-            <h4>Maximum Loan Amounts</h4>
+            <h4 data-i18n="maximum-loan-amounts">Maximum Loan Amounts</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
                             <th data-i18n="tenor">Tenor</th>
-                            <th>Max Loan</th>
+                            <th data-i18n="max-loan">Max Loan</th>
                             <th data-i18n="monthly-payment">Monthly Payment</th>
                             <th data-i18n="total-payment">Total Payment</th>
                             <th data-i18n="total-interest">Total Interest</th>

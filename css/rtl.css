@@ -1,21 +1,241 @@
-/* RTL Overrides for Arabic Language */
+/* =================================
+   RTL Overrides for Arabic Language
+   ================================= */
 
+/* Base Direction */
 [dir="rtl"] {
     direction: rtl;
 }
 
-/* Navigation */
-[dir="rtl"] .main-nav {
-    flex-direction: row-reverse;
+    /* Typography - Keep numbers LTR */
+    [dir="rtl"] .number-display,
+    [dir="rtl"] .results-table td.number {
+        direction: ltr;
+        text-align: right;
+    }
+
+    /* =================================
+   HEADER & NAVIGATION
+   ================================= */
+
+    /* Header Content - Reverse flex direction */
+    [dir="rtl"] .header-content {
+        flex-direction: row-reverse;
+    }
+
+    /* Brand Logo - Reverse icon and text */
+    [dir="rtl"] .brand-logo {
+        flex-direction: row-reverse;
+    }
+
+    /* Main Navigation - Reverse order */
+    [dir="rtl"] .main-nav {
+        flex-direction: row-reverse;
+    }
+
+    /* Navigation Links - Reverse icon and text */
+    [dir="rtl"] .nav-link {
+        flex-direction: row-reverse;
+    }
+
+    /* Header Actions - Reverse order */
+    [dir="rtl"] .header-actions {
+        flex-direction: row-reverse;
+    }
+
+    /* Language Toggle Text */
+    [dir="rtl"] #lang-text {
+        margin-left: 0;
+        margin-right: 4px;
+    }
+
+    /* User Menu Dropdown Position */
+    [dir="rtl"] .user-menu-dropdown {
+        right: auto;
+        left: 0;
+    }
+
+    /* User Menu Button - Reverse icon and text */
+    [dir="rtl"] .user-menu-btn {
+        flex-direction: row-reverse;
+    }
+
+    /* Menu Items */
+    [dir="rtl"] .menu-item {
+        text-align: right;
+        flex-direction: row-reverse;
+    }
+
+    /* =================================
+   BUTTONS & ACTIONS
+   ================================= */
+
+    /* Primary Button - Reverse icon and text */
+    [dir="rtl"] .btn-primary {
+        flex-direction: row-reverse;
+    }
+
+    /* Secondary Button - Reverse icon and text */
+    [dir="rtl"] .btn-secondary {
+        flex-direction: row-reverse;
+    }
+
+    /* Tab Buttons - Reverse icon and text */
+    [dir="rtl"] .tab-btn {
+        flex-direction: row-reverse;
+    }
+
+    /* =================================
+   FORMS
+   ================================= */
+
+    /* Form Groups */
+    [dir="rtl"] .form-group {
+        text-align: right;
+    }
+
+    /* Form Labels */
+    [dir="rtl"] .form-label {
+        text-align: right;
+    }
+
+    /* Form Inputs */
+    [dir="rtl"] .form-input,
+    [dir="rtl"] .form-select,
+    [dir="rtl"] .form-textarea {
+        text-align: right;
+    }
+
+    /* Form Group with Icon - Reverse layout */
+    [dir="rtl"] .form-group-icon {
+        flex-direction: row-reverse;
+    }
+
+    /* Toggle Switch - Mirror position */
+    [dir="rtl"] .toggle-switch {
+        flex-direction: row-reverse;
+    }
+
+        [dir="rtl"] .toggle-switch input::before {
+            left: auto;
+            right: 2px;
+        }
+
+        [dir="rtl"] .toggle-switch input:checked::before {
+            transform: translateX(-24px);
+        }
+
+    /* =================================
+   CARDS & CONTENT
+   ================================= */
+
+    /* Card Headers */
+    [dir="rtl"] .card-header {
+        text-align: right;
+    }
+
+    /* Card Body */
+    [dir="rtl"] .card-body {
+        text-align: right;
+    }
+
+    /* Card Footer */
+    [dir="rtl"] .card-footer {
+        text-align: right;
+        flex-direction: row-reverse;
+    }
+
+    /* Card Title with Icon - Reverse layout */
+    [dir="rtl"] .card-title {
+        flex-direction: row-reverse;
+    }
+
+    /* Grid Items */
+    [dir="rtl"] .grid {
+        direction: rtl;
+    }
+
+    /* Flex Containers */
+    [dir="rtl"] .flex-row {
+        flex-direction: row-reverse;
+    }
+
+    /* =================================
+   TABLES
+   ================================= */
+
+    /* Table Cells */
+    [dir="rtl"] .results-table th,
+    [dir="rtl"] .results-table td {
+        text-align: right;
+    }
+
+    /* =================================
+   NOTIFICATIONS & ALERTS
+   ================================= */
+
+    /* Toast Container Position */
+    [dir="rtl"] #toast-container {
+        right: auto;
+        left: var(--spacing-lg);
+    }
+
+    /* Toast Borders */
+    [dir="rtl"] .toast.success,
+    [dir="rtl"] .toast.error,
+    [dir="rtl"] .toast.warning,
+    [dir="rtl"] .toast.info {
+        border-left: none;
+    }
+
+    [dir="rtl"] .toast.success {
+        border-right: 4px solid var(--secondary);
+    }
+
+    [dir="rtl"] .toast.error {
+        border-right: 4px solid #ef4444;
+    }
+
+    [dir="rtl"] .toast.warning {
+        border-right: 4px solid var(--accent);
+    }
+
+    [dir="rtl"] .toast.info {
+        border-right: 4px solid var(--primary);
+    }
+
+/* Toast Animation - Mirror slide direction */
+@keyframes slideInRTL {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
-[dir="rtl"] .header-content {
-    flex-direction: row-reverse;
+[dir="rtl"] .toast {
+    animation: slideInRTL 0.3s ease;
 }
 
-[dir="rtl"] .header-actions {
-    flex-direction: row-reverse;
+/* Warning Box */
+[dir="rtl"] .warning-box {
+    border-left: none;
+    border-right: 4px solid var(--accent);
 }
+
+/* Info Box */
+[dir="rtl"] .info-box {
+    border-left: none;
+    border-right: 4px solid var(--secondary);
+}
+
+/* =================================
+   UTILITY CLASSES
+   ================================= */
 
 /* Text Alignment */
 [dir="rtl"] .text-left {
@@ -26,37 +246,264 @@
     text-align: left;
 }
 
-/* Flex Direction */
-[dir="rtl"] .flex-row {
+/* =================================
+   MODAL
+   ================================= */
+
+/* Modal Header - Reverse layout */
+[dir="rtl"] .modal-header {
     flex-direction: row-reverse;
 }
 
-/* Grid Items */
-[dir="rtl"] .grid {
-    direction: rtl;
-}
-
-/* Form Elements */
-[dir="rtl"] .form-label {
+/* Modal Body */
+[dir="rtl"] .modal-body {
     text-align: right;
 }
 
-/* User Menu Dropdown Position */
-[dir="rtl"] .user-menu-dropdown {
+/* =================================
+   MOBILE RESPONSIVE
+   ================================= */
+
+@media (max-width: 768px) {
+    /* Mobile Navigation */
+    [dir="rtl"] .main-nav {
+        flex-direction: column;
+    }
+
+    /* Mobile Toast Container */
+    [dir="rtl"] #toast-container {
+        left: var(--spacing-sm);
+        right: var(--spacing-sm);
+    }
+}
+
+/* =================================
+   ADDITIONAL SPECIFIC ELEMENTS
+   ================================= */
+
+/* Lists */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+    padding-right: var(--spacing-lg);
+    padding-left: 0;
+}
+
+/* Loading Spinner */
+[dir="rtl"] .loading-spinner {
+    direction: ltr; /* Keep spinner direction consistent */
+}
+
+/* Icons in flex containers */
+[dir="rtl"] .icon-text {
+    flex-direction: row-reverse;
+}
+
+/* Badges */
+[dir="rtl"] .badge {
+    margin-left: 0;
+    margin-right: var(--spacing-sm);
+}
+
+/* Breadcrumbs */
+[dir="rtl"] .breadcrumb {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb-separator::before {
+    content: '\f104'; /* Left chevron for RTL */
+}
+
+/* Pagination */
+[dir="rtl"] .pagination {
+    flex-direction: row-reverse;
+}
+
+/* Progress Bars */
+[dir="rtl"] .progress-bar {
+    transform: scaleX(-1);
+}
+
+/* Dropdown Menus */
+[dir="rtl"] .dropdown-menu {
     right: auto;
     left: 0;
 }
 
-/* Card Elements */
-[dir="rtl"] .card-header,
-[dir="rtl"] .card-body,
-[dir="rtl"] .card-footer {
+/* Sidebar (if exists) */
+[dir="rtl"] .sidebar {
+    right: 0;
+    left: auto;
+}
+
+/* Checkboxes and Radio with labels */
+[dir="rtl"] .checkbox-wrapper,
+[dir="rtl"] .radio-wrapper {
+    flex-direction: row-reverse;
+}
+
+    [dir="rtl"] .checkbox-wrapper label,
+    [dir="rtl"] .radio-wrapper label {
+        margin-left: 0;
+        margin-right: var(--spacing-sm);
+    }
+
+/* Input Groups */
+[dir="rtl"] .input-group {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .input-group-prepend {
+    border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+}
+
+[dir="rtl"] .input-group-append {
+    border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+}
+
+/* Steps/Wizard */
+[dir="rtl"] .steps {
+    flex-direction: row-reverse;
+}
+
+/* Arrows */
+[dir="rtl"] .arrow-right {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .arrow-left {
+    transform: scaleX(-1);
+}
+
+/* Charts and Graphs - Keep LTR for data visualization */
+[dir="rtl"] .chart-container,
+[dir="rtl"] canvas.chart {
+    direction: ltr;
+}
+
+/* Search Boxes */
+[dir="rtl"] .search-box {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .search-icon {
+    left: auto;
+    right: var(--spacing-md);
+}
+
+/* File Upload */
+[dir="rtl"] .file-upload-wrapper {
+    flex-direction: row-reverse;
+}
+
+/* Stepper */
+[dir="rtl"] .stepper {
+    flex-direction: row-reverse;
+}
+
+/* Timeline */
+[dir="rtl"] .timeline {
+    border-left: none;
+    border-right: 2px solid var(--border-color);
+}
+
+[dir="rtl"] .timeline-item {
+    padding-left: 0;
+    padding-right: var(--spacing-lg);
+}
+
+/* Accordion */
+[dir="rtl"] .accordion-header {
+    flex-direction: row-reverse;
+}
+
+/* Rating Stars */
+[dir="rtl"] .rating-stars {
+    flex-direction: row-reverse;
+}
+
+/* Price Tags */
+[dir="rtl"] .price {
+    direction: ltr;
     text-align: right;
 }
 
-/* Numbers remain LTR */
-[dir="rtl"] .number-display,
-[dir="rtl"] .results-table td.number {
-    direction: ltr;
+/* Date Pickers */
+[dir="rtl"] .datepicker {
+    direction: rtl;
+}
+
+/* Time Pickers */
+[dir="rtl"] .timepicker {
+    direction: ltr; /* Keep time in LTR format */
+}
+
+/* Statistics Cards */
+[dir="rtl"] .stat-card {
     text-align: right;
+}
+
+[dir="rtl"] .stat-icon {
+    margin-left: var(--spacing-md);
+    margin-right: 0;
+}
+
+/* Alert Dialogs */
+[dir="rtl"] .alert {
+    text-align: right;
+}
+
+[dir="rtl"] .alert-icon {
+    margin-left: var(--spacing-sm);
+    margin-right: 0;
+}
+
+/* Tooltips */
+[dir="rtl"] .tooltip {
+    direction: rtl;
+}
+
+/* Popovers */
+[dir="rtl"] .popover {
+    direction: rtl;
+}
+
+/* Code Blocks - Keep LTR */
+[dir="rtl"] pre,
+[dir="rtl"] code {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Footer Links */
+[dir="rtl"] .footer-links {
+    flex-direction: row-reverse;
+}
+
+/* Social Icons */
+[dir="rtl"] .social-icons {
+    flex-direction: row-reverse;
+}
+
+/* Dividers with Text */
+[dir="rtl"] .divider-text {
+    flex-direction: row-reverse;
+}
+
+/* Empty State Icons */
+[dir="rtl"] .empty-state {
+    direction: ltr; /* Keep illustrations consistent */
+}
+
+/* =================================
+   PRINT STYLES
+   ================================= */
+
+@media print {
+    [dir="rtl"] {
+        direction: rtl;
+    }
+
+        [dir="rtl"] body {
+            text-align: right;
+        }
 }

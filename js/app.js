@@ -6,6 +6,7 @@ import { AuthService } from './services/auth.js';
 import { HomePage } from './pages/home.js';
 import { SecuredLoansPage } from './pages/secured-loans.js';
 import { UnsecuredLoansPage } from './pages/unsecured-loans.js';
+import { ExtensionsPage } from './pages/extensions.js';
 import { LoginPage } from './pages/login.js';
 import { AdminPage } from './pages/admin.js';
 
@@ -40,6 +41,10 @@ class App {
 
         this.router.register('unsecured-loans', () => UnsecuredLoansPage.init(), {
             title: 'BMToolkit - Unsecured Loans'
+        });
+
+        this.router.register('extensions', () => ExtensionsPage.init(), {
+            title: 'BMToolkit - Extensions'
         });
 
         this.router.register('login', () => LoginPage.init(), {

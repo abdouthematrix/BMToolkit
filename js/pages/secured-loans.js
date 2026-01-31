@@ -61,6 +61,15 @@ export class SecuredLoansPage {
                         ${this.renderMaxLoanTab()}
                     </div>
                 </div>
+
+                <!-- Link to Extensions -->
+                <div class="info-box" style="margin-top: var(--spacing-lg);">
+                    <i class="fas fa-info-circle"></i>
+                    <p style="margin: 0;">
+                        <strong>Need First Month Interest or Amortization Schedule?</strong><br>
+                        Visit the <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a> page for advanced calculators that work with both secured and unsecured loans.
+                    </p>
+                </div>
             </div>
         `;
     }
@@ -320,6 +329,17 @@ export class SecuredLoansPage {
         const cdRate = parseFloat(document.getElementById('cd-rate').value) / 100;
         const years = parseInt(document.getElementById('td-years').value);
 
+        // Update URL parameters
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                calc: 'smart-investment',
+                amount: tdAmount,
+                rate: (cdRate * 100).toFixed(2),
+                years: years
+            });
+        }
+
         const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, cdRate, years);
 
         // Find best scenario
@@ -377,6 +397,18 @@ export class SecuredLoansPage {
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
         const loanRate = parseFloat(document.getElementById('loan-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
+
+        // Update URL parameters
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                calc: 'smart-optimizer',
+                principal: principal,
+                cdRate: (cdRate * 100).toFixed(2),
+                loanRate: (loanRate * 100).toFixed(2),
+                term: loanTerm
+            });
+        }
 
         const result = await FinancialCalculator.calculateSmartLoan({
             principal,
@@ -448,6 +480,19 @@ export class SecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-loan').value);
         const isYears = document.getElementById('is-years-loan').checked;
 
+        // Update URL parameters
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                calc: 'loan-calculator',
+                principal: principal,
+                rate: (annualRate * 100).toFixed(2),
+                minTenor: minTenor,
+                maxTenor: maxTenor,
+                unit: isYears ? 'years' : 'months'
+            });
+        }
+
         const results = FinancialCalculator.calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears);
 
         const resultsHtml = `
@@ -489,6 +534,19 @@ export class SecuredLoansPage {
         const minTenor = parseInt(document.getElementById('min-tenor-max').value);
         const maxTenor = parseInt(document.getElementById('max-tenor-max').value);
         const isYears = document.getElementById('is-years-max').checked;
+
+        // Update URL parameters
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                calc: 'max-loan',
+                payment: monthlyPayment,
+                rate: (annualRate * 100).toFixed(2),
+                minTenor: minTenor,
+                maxTenor: maxTenor,
+                unit: isYears ? 'years' : 'months'
+            });
+        }
 
         const results = FinancialCalculator.generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears);
 

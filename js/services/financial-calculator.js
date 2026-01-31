@@ -26,13 +26,18 @@ export class FinancialCalculator {
     // ===== SECURED LOANS =====
 
     // Smart Investment Tool - Calculate single scenario
-    static calculateScenario(tdAmount, tdRate, years, loanPercent = 0, reinvest = false) {
+    static calculateScenario(tdAmount, tdRate, years, loanPercent = 0, reinvest = false, constants = {}) {
         const months = years * 12;
         const monthlyCertInterest = (tdAmount * tdRate) / 12;
         const totalCertInterest = tdAmount * tdRate * years;
 
         let loan = this.roundTo100(tdAmount * loanPercent / 100);
-        const loanAnnualRate = Math.max(tdRate + 0.02, 0.18);
+
+        // Use constants with fallback defaults
+        const tdMargin = constants.TD_MARGIN !== undefined ? constants.TD_MARGIN : 0.02;
+        const minRate = constants.MIN_RATE !== undefined ? constants.MIN_RATE : 0.18;
+        const loanAnnualRate = Math.max(tdRate + tdMargin, minRate);
+
         const monthlyLoanRate = loanAnnualRate / 12;
         const monthlyInstallment = loan > 0 ? this.PMT(monthlyLoanRate, months, loan) : 0;
         const loanInterest = (monthlyInstallment * months) - loan;
@@ -76,25 +81,65 @@ export class FinancialCalculator {
     }
 
     // Smart Investment Tool - All 4 scenarios
-    static calculateAllScenarios(tdAmount, tdRate, years) {
-        const scenarios = [
-            { title: 'شهادة فقط', titleEn: 'Certificate Only', loanPercent: 0, reinvest: false },
-            { title: 'الحد الاقصى للقرض', titleEn: 'Maximum Loan', loanPercent: 90, reinvest: false },
-            { title: 'الفائدة مقدماً', titleEn: 'Interest Upfront', loanPercent: 36, reinvest: false },
-            { title: 'قرض وشهادة', titleEn: 'Loan + Certificate', loanPercent: 58, reinvest: true }
+    static calculateAllScenarios(tdAmount, tdRate, years, constants = {}) {
+        // Use constants with fallback defaults
+        const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
+            ? constants.MAX_LOAN_PERCENT * 100
+            : 90;
+
+        const scenarios = constants.SCENARIOS || {
+            INTEREST_UPFRONT_PERCENT: 36,
+            LOAN_CERTIFICATE_PERCENT: 58
+        };
+
+        const scenariosList = [
+            {
+                title: 'شهادة فقط',
+                titleEn: 'Certificate Only',
+                loanPercent: 0,
+                reinvest: false
+            },
+            {
+                title: 'الحد الاقصى للقرض',
+                titleEn: 'Maximum Loan',
+                loanPercent: maxLoanPercent,
+                reinvest: false
+            },
+            {
+                title: 'الفائدة مقدماً',
+                titleEn: 'Interest Upfront',
+                loanPercent: scenarios.INTEREST_UPFRONT_PERCENT,
+                reinvest: false
+            },
+            {
+                title: 'قرض وشهادة',
+                titleEn: 'Loan + Certificate',
+                loanPercent: scenarios.LOAN_CERTIFICATE_PERCENT,
+                reinvest: true
+            }
         ];
 
-        return scenarios.map(scenario => ({
+        return scenariosList.map(scenario => ({
             ...scenario,
-            ...this.calculateScenario(tdAmount, tdRate, years, scenario.loanPercent, scenario.reinvest)
+            ...this.calculateScenario(tdAmount, tdRate, years, scenario.loanPercent, scenario.reinvest, constants)
         }));
     }
 
     // Smart Loan Investment Optimizer (0-90%)
-    static async calculateSmartLoan(inputs) {
-        const { principal, cdRate, loanRate, loanTerm } = inputs;
+    static async calculateSmartLoan(inputs, constants = {}) {
+        const { principal, cdRate, loanTerm } = inputs;
 
-        const maxLoan = principal * 0.9;
+        // Use constants with fallback defaults
+        const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
+            ? constants.MAX_LOAN_PERCENT
+            : 0.9;
+        const tdMargin = constants.TD_MARGIN !== undefined ? constants.TD_MARGIN : 0.02;
+        const minRate = constants.MIN_RATE !== undefined ? constants.MIN_RATE : 0.18;
+
+        // Calculate loan rate from CD rate using constants
+        const loanRate = Math.max(cdRate + tdMargin, minRate);
+
+        const maxLoan = principal * maxLoanPercent;
         const monthlyRate = loanRate / 12;
         const cdMonthlyRate = cdRate / 12;
 
@@ -178,7 +223,8 @@ export class FinancialCalculator {
             bestResult,
             zeroLoanTotal,
             principal,
-            loanTerm
+            loanTerm,
+            loanRate // Include calculated loan rate in results
         };
     }
 
@@ -209,8 +255,13 @@ export class FinancialCalculator {
     // ===== UNSECURED LOANS =====
 
     // Max Loan by Income
-    static calculateByIncome(inputs) {
-        const { annualRate, minTenor, maxTenor, monthlyIncome, monthlyInstallments, maxDTI, isYears } = inputs;
+    static calculateByIncome(inputs, constants = {}) {
+        const { annualRate, minTenor, maxTenor, monthlyIncome, monthlyInstallments, isYears } = inputs;
+
+        // Use constants with fallback defaults
+        const maxDTI = inputs.maxDTI !== undefined
+            ? inputs.maxDTI
+            : (constants.MAX_DBR_RATIO !== undefined ? constants.MAX_DBR_RATIO : 0.50);
 
         const maxMonthlyPayment = (monthlyIncome * maxDTI) - monthlyInstallments;
 

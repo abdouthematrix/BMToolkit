@@ -5,23 +5,26 @@ import { FinancialCalculator } from '../services/financial-calculator.js';
 import { FirestoreService } from '../services/firestore.js';
 
 export class SecuredLoansPage {
+    static constants = null;
+
     static async init() {
         const router = window.app?.router;
         if (router) {
             router.render(this.render());
             i18n.updatePageText();
-            this.attachEventListeners();
             await this.loadConstants();
+            this.attachEventListeners();
         }
     }
 
     static async loadConstants() {
-        const constants = await FirestoreService.getConstants();
-        
+        this.constants = await FirestoreService.getConstants();
+
         // Update form defaults
-        document.getElementById('cd-rate').value = (constants.CD_RATE * 100).toFixed(2);
-        document.getElementById('cd-rate-optimizer').value = (constants.CD_RATE * 100).toFixed(2);
-        document.getElementById('loan-rate-optimizer').value = ((constants.CD_RATE + constants.TD_MARGIN) * 100).toFixed(2);
+        document.getElementById('cd-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
+        document.getElementById('cd-rate-optimizer').value = (this.constants.CD_RATE * 100).toFixed(2);
+
+        // Note: loan-rate-optimizer field removed - calculated automatically from CD rate
     }
 
     static render() {
@@ -135,10 +138,6 @@ export class SecuredLoansPage {
                                 <input type="number" id="cd-rate-optimizer" class="form-input" value="16" min="0" max="100" step="0.1" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Loan Rate (%)</label>
-                                <input type="number" id="loan-rate-optimizer" class="form-input" value="18" min="0" max="100" step="0.1" required>
-                            </div>
-                            <div class="form-group">
                                 <label class="form-label" data-i18n="loan-term">Loan Term (Months)</label>
                                 <input type="number" id="loan-term-optimizer" class="form-input" value="36" min="1" max="120" step="1" required>
                             </div>
@@ -146,7 +145,7 @@ export class SecuredLoansPage {
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-search"></i>
-                                <span>Find Optimal Loan</span>
+                                <span data-i18n="find-optimal">Find Optimal Loan</span>
                             </button>
                             <button type="reset" class="btn-secondary">
                                 <i class="fas fa-redo"></i>
@@ -167,21 +166,21 @@ export class SecuredLoansPage {
             <div class="tab-content" data-tab-content="loan-calculator">
                 <div class="card-body">
                     <h3 data-i18n="loan-calculator">Loan Calculator</h3>
-                    <p class="text-muted" data-i18n="loan-calculator-desc">Calculate loan payments for multiple tenors</p>
+                    <p class="text-muted" data-i18n="loan-calculator-desc">Calculate monthly payments for different tenors</p>
 
                     <!-- Form -->
                     <form id="loan-calculator-form" style="margin-top: var(--spacing-lg);">
-                        <div class="grid grid-3">
+                        <div class="grid grid-2">
                             <div class="form-group">
-                                <label class="form-label" data-i18n="principal">Principal Amount</label>
+                                <label class="form-label" data-i18n="principal">Loan Amount</label>
                                 <input type="number" id="principal-loan" class="form-input" value="100000" min="0" step="1000" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" data-i18n="interest-rate">Interest Rate (%)</label>
+                                <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
                                 <input type="number" id="rate-loan" class="form-input" value="18" min="0" max="100" step="0.1" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Tenor Range</label>
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
                                     <input type="number" id="min-tenor-loan" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
                                     <input type="number" id="max-tenor-loan" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
@@ -217,22 +216,22 @@ export class SecuredLoansPage {
         return `
             <div class="tab-content" data-tab-content="max-loan">
                 <div class="card-body">
-                    <h3 data-i18n="max-loan-calc">Max Loan Calculator</h3>
-                    <p class="text-muted" data-i18n="max-loan-calc-desc">Find maximum loan based on monthly payment</p>
+                    <h3 data-i18n="max-loan-calc">Maximum Loan Calculator</h3>
+                    <p class="text-muted" data-i18n="max-loan-desc">Calculate maximum loan based on monthly payment capacity</p>
 
                     <!-- Form -->
                     <form id="max-loan-form" style="margin-top: var(--spacing-lg);">
-                        <div class="grid grid-3">
+                        <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="monthly-payment">Monthly Payment Capacity</label>
                                 <input type="number" id="monthly-payment-max" class="form-input" value="5000" min="0" step="100" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" data-i18n="interest-rate">Interest Rate (%)</label>
+                                <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
                                 <input type="number" id="rate-max" class="form-input" value="18" min="0" max="100" step="0.1" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Tenor Range</label>
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
                                 <div style="display: flex; gap: var(--spacing-sm);">
                                     <input type="number" id="min-tenor-max" class="form-input" value="1" min="1" max="10" placeholder="Min" required>
                                     <input type="number" id="max-tenor-max" class="form-input" value="5" min="1" max="10" placeholder="Max" required>
@@ -269,64 +268,41 @@ export class SecuredLoansPage {
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.dataset.tab;
-                this.switchTab(tab);
+
+                // Update active states
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                e.currentTarget.classList.add('active');
+                document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
             });
         });
 
-        // Smart Investment Form
-        const smartInvestmentForm = document.getElementById('smart-investment-form');
-        if (smartInvestmentForm) {
-            smartInvestmentForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.calculateSmartInvestment();
-            });
-        }
-
-        // Smart Optimizer Form
-        const smartOptimizerForm = document.getElementById('smart-optimizer-form');
-        if (smartOptimizerForm) {
-            smartOptimizerForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.calculateSmartOptimizer();
-            });
-        }
-
-        // Loan Calculator Form
-        const loanCalculatorForm = document.getElementById('loan-calculator-form');
-        if (loanCalculatorForm) {
-            loanCalculatorForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.calculateLoan();
-            });
-        }
-
-        // Max Loan Form
-        const maxLoanForm = document.getElementById('max-loan-form');
-        if (maxLoanForm) {
-            maxLoanForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.calculateMaxLoan();
-            });
-        }
-    }
-
-    static switchTab(tab) {
-        // Update buttons
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
+        // Form submissions
+        document.getElementById('smart-investment-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateSmartInvestment();
         });
-        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
 
-        // Update content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
+        document.getElementById('smart-optimizer-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateSmartOptimizer();
         });
-        document.querySelector(`[data-tab-content="${tab}"]`).classList.add('active');
+
+        document.getElementById('loan-calculator-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateLoan();
+        });
+
+        document.getElementById('max-loan-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateMaxLoan();
+        });
     }
 
     static calculateSmartInvestment() {
         const tdAmount = parseFloat(document.getElementById('td-amount').value);
-        const cdRate = parseFloat(document.getElementById('cd-rate').value) / 100;
+        const tdRate = parseFloat(document.getElementById('cd-rate').value) / 100;
         const years = parseInt(document.getElementById('td-years').value);
 
         // Update URL parameters
@@ -335,55 +311,45 @@ export class SecuredLoansPage {
             router.updateQueryParams({
                 calc: 'smart-investment',
                 amount: tdAmount,
-                rate: (cdRate * 100).toFixed(2),
+                rate: (tdRate * 100).toFixed(2),
                 years: years
             });
         }
 
-        const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, cdRate, years);
-
-        // Find best scenario
-        let bestScenario = scenarios[0];
-        scenarios.forEach(scenario => {
-            if (scenario.finalAmount > bestScenario.finalAmount) {
-                bestScenario = scenario;
-            }
-        });
+        // Pass constants to calculator
+        const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, tdRate, years, this.constants);
 
         const resultsHtml = `
-            <h4><span data-i18n="scenario">Comparison Results</span></h4>
+            <h4>Investment Scenarios Comparison</h4>
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>
                         <tr>
-                            <th data-i18n="scenario">Scenario</th>
-                            <th data-i18n="loan-amount">Loan Amount</th>
-                            <th data-i18n="monthly-interest">Monthly Interest</th>
-                            <th data-i18n="monthly-payment">Monthly Payment</th>
-                            <th data-i18n="net-monthly">Net Monthly</th>
-                            <th data-i18n="total-interest">Total Interest</th>
-                            <th data-i18n="final-amount">Final Amount</th>
+                            <th>Scenario</th>
+                            <th>Loan Amount</th>
+                            <th>Monthly Interest</th>
+                            <th>Monthly Installment</th>
+                            <th>Net Monthly Payment</th>
+                            <th>Total Interest</th>
+                            <th>Loan Interest</th>
+                            <th>Final Amount</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${scenarios.map(scenario => `
-                            <tr class="${scenario === bestScenario ? 'best-option' : ''}">
-                                <td>${i18n.currentLanguage === 'ar' ? scenario.title : scenario.titleEn}</td>
+                        ${scenarios.map((scenario, index) => `
+                            <tr class="${index === scenarios.length - 1 ? 'best-option' : ''}">
+                                <td><strong>${i18n.currentLanguage === 'ar' ? scenario.title : scenario.titleEn}</strong></td>
                                 <td class="number-display">${i18n.formatCurrency(scenario.loan)}</td>
                                 <td class="number-display">${i18n.formatCurrency(scenario.monthlyInterest)}</td>
                                 <td class="number-display">${i18n.formatCurrency(scenario.monthlyInstallment)}</td>
                                 <td class="number-display">${i18n.formatCurrency(scenario.netMonthlyPay)}</td>
                                 <td class="number-display">${i18n.formatCurrency(scenario.totalInterest)}</td>
+                                <td class="number-display">${i18n.formatCurrency(scenario.loanInterest)}</td>
                                 <td class="number-display font-bold">${i18n.formatCurrency(scenario.finalAmount)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
                 </table>
-            </div>
-            <div class="highlight-box" style="margin-top: var(--spacing-lg);">
-                <h3><i class="fas fa-trophy"></i> <span data-i18n="best-option">Best Option</span></h3>
-                <p>${i18n.currentLanguage === 'ar' ? bestScenario.title : bestScenario.titleEn}</p>
-                <p style="font-size: 1.5rem; font-weight: 700; margin: 0;">${i18n.formatCurrency(bestScenario.finalAmount)}</p>
             </div>
         `;
 
@@ -395,7 +361,6 @@ export class SecuredLoansPage {
     static async calculateSmartOptimizer() {
         const principal = parseFloat(document.getElementById('principal-optimizer').value);
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
-        const loanRate = parseFloat(document.getElementById('loan-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
 
         // Update URL parameters
@@ -405,34 +370,32 @@ export class SecuredLoansPage {
                 calc: 'smart-optimizer',
                 principal: principal,
                 cdRate: (cdRate * 100).toFixed(2),
-                loanRate: (loanRate * 100).toFixed(2),
                 term: loanTerm
             });
         }
 
+        // Pass constants to calculator (loan rate will be calculated inside)
         const result = await FinancialCalculator.calculateSmartLoan({
             principal,
             cdRate,
-            loanRate,
             loanTerm
-        });
+        }, this.constants);
 
         const resultsHtml = `
             <div class="highlight-box">
-                <h3><i class="fas fa-star"></i> Optimal Loan Amount</h3>
-                <p style="font-size: 2rem; font-weight: 700; margin: var(--spacing-md) 0;">${i18n.formatCurrency(result.bestResult.loanAmount)}</p>
+                <h3><i class="fas fa-trophy"></i> Optimal Loan Configuration</h3>
                 <div class="grid grid-2" style="margin-top: var(--spacing-md);">
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Monthly Income:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.bestResult.totalMonthlyIncome)}</p>
+                        <p style="margin: 0; opacity: 0.9;">Optimal Loan Amount:</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--primary);">${i18n.formatCurrency(result.bestResult.loanAmount)}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Monthly Payment:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.bestResult.monthlyPayment)}</p>
+                        <p style="margin: 0; opacity: 0.9;">Monthly Net Profit:</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; margin: 0; color: var(--accent);">${i18n.formatCurrency(result.bestResult.netMonthlyProfit)}</p>
                     </div>
                     <div>
-                        <p style="margin: 0; opacity: 0.9;">Net Monthly Profit:</p>
-                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.bestResult.netMonthlyProfit)}</p>
+                        <p style="margin: 0; opacity: 0.9;">Calculated Loan Rate:</p>
+                        <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${(result.loanRate * 100).toFixed(2)}%</p>
                     </div>
                     <div>
                         <p style="margin: 0; opacity: 0.9;">Grand Total:</p>

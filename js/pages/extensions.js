@@ -81,7 +81,7 @@ export class ExtensionsPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="loan-term">Loan Term</label>
-                                <input type="number" id="loan-term-first" class="form-input" value="36" min="1" max="120" required>
+                                <input type="number" id="loan-term-first" class="form-input" value="3" min="1" max="180" required>
                             </div>
                         </div>
                         <div class="form-group">
@@ -136,11 +136,11 @@ export class ExtensionsPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="loan-term">Loan Term</label>
-                                <input type="number" id="loan-term-amort" class="form-input" value="36" min="1" max="120" required>
+                                <input type="number" id="loan-term-amort" class="form-input" value="3" min="1" max="180" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="stamp-duty-rate">Stamp Duty Rate (‰)</label>
-                                <input type="number" id="stamp-duty-rate" class="form-input" value="4" min="0" step="0.1" required>
+                                <input type="number" id="stamp-duty-rate" class="form-input" value="0.5" min="0" step="0.1" required>
                             </div>
                         </div>
                         <div class="form-group">

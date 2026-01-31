@@ -32,7 +32,12 @@ export class FirestoreService {
             MIN_RATE: 0.18,
             MAX_LOAN_PERCENT: 0.90,
             MAX_DBR_RATIO: 0.50,
-            STAMP_DUTY_RATE: 4 // per thousand
+            STAMP_DUTY_RATE: 0.50, // per thousand
+            // Scenario percentages for Smart Investment Tool
+            SCENARIOS: {
+                INTEREST_UPFRONT_PERCENT: 36,
+                LOAN_CERTIFICATE_PERCENT: 58
+            }
         };
     }
 
@@ -106,11 +111,11 @@ export class FirestoreService {
     static filterProducts(products, criteria) {
         return products.filter(product => {
             let match = true;
-            
+
             if (criteria.sector && product.sector !== criteria.sector) match = false;
             if (criteria.payrollType && product.payrollType !== criteria.payrollType) match = false;
             if (criteria.companySegment && product.companySegment !== criteria.companySegment) match = false;
-            
+
             return match;
         });
     }

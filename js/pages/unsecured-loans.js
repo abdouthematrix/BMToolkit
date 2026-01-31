@@ -7,6 +7,7 @@ import { FirestoreService } from '../services/firestore.js';
 export class UnsecuredLoansPage {
     static products = [];
     static selectedProduct = null;
+    static constants = null;
 
     static async init() {
         const router = window.app?.router;
@@ -14,7 +15,18 @@ export class UnsecuredLoansPage {
             router.render(this.render());
             i18n.updatePageText();
             await this.loadProducts();
+            await this.loadConstants();
             this.attachEventListeners();
+        }
+    }
+
+    static async loadConstants() {
+        this.constants = await FirestoreService.getConstants();
+
+        // Update form default for max DTI
+        const maxDtiInput = document.getElementById('max-dti');
+        if (maxDtiInput && this.constants.MAX_DBR_RATIO) {
+            maxDtiInput.value = (this.constants.MAX_DBR_RATIO * 100).toFixed(0);
         }
     }
 
@@ -309,7 +321,7 @@ export class UnsecuredLoansPage {
     static populateProductSelect() {
         const select = document.getElementById('product-select');
         select.innerHTML = '<option value="">Select a product</option>';
-        
+
         this.products.forEach((product, index) => {
             const option = document.createElement('option');
             option.value = index;
@@ -333,7 +345,7 @@ export class UnsecuredLoansPage {
 
         const select = document.getElementById('product-select');
         select.innerHTML = '<option value="">Select a product</option>';
-        
+
         filtered.forEach((product, index) => {
             const option = document.createElement('option');
             const originalIndex = this.products.indexOf(product);
@@ -435,7 +447,7 @@ export class UnsecuredLoansPage {
                 monthlyInstallments,
                 maxDTI,
                 isYears
-            });
+            }, this.constants); // Pass constants
 
             if (!result.error && result.length > 0) {
                 results.push(...result);

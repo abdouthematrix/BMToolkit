@@ -73,7 +73,7 @@ Document ID: `global`
   "MIN_RATE": 0.18,
   "MAX_LOAN_PERCENT": 0.90,
   "MAX_DBR_RATIO": 0.50,
-  "STAMP_DUTY_RATE": 4
+  "STAMP_DUTY_RATE": 0.5
 }
 ```
 

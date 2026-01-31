@@ -65,12 +65,12 @@ export class SecuredLoansPage {
                     </div>
                 </div>
 
-                <!-- Link to Extensions -->
+                <!-- Link to advancedtools -->
                 <div class="info-box" style="margin-top: var(--spacing-lg);">
                     <i class="fas fa-info-circle"></i>
                     <p style="margin: 0;">
-                        <strong data-i18n="extensions-info">Need First Month Interest or Amortization Schedule?</strong><br>
-                        <span data-i18n="extensions-link-secured">Visit the Extensions page for advanced calculators that work with both secured and unsecured loans.</span> <a href="#extensions" style="color: var(--primary); font-weight: 600;">Extensions</a>
+                        <strong data-i18n="advancedtools-info">Need First Month Interest or Amortization Schedule?</strong><br>
+                        <span data-i18n="advancedtools-link-secured">Visit the Advanced Tools page for advanced calculators that work with both secured and unsecured loans.</span> <a href="#advancedtools" style="color: var(--primary); font-weight: 600;">Advanced Tools</a>
                     </p>
                 </div>
             </div>

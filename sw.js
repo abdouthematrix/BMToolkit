@@ -17,7 +17,7 @@ const urlsToCache = [
   './js/pages/home.js',
   './js/pages/secured-loans.js',
   './js/pages/unsecured-loans.js',
-  './js/pages/extensions.js',
+  './js/pages/advancedtools.js',
   './js/pages/login.js',
   './js/pages/admin.js'
 ];

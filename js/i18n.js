@@ -17,7 +17,7 @@ export class I18n {
                 'nav-home': 'Home',
                 'nav-secured': 'Secured Loans (CDs)',
                 'nav-unsecured': 'Cash Loans',
-                'nav-extensions': 'Advanced Tools',
+                'nav-advancedtools': 'Advanced Tools',
                 'nav-admin': 'Settings',
 
                 // Home Page
@@ -52,9 +52,9 @@ export class I18n {
                 'loan-schedule': 'Payment Schedule',
                 'loan-schedule-desc': 'View your complete repayment timeline',
 
-                // Extensions
-                'extensions-title': 'Advanced Tools',
-                'extensions-desc': 'Deep-dive calculations for specialized scenarios',
+                // advancedtools
+                'advancedtools-title': 'Advanced Tools',
+                'advancedtools-desc': 'Deep-dive calculations for specialized scenarios',
                 'first-month-interest': 'Broken Period Interest',
                 'first-month-interest-desc': 'Calculate interest for the partial first month',
                 'amortization-schedule': 'Full Amortization',
@@ -208,9 +208,9 @@ export class I18n {
                 // Info Messages
                 'important-note': 'Please Note',
                 'admin-warning': '⚠️ Changes here affect calculations for all users immediately.',
-                'extensions-info': 'Need detailed schedules?',
-                'extensions-link': 'Check the Advanced Tools section.',
-                'extensions-link-secured': 'Check Advanced Tools for detailed amortization schedules.',
+                'advancedtools-info': 'Need detailed schedules?',
+                'advancedtools-link': 'Check the Advanced Tools section.',
+                'advancedtools-link-secured': 'Check Advanced Tools for detailed amortization schedules.',
                 'first-month-how-it-works': 'Understanding the First Payment:',
                 'first-month-explanation': 'If your loan starts mid-month, the first payment is higher because it covers the extra days before your regular billing cycle begins.',
                 'stamp-duty-info': 'About Stamp Duty:',
@@ -249,7 +249,7 @@ export class I18n {
                 'nav-home': 'الرئيسية',
                 'nav-secured': 'قروض بضمان (شهادات)',
                 'nav-unsecured': 'القروض النقدية',
-                'nav-extensions': 'أدوات متقدمة',
+                'nav-advancedtools': 'أدوات متقدمة',
                 'nav-admin': 'الإعدادات',
 
                 // Home Page
@@ -284,9 +284,9 @@ export class I18n {
                 'loan-schedule': 'جدول السداد',
                 'loan-schedule-desc': 'عرض تفصيلي لتواريخ وقيم الدفعات',
 
-                // Extensions
-                'extensions-title': 'أدوات متقدمة',
-                'extensions-desc': 'حسابات دقيقة للسيناريوهات المعقدة',
+                // advancedtools
+                'advancedtools-title': 'أدوات متقدمة',
+                'advancedtools-desc': 'حسابات دقيقة للسيناريوهات المعقدة',
                 'first-month-interest': 'فائدة كسر الشهر',
                 'first-month-interest-desc': 'حساب الفائدة عن الأيام الأولى قبل انتظام الجدول',
                 'amortization-schedule': 'جدول الاستهلاك الكامل',
@@ -441,9 +441,9 @@ export class I18n {
                 // Info Messages
                 'important-note': 'ملاحظة هامة',
                 'admin-warning': '⚠️ انتبه: أي تغيير هنا سيؤثر فوراً على جميع الحسابات للمستخدمين.',
-                'extensions-info': 'تريد جدول سداد مفصل؟',
-                'extensions-link': 'اذهب للأدوات المتقدمة',
-                'extensions-link-secured': 'اذهب للأدوات المتقدمة للحصول على جداول الاستهلاك.',
+                'advancedtools-info': 'تريد جدول سداد مفصل؟',
+                'advancedtools-link': 'اذهب للأدوات المتقدمة',
+                'advancedtools-link-secured': 'اذهب للأدوات المتقدمة للحصول على جداول الاستهلاك.',
                 'first-month-how-it-works': 'توضيح بخصوص القسط الأول:',
                 'first-month-explanation': 'إذا بدأ القرض في منتصف الشهر، يكون القسط الأول أكبر لأنه يشمل فوائد الأيام الزائدة قبل انتظام دورة الدفع.',
                 'stamp-duty-info': 'عن رسوم الدمغة:',

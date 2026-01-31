@@ -1,10 +1,10 @@
-// extensions.js - Extensions Page (Advanced Calculators)
+// advancedtools.js - advancedtools Page (Advanced Calculators)
 
 import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
 import { FirestoreService } from '../services/firestore.js';
 
-export class ExtensionsPage {
+export class AdvancedToolsPage {
     static async init() {
         const router = window.app?.router;
         if (router) {
@@ -26,8 +26,8 @@ export class ExtensionsPage {
         return `
             <div class="container">
                 <div style="margin-bottom: var(--spacing-2xl);">
-                    <h1><i class="fas fa-puzzle-piece" style="color: var(--accent);"></i> <span data-i18n="extensions-title">Extensions</span></h1>
-                    <p class="text-muted" data-i18n="extensions-desc">Advanced calculators for both secured and unsecured loans</p>
+                    <h1><i class="fas fa-puzzle-piece" style="color: var(--accent);"></i> <span data-i18n="advancedtools-title">advancedtools</span></h1>
+                    <p class="text-muted" data-i18n="advancedtools-desc">Advanced calculators for both secured and unsecured loans</p>
                 </div>
 
                 <!-- Calculators Tabs -->

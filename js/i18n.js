@@ -152,6 +152,9 @@ export class I18n {
                 'rates-margins': 'Rates & Margins',
                 'secured-loans-constants': 'Secured Loan Settings',
                 'unsecured-loans-constants': 'Cash Loan Settings',
+                'scenario-constants': 'Smart Investment Tool',
+                'interest-upfront-label': 'Interest Upfront (%)',
+                'loan-certificate-label': 'Loan Certificat (%)',
                 'cd-rate-label': 'Base CD Rate (%)',
                 'td-margin-label': 'Bank Margin (%)',
                 'min-rate-label': 'Minimum Interest Floor (%)',
@@ -231,7 +234,7 @@ export class I18n {
                 'tab-loan-calculator': 'Loan Calc',
                 'tab-max-loan': 'Loan Limit',
                 'tab-first-month': 'First Month',
-                'tab-amortization': 'Amortization'
+                'tab-amortization': 'Amortization'              
             },
             ar: {
                 // App
@@ -381,6 +384,10 @@ export class I18n {
                 'rates-margins': 'الهوامش والأسعار',
                 'secured-loans-constants': 'إعدادات القروض المضمونة',
                 'unsecured-loans-constants': 'إعدادات القروض النقدية',
+                'scenario-constants': 'ثوابت أداة الاستثمار الذكي',
+                'interest-upfront-label': 'الفائدة مقدماً (%)',
+                'loan-certificate-label': 'شهادة وقرض (%)',
+
                 'cd-rate-label': 'سعر الكوريدور/الشهادة (%)',
                 'td-margin-label': 'هامش البنك (%)',
                 'min-rate-label': 'الحد الأدنى للفائدة (%)',

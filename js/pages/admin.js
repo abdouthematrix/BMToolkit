@@ -92,6 +92,19 @@ export class AdminPage {
                                 </div>
                             </div>
 
+                            <!-- Scenario Constants -->
+                            <h4 style="margin-top: var(--spacing-xl);" data-i18n="scenario-constants">Smart Investment Tool</h4>
+                            <div class="grid grid-2">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="interest-upfront-label">Interest Upfront Distribution (%)</label>
+                                    <input type="number" id="interest-upfront-percent-admin" class="form-input" min="0" max="100" step="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="loan-certificate-label">Loan Certificate Distribution (%)</label>
+                                    <input type="number" id="loan-certificate-percent-admin" class="form-input" min="0" max="100" step="1" required>
+                                </div>
+                            </div>
+
                             <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-xl);">
                                 <button type="submit" class="btn-primary">
                                     <i class="fas fa-save"></i>
@@ -222,6 +235,10 @@ export class AdminPage {
         document.getElementById('max-loan-percent-admin').value = (this.constants.MAX_LOAN_PERCENT * 100).toFixed(0);
         document.getElementById('max-dti-admin').value = (this.constants.MAX_DBR_RATIO * 100).toFixed(0);
         document.getElementById('stamp-duty-admin').value = this.constants.STAMP_DUTY_RATE.toFixed(1);
+        
+        // Populate scenario constants
+        document.getElementById('interest-upfront-percent-admin').value = (this.constants.SCENARIOS?.INTEREST_UPFRONT_PERCENT || 0);
+        document.getElementById('loan-certificate-percent-admin').value = (this.constants.SCENARIOS?.LOAN_CERTIFICATE_PERCENT || 0);
     }
 
     static attachEventListeners() {
@@ -560,7 +577,11 @@ export class AdminPage {
             MIN_RATE: parseFloat(document.getElementById('min-rate-admin').value) / 100,
             MAX_LOAN_PERCENT: parseFloat(document.getElementById('max-loan-percent-admin').value) / 100,
             MAX_DBR_RATIO: parseFloat(document.getElementById('max-dti-admin').value) / 100,
-            STAMP_DUTY_RATE: parseFloat(document.getElementById('stamp-duty-admin').value)
+            STAMP_DUTY_RATE: parseFloat(document.getElementById('stamp-duty-admin').value),
+            SCENARIOS: {
+                INTEREST_UPFRONT_PERCENT: parseInt(document.getElementById('interest-upfront-percent-admin').value),
+                LOAN_CERTIFICATE_PERCENT: parseInt(document.getElementById('loan-certificate-percent-admin').value)
+            }
         };
 
         const result = await FirestoreService.updateConstants(constants);

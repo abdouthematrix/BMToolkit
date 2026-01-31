@@ -9,14 +9,19 @@ export class UnsecuredLoansPage {
     static selectedProduct = null;
     static constants = null;
     static STORAGE_KEY = 'unsecured-loans-active-tab';
-    static activeTab = 'by-income'; // Track active tab
+    static activeTab = 'by-income';
+
+    // Product filter criteria for sharing in URLs
+    static productFilterCriteria = {
+        sector: '',
+        payroll: '',
+        segment: ''
+    };
 
     static async init() {
         const router = window.app?.router;
         if (router) {
-            // Determine active tab BEFORE rendering
             this.determineActiveTab();
-            
             router.render(this.render());
             i18n.updatePageText();
             await this.loadProducts();
@@ -29,15 +34,11 @@ export class UnsecuredLoansPage {
     static determineActiveTab() {
         const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
         const urlParams = window.app?.router?.getQueryParams() || {};
-        
-        // URL parameter takes precedence over saved tab
         this.activeTab = urlParams.tab || savedTab || 'by-income';
     }
 
     static async loadConstants() {
         this.constants = await FirestoreService.getConstants();
-
-        // Update form default for max DTI
         const maxDtiInput = document.getElementById('max-dti');
         if (maxDtiInput && this.constants.MAX_DBR_RATIO) {
             maxDtiInput.value = (this.constants.MAX_DBR_RATIO * 100).toFixed(0);
@@ -47,10 +48,28 @@ export class UnsecuredLoansPage {
     static async loadProducts() {
         this.products = await FirestoreService.getProducts();
         if (this.products.length === 0) {
-            // Load from CSV if no products in Firestore
             this.products = this.getDefaultProducts();
         }
         this.populateProductSelect();
+    }
+
+    // Find product by filter criteria
+    static findProductByFilter(sector, payroll, segment) {
+        return this.products.find(product => {
+            if (sector && product.sector !== sector) return false;
+            if (payroll && product.payrollType !== payroll) return false;
+            if (segment && product.companySegment !== segment) return false;
+            return true;
+        });
+    }
+
+    // Get filter criteria from selected product
+    static getProductFilterCriteria(product) {
+        return {
+            sector: product.sector || '',
+            payroll: product.payrollType || '',
+            segment: product.companySegment || ''
+        };
     }
 
     static render() {
@@ -293,23 +312,19 @@ export class UnsecuredLoansPage {
     }
 
     static attachEventListeners() {
-        // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const tab = e.currentTarget.dataset.tab;
                 this.switchTab(tab);
-                // Save tab preference
                 this.saveTabState(tab);
             });
         });
 
-        // Product filters
         document.getElementById('sector-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('payroll-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('segment-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('product-select').addEventListener('change', (e) => this.selectProduct(e.target.value));
 
-        // Form submissions
         document.getElementById('by-income-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.calculateByIncome();
@@ -338,7 +353,6 @@ export class UnsecuredLoansPage {
         if (tabBtn && tabContent) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
             tabBtn.classList.add('active');
             tabContent.classList.add('active');
         }
@@ -350,16 +364,22 @@ export class UnsecuredLoansPage {
 
         if (!tab) return;
 
-        // Select product if specified in URL
-        if (urlParams.product) {
-            const productIndex = this.products.findIndex(p => p.ubsCode === urlParams.product);
-            if (productIndex !== -1) {
-                document.getElementById('product-select').value = productIndex;
-                this.selectProduct(productIndex);
+        // Select product using filter criteria from URL (sector, payroll, segment)
+        if (urlParams.sector || urlParams.payroll || urlParams.segment) {
+            const product = this.findProductByFilter(urlParams.sector, urlParams.payroll, urlParams.segment);
+            if (product) {
+                // Set filter dropdowns
+                if (urlParams.sector) document.getElementById('sector-filter').value = urlParams.sector;
+                if (urlParams.payroll) document.getElementById('payroll-filter').value = urlParams.payroll;
+                if (urlParams.segment) document.getElementById('segment-filter').value = urlParams.segment;
+
+                // Update dropdown and select product
+                this.filterProducts();
+                document.getElementById('product-select').value = product.nameEn;
+                this.selectProduct(product.nameEn);
             }
         }
 
-        // Populate form fields and calculate based on tab type
         switch (tab) {
             case 'by-income':
                 if (urlParams.income) document.getElementById('monthly-income').value = urlParams.income;
@@ -393,9 +413,9 @@ export class UnsecuredLoansPage {
         const select = document.getElementById('product-select');
         select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
-        this.products.forEach((product, index) => {
+        this.products.forEach((product) => {
             const option = document.createElement('option');
-            option.value = index;
+            option.value = product.nameEn;
             option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
             select.appendChild(option);
         });
@@ -417,26 +437,30 @@ export class UnsecuredLoansPage {
         const select = document.getElementById('product-select');
         select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
-        filtered.forEach((product, index) => {
+        filtered.forEach((product) => {
             const option = document.createElement('option');
-            const originalIndex = this.products.indexOf(product);
-            option.value = originalIndex;
+            option.value = product.nameEn;
             option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
             select.appendChild(option);
         });
     }
 
-    static selectProduct(index) {
-        if (!index) {
+    static selectProduct(productName) {
+        if (!productName) {
             this.selectedProduct = null;
             document.getElementById('product-info').style.display = 'none';
             return;
         }
 
-        this.selectedProduct = this.products[index];
+        // Find product by name
+        this.selectedProduct = this.products.find(p => p.nameEn === productName);
+        if (!this.selectedProduct) {
+            document.getElementById('product-info').style.display = 'none';
+            return;
+        }
+
         const product = this.selectedProduct;
 
-        // Helper function to get translation key for sector
         const getSectorKey = (sector) => {
             const sectorMap = {
                 'Government/Public': 'government-public',
@@ -446,7 +470,6 @@ export class UnsecuredLoansPage {
             return sectorMap[sector] || sector;
         };
 
-        // Helper function to get translation key for payroll type
         const getPayrollKey = (payrollType) => {
             const payrollMap = {
                 'Contracted': 'contracted',
@@ -487,7 +510,7 @@ export class UnsecuredLoansPage {
     }
 
     static getProductRate(tenorYears) {
-        if (!this.selectedProduct) return 0.18; // Default rate
+        if (!this.selectedProduct) return 0.18;
 
         if (tenorYears <= 5 && this.selectedProduct.rate1_5) {
             return parseFloat(this.selectedProduct.rate1_5.replace('%', '')) / 100;
@@ -512,9 +535,10 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-income').value);
         const isYears = document.getElementById('is-years-income').checked;
 
-        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
+            // Use filter criteria instead of ubsCode
+            const criteria = this.getProductFilterCriteria(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'by-income',
                 income: monthlyIncome,
@@ -523,11 +547,12 @@ export class UnsecuredLoansPage {
                 minTenor: minTenor,
                 maxTenor: maxTenor,
                 unit: isYears ? 'years' : 'months',
-                product: this.selectedProduct.ubsCode
+                sector: criteria.sector,
+                payroll: criteria.payroll,
+                segment: criteria.segment
             });
         }
 
-        // Calculate for each tenor using product rate
         const results = [];
         for (let tenor = minTenor; tenor <= maxTenor; tenor++) {
             const annualRate = this.getProductRate(tenor);
@@ -597,20 +622,21 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-installment').value);
         const isYears = document.getElementById('is-years-installment').checked;
 
-        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
+            const criteria = this.getProductFilterCriteria(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'by-installment',
                 payment: monthlyPayment,
                 minTenor: minTenor,
                 maxTenor: maxTenor,
                 unit: isYears ? 'years' : 'months',
-                product: this.selectedProduct.ubsCode
+                sector: criteria.sector,
+                payroll: criteria.payroll,
+                segment: criteria.segment
             });
         }
 
-        // Calculate for each tenor using product rate
         const results = [];
         for (let tenor = minTenor; tenor <= maxTenor; tenor++) {
             const annualRate = this.getProductRate(tenor);
@@ -664,16 +690,18 @@ export class UnsecuredLoansPage {
         const maxTenor = parseInt(document.getElementById('max-tenor-schedule').value);
         const isYears = document.getElementById('is-years-schedule').checked;
 
-        // Update URL parameters using tab as single identifier
         const router = window.app?.router;
         if (router) {
+            const criteria = this.getProductFilterCriteria(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'loan-schedule',
                 principal: principal,
                 minTenor: minTenor,
                 maxTenor: maxTenor,
                 unit: isYears ? 'years' : 'months',
-                product: this.selectedProduct.ubsCode
+                sector: criteria.sector,
+                payroll: criteria.payroll,
+                segment: criteria.segment
             });
         }
 
@@ -718,7 +746,6 @@ export class UnsecuredLoansPage {
     }
 
     static getDefaultProducts() {
-        // Sample products - would normally be loaded from CSV
         return [
             {
                 nameAr: 'قروض نقدية بضمان تعهد للعاملين بالقطاع الحكومي',

@@ -1,4 +1,4 @@
-// firebase-config.js - Firebase Configuration with CDN Compat API
+// firebase-config.js - Firebase Configuration with Guaranteed Offline Persistence
 
 export class FirebaseConfig {
     static config = {
@@ -13,47 +13,78 @@ export class FirebaseConfig {
     static isOffline = false;
     static listeners = [];
     static initialized = false;
+    static initPromise = null; // Track initialization promise
+    static auth = null;
+    static db = null;
 
-    static init() {
+    // CRITICAL: Async init that WAITS for persistence
+    static async init() {
+        // Return existing initialization if already in progress or complete
+        if (this.initPromise) {
+            return this.initPromise;
+        }
+
+        // Create and store initialization promise
+        this.initPromise = this._initializeFirebase();
+        return this.initPromise;
+    }
+
+    static async _initializeFirebase() {
         if (this.initialized) {
             return {
-                auth: firebase.auth(),
-                db: firebase.firestore()
+                auth: this.auth,
+                db: this.db
             };
         }
 
-        if (!firebase.apps.length) {
-            // Initialize Firebase
-            firebase.initializeApp(this.config);
+        try {
+            // Initialize Firebase app if not already initialized
+            if (!firebase.apps.length) {
+                firebase.initializeApp(this.config);
+            }
 
-            // Get Firestore instance
-            const db = firebase.firestore();
+            // Get instances
+            this.auth = firebase.auth();
+            this.db = firebase.firestore();
 
-            // Enable persistence using the compat API
-            // This must be called before any other Firestore operations
-            db.enablePersistence({ synchronizeTabs: true })
-                .then(() => {
-                    console.log('✓ Firestore offline persistence enabled');
-                    this.setupOfflineDetection();
-                })
-                .catch((err) => {
-                    if (err.code === 'failed-precondition') {
-                        console.warn('⚠ Multiple tabs open - persistence enabled in another tab');
-                    } else if (err.code === 'unimplemented') {
-                        console.warn('⚠ Browser does not support offline persistence');
-                    } else {
-                        console.error('Error enabling persistence:', err);
-                    }
-                    this.setupOfflineDetection();
-                });
+            // CRITICAL: Wait for persistence to be enabled before continuing
+            await this._enablePersistence();
+
+            // Setup offline detection AFTER persistence is guaranteed
+            this.setupOfflineDetection();
 
             this.initialized = true;
-        }
+            console.log('✅ Firebase initialized with offline persistence');
 
-        return {
-            auth: firebase.auth(),
-            db: firebase.firestore()
-        };
+            return {
+                auth: this.auth,
+                db: this.db
+            };
+        } catch (error) {
+            console.error('❌ Fatal error initializing Firebase:', error);
+            throw error;
+        }
+    }
+
+    // Enable persistence and wait for it to complete
+    static async _enablePersistence() {
+        try {
+            await this.db.enablePersistence({
+                synchronizeTabs: true
+            });
+            console.log('✅ Firestore offline persistence enabled');
+        } catch (err) {
+            if (err.code === 'failed-precondition') {
+                // Multiple tabs open, persistence enabled in another tab
+                console.warn('⚠️ Multiple tabs open - persistence enabled in another tab');
+            } else if (err.code === 'unimplemented') {
+                // Browser doesn't support persistence
+                console.warn('⚠️ Browser does not support offline persistence');
+            } else {
+                console.error('❌ Error enabling persistence:', err);
+                throw err; // Re-throw unexpected errors
+            }
+        }
     }
 
     // Setup offline/online detection
@@ -106,47 +137,49 @@ export class FirebaseConfig {
     }
 
     // Force Firestore to go offline (useful for testing)
-    static goOffline() {
-        return firebase.firestore().disableNetwork()
-            .then(() => {
-                console.log('🔌 Firestore network disabled (manual)');
-                this.isOffline = true;
-                this.notifyListeners(true);
-                return { success: true };
-            })
-            .catch((error) => {
-                console.error('❌ Error disabling network:', error);
-                return { success: false, error: error.message };
-            });
+    static async goOffline() {
+        await this.init(); // Ensure initialized
+        try {
+            await this.db.disableNetwork();
+            console.log('🔌 Firestore network disabled (manual)');
+            this.isOffline = true;
+            this.notifyListeners(true);
+            return { success: true };
+        } catch (error) {
+            console.error('❌ Error disabling network:', error);
+            return { success: false, error: error.message };
+        }
     }
 
     // Force Firestore to go online
-    static goOnline() {
-        return firebase.firestore().enableNetwork()
-            .then(() => {
-                console.log('🔌 Firestore network enabled (manual)');
-                this.isOffline = false;
-                this.notifyListeners(false);
-                return { success: true };
-            })
-            .catch((error) => {
-                console.error('❌ Error enabling network:', error);
-                return { success: false, error: error.message };
-            });
+    static async goOnline() {
+        await this.init(); // Ensure initialized
+        try {
+            await this.db.enableNetwork();
+            console.log('🔌 Firestore network enabled (manual)');
+            this.isOffline = false;
+            this.notifyListeners(false);
+            return { success: true };
+        } catch (error) {
+            console.error('❌ Error enabling network:', error);
+            return { success: false, error: error.message };
+        }
     }
 
     // Clear offline cache (useful for troubleshooting)
     static async clearCache() {
         try {
             // clearPersistence can only be called when Firestore is terminated
-            const db = firebase.firestore();
-            await db.terminate();
-            await db.clearPersistence();
+            await this.db.terminate();
+            await this.db.clearPersistence();
             console.log('🗑️ Firestore cache cleared');
 
             // Re-initialize after clearing
             this.initialized = false;
-            this.init();
+            this.initPromise = null;
+            this.auth = null;
+            this.db = null;
+            await this.init();
 
             return { success: true };
         } catch (error) {
@@ -154,7 +187,10 @@ export class FirebaseConfig {
             // Even if clearPersistence fails, try to re-initialize
             if (error.code === 'failed-precondition') {
                 this.initialized = false;
-                this.init();
+                this.initPromise = null;
+                this.auth = null;
+                this.db = null;
+                await this.init();
             }
             return { success: false, error: error.message };
         }
@@ -172,9 +208,10 @@ export class FirebaseConfig {
 
     // Wait for pending writes to complete (useful before logging out)
     static async waitForPendingWrites() {
+        await this.init(); // Ensure initialized
         try {
-            await firebase.firestore().waitForPendingWrites();
-            console.log('✓ All pending writes completed');
+            await this.db.waitForPendingWrites();
+            console.log('✅ All pending writes completed');
             return { success: true };
         } catch (error) {
             console.error('❌ Error waiting for pending writes:', error);
@@ -184,10 +221,14 @@ export class FirebaseConfig {
 
     // Terminate Firestore instance (useful for cleanup)
     static async terminate() {
+        await this.init(); // Ensure initialized
         try {
-            await firebase.firestore().terminate();
+            await this.db.terminate();
             console.log('🛑 Firestore terminated');
             this.initialized = false;
+            this.initPromise = null;
+            this.auth = null;
+            this.db = null;
             return { success: true };
         } catch (error) {
             console.error('❌ Error terminating Firestore:', error);
@@ -196,8 +237,22 @@ export class FirebaseConfig {
     }
 }
 
-// Initialize Firebase (only once)
-export const { auth, db } = FirebaseConfig.init();
+// Export async initialization function
+export async function initializeFirebase() {
+    const { auth, db } = await FirebaseConfig.init();
+    return { auth, db };
+}
+
+// Export lazy getters that ensure initialization
+export const getAuth = async () => {
+    await FirebaseConfig.init();
+    return FirebaseConfig.auth;
+};
+
+export const getDb = async () => {
+    await FirebaseConfig.init();
+    return FirebaseConfig.db;
+};
 
 // Export offline status utilities
 export const OfflineManager = {

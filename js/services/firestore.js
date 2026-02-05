@@ -1,6 +1,6 @@
-// firestore.js - Enhanced Firestore Data Service with Offline Support
+// firestore.js - Enhanced Firestore Data Service with Guaranteed Offline Support
 
-import { db } from '../firebase-config.js';
+import { getDb } from '../firebase-config.js';
 
 export class FirestoreService {
     static COLLECTIONS = {
@@ -21,18 +21,26 @@ export class FirestoreService {
     // Cache duration in milliseconds (5 minutes)
     static CACHE_DURATION = 5 * 60 * 1000;
 
+    // CRITICAL: Get initialized Firestore instance
+    static async getFirestore() {
+        return await getDb();
+    }
+
     // Get constants (rates, margins, etc.) with offline support
     static async getConstants(useCache = true) {
         try {
             // Check cache first if requested
             if (useCache && this.cache.constants && this.isCacheValid('constants')) {
-                console.log('Returning constants from cache');
+                console.log('📦 Returning constants from memory cache');
                 return this.cache.constants;
             }
 
+            // CRITICAL: Wait for Firestore to be initialized with persistence
+            const db = await this.getFirestore();
+
             const doc = await db.collection(this.COLLECTIONS.CONSTANTS)
                 .doc('global')
-                .get({ source: 'default' }); // Will use cache if offline
+                .get({ source: 'default' }); // Will use IndexedDB cache if offline
 
             if (doc.exists) {
                 const data = doc.data();
@@ -41,25 +49,27 @@ export class FirestoreService {
 
                 // Log if data came from cache
                 if (doc.metadata.fromCache) {
-                    console.log('Constants loaded from offline cache');
+                    console.log('💾 Constants loaded from Firestore offline cache (IndexedDB)');
                 } else {
-                    console.log('Constants loaded from server');
+                    console.log('🌐 Constants loaded from server');
                 }
 
                 return data;
             } else {
                 // Return defaults if not found
+                console.log('⚠️ Constants not found, using defaults');
                 return this.getDefaultConstants();
             }
         } catch (error) {
-            console.error('Error fetching constants:', error);
+            console.error('❌ Error fetching constants:', error);
 
             // If we have cached data, return it even if expired
             if (this.cache.constants) {
-                console.log('Returning expired cache due to error');
+                console.log('📦 Returning expired memory cache due to error');
                 return this.cache.constants;
             }
 
+            console.log('⚠️ No cache available, using defaults');
             return this.getDefaultConstants();
         }
     }
@@ -84,6 +94,9 @@ export class FirestoreService {
     // Update constants with offline queue support
     static async updateConstants(constants) {
         try {
+            // CRITICAL: Wait for Firestore to be initialized
+            const db = await this.getFirestore();
+
             await db.collection(this.COLLECTIONS.CONSTANTS)
                 .doc('global')
                 .set(constants, { merge: true });
@@ -92,13 +105,14 @@ export class FirestoreService {
             this.cache.constants = constants;
             this.cache.lastFetch.constants = Date.now();
 
+            console.log('✅ Constants updated successfully');
             return { success: true };
         } catch (error) {
-            console.error('Error updating constants:', error);
+            console.error('❌ Error updating constants:', error);
 
-            // If offline, the write is queued automatically
+            // If offline, the write is queued automatically by Firestore
             if (error.code === 'unavailable') {
-                console.log('Update queued for when online');
+                console.log('📤 Update queued for when online');
                 return { success: true, queued: true };
             }
 
@@ -111,12 +125,15 @@ export class FirestoreService {
         try {
             // Check cache first if requested
             if (useCache && this.cache.products && this.isCacheValid('products')) {
-                console.log('Returning products from cache');
+                console.log('📦 Returning products from memory cache');
                 return this.cache.products;
             }
 
+            // CRITICAL: Wait for Firestore to be initialized
+            const db = await this.getFirestore();
+
             const snapshot = await db.collection(this.COLLECTIONS.PRODUCTS)
-                .get({ source: 'default' }); // Will use cache if offline
+                .get({ source: 'default' }); // Will use IndexedDB cache if offline
 
             const products = [];
             snapshot.forEach(doc => {
@@ -129,18 +146,18 @@ export class FirestoreService {
 
             // Log if data came from cache
             if (snapshot.metadata.fromCache) {
-                console.log('Products loaded from offline cache');
+                console.log('💾 Products loaded from Firestore offline cache (IndexedDB)');
             } else {
-                console.log('Products loaded from server');
+                console.log('🌐 Products loaded from server');
             }
 
             return products;
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('❌ Error fetching products:', error);
 
             // If we have cached data, return it even if expired
             if (this.cache.products) {
-                console.log('Returning expired cache due to error');
+                console.log('📦 Returning expired memory cache due to error');
                 return this.cache.products;
             }
 
@@ -151,25 +168,28 @@ export class FirestoreService {
     // Get product by ID with offline support
     static async getProduct(id) {
         try {
+            // CRITICAL: Wait for Firestore to be initialized
+            const db = await this.getFirestore();
+
             const doc = await db.collection(this.COLLECTIONS.PRODUCTS)
                 .doc(id)
                 .get({ source: 'default' });
 
             if (doc.exists) {
                 if (doc.metadata.fromCache) {
-                    console.log(`Product ${id} loaded from offline cache`);
+                    console.log(`💾 Product ${id} loaded from Firestore offline cache`);
                 }
                 return { id: doc.id, ...doc.data() };
             }
             return null;
         } catch (error) {
-            console.error('Error fetching product:', error);
+            console.error('❌ Error fetching product:', error);
 
             // Try to find in cached products list
             if (this.cache.products) {
                 const product = this.cache.products.find(p => p.id === id);
                 if (product) {
-                    console.log('Returning product from products cache');
+                    console.log('📦 Returning product from memory cache');
                     return product;
                 }
             }
@@ -181,6 +201,9 @@ export class FirestoreService {
     // Add or update product with offline queue support
     static async saveProduct(productData, id = null) {
         try {
+            // CRITICAL: Wait for Firestore to be initialized
+            const db = await this.getFirestore();
+
             if (id) {
                 await db.collection(this.COLLECTIONS.PRODUCTS)
                     .doc(id)
@@ -190,16 +213,17 @@ export class FirestoreService {
                     .add(productData);
             }
 
-            // Invalidate cache
+            // Invalidate cache to force refresh
             this.cache.products = null;
 
+            console.log('✅ Product saved successfully');
             return { success: true };
         } catch (error) {
-            console.error('Error saving product:', error);
+            console.error('❌ Error saving product:', error);
 
-            // If offline, the write is queued automatically
+            // If offline, the write is queued automatically by Firestore
             if (error.code === 'unavailable') {
-                console.log('Save queued for when online');
+                console.log('📤 Save queued for when online');
                 this.cache.products = null; // Invalidate to force refresh
                 return { success: true, queued: true };
             }
@@ -211,6 +235,9 @@ export class FirestoreService {
     // Delete product with offline queue support
     static async deleteProduct(id) {
         try {
+            // CRITICAL: Wait for Firestore to be initialized
+            const db = await this.getFirestore();
+
             await db.collection(this.COLLECTIONS.PRODUCTS)
                 .doc(id)
                 .delete();
@@ -218,13 +245,14 @@ export class FirestoreService {
             // Invalidate cache
             this.cache.products = null;
 
+            console.log('✅ Product deleted successfully');
             return { success: true };
         } catch (error) {
-            console.error('Error deleting product:', error);
+            console.error('❌ Error deleting product:', error);
 
-            // If offline, the write is queued automatically
+            // If offline, the write is queued automatically by Firestore
             if (error.code === 'unavailable') {
-                console.log('Delete queued for when online');
+                console.log('📤 Delete queued for when online');
                 this.cache.products = null; // Invalidate to force refresh
                 return { success: true, queued: true };
             }
@@ -252,6 +280,8 @@ export class FirestoreService {
             this.getConstants(false),
             this.getProducts(false)
         ]);
+
+        console.log('✅ Cache refreshed');
     }
 
     // Clear cache
@@ -260,6 +290,7 @@ export class FirestoreService {
         this.cache.products = null;
         this.cache.lastFetch.constants = null;
         this.cache.lastFetch.products = null;
+        console.log('🗑️ Memory cache cleared');
     }
 
     // Filter products by criteria
@@ -288,7 +319,10 @@ export class FirestoreService {
     }
 
     // Listen to real-time updates for constants
-    static listenToConstants(callback) {
+    static async listenToConstants(callback) {
+        // CRITICAL: Wait for Firestore to be initialized
+        const db = await this.getFirestore();
+
         return db.collection(this.COLLECTIONS.CONSTANTS)
             .doc('global')
             .onSnapshot((doc) => {
@@ -299,12 +333,15 @@ export class FirestoreService {
                     callback(data);
                 }
             }, (error) => {
-                console.error('Error listening to constants:', error);
+                console.error('❌ Error listening to constants:', error);
             });
     }
 
     // Listen to real-time updates for products
-    static listenToProducts(callback) {
+    static async listenToProducts(callback) {
+        // CRITICAL: Wait for Firestore to be initialized
+        const db = await this.getFirestore();
+
         return db.collection(this.COLLECTIONS.PRODUCTS)
             .onSnapshot((snapshot) => {
                 const products = [];
@@ -315,7 +352,7 @@ export class FirestoreService {
                 this.cache.lastFetch.products = Date.now();
                 callback(products);
             }, (error) => {
-                console.error('Error listening to products:', error);
+                console.error('❌ Error listening to products:', error);
             });
     }
 }

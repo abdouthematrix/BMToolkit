@@ -1,4 +1,4 @@
-// firebase-config.js - Firebase Configuration with Offline Persistence
+// firebase-config.js - Firebase Configuration
 
 export class FirebaseConfig {
     static config = {
@@ -13,16 +13,6 @@ export class FirebaseConfig {
     static init() {
         if (!firebase.apps.length) {
             firebase.initializeApp(this.config);
-            
-            // Enable offline persistence
-            firebase.firestore().enablePersistence()
-                .catch((err) => {
-                    if (err.code === 'failed-precondition') {
-                        console.warn('Multiple tabs open, persistence can only be enabled in one tab at a time.');
-                    } else if (err.code === 'unimplemented') {
-                        console.warn('The current browser does not support persistence.');
-                    }
-                });
         }
         return {
             auth: firebase.auth(),

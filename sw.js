@@ -2,6 +2,12 @@
 
 const CACHE_NAME = 'bmtoolkit-v1';
 const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v1';
+// 1. Define the Firebase Modular SDKs to cache
+const FIREBASE_SDKS = [
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+];
 const urlsToCache = [
   './',
   './index.html',
@@ -34,129 +40,127 @@ const fontsToCache = [
 
 // Install event - cache resources
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    Promise.all([
-      caches.open(CACHE_NAME)
-        .then((cache) => {
-          console.log('Opened cache');
-          return cache.addAll(urlsToCache);
-        })
-        .catch((error) => {
-          console.error('Cache installation failed:', error);
-        }),
-      caches.open(FONTS_CACHE_NAME)
-        .then((cache) => {
-          console.log('Opened fonts cache');
-          return cache.addAll(fontsToCache);
-        })
-        .catch((error) => {
-          console.error('Fonts cache installation failed:', error);
-        })
-    ])
-  );
-  self.skipWaiting();
+    event.waitUntil(
+        Promise.all([
+            caches.open(CACHE_NAME)
+                .then((cache) => {
+                    console.log('Opened cache');
+                    // Cache local files AND Firebase SDKs
+                    return cache.addAll([...urlsToCache, ...FIREBASE_SDKS]);
+                })
+                .catch((error) => {
+                    console.error('Cache installation failed:', error);
+                }),
+            caches.open(FONTS_CACHE_NAME)
+                .then((cache) => {
+                    console.log('Opened fonts cache');
+                    return cache.addAll(fontsToCache);
+                })
+                .catch((error) => {
+                    console.error('Fonts cache installation failed:', error);
+                })
+        ])
+    );
+    self.skipWaiting();
 });
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') return;
 
-  // Handle Google Fonts with stale-while-revalidate strategy
-  if (event.request.url.includes('fonts.googleapis.com') || event.request.url.includes('fonts.gstatic.com')) {
+    const url = event.request.url;
+
+    // 2. Handle Firebase SDKs (Cache First strategy)
+    // We want to cache the scripts from gstatic.com, but NOT the data calls to googleapis.com
+    if (FIREBASE_SDKS.includes(url)) {
+        event.respondWith(
+            caches.match(event.request).then((response) => {
+                return response || fetch(event.request).then((fetchResponse) => {
+                    return caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, fetchResponse.clone());
+                        return fetchResponse;
+                    });
+                });
+            })
+        );
+        return;
+    }
+
+    // 3. Ignore Firestore Data / Auth API calls
+    // These are dynamic and handled by the SDK's internal offline logic or network
+    if (
+        url.includes('firestore.googleapis.com') ||
+        url.includes('identitytoolkit.googleapis.com') ||
+        url.includes('securetoken.googleapis.com')
+    ) {
+        return; // Let the browser/SDK handle the network request
+    }
+
+    // Handle Google Fonts
+    if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    if (response) return response;
+                    return fetch(event.request).then((response) => {
+                        if (!response || response.status !== 200) return response;
+                        const responseToCache = response.clone();
+                        caches.open(FONTS_CACHE_NAME)
+                            .then((cache) => {
+                                cache.put(event.request, responseToCache);
+                            });
+                        return response;
+                    });
+                })
+        );
+        return;
+    }
+
+    // Default Stale-While-Revalidate for app shell
     event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          if (response) {
-            return response;
-          }
-
-          return fetch(event.request).then((response) => {
-            if (!response || response.status !== 200) {
-              return response;
-            }
-
-            const responseToCache = response.clone();
-            caches.open(FONTS_CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          });
-        })
-        .catch(() => {
-          console.warn('Fonts unavailable offline');
-        })
+        caches.match(event.request)
+            .then((response) => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request).then((response) => {
+                    if (!response || response.status !== 200 || response.type !== 'basic') {
+                        return response;
+                    }
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME)
+                        .then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    return response;
+                });
+            })
+            .catch(() => {
+                return caches.match('./index.html');
+            })
     );
-    return;
-  }
-
-  // Skip Firebase and other external API calls
-  if (
-    event.request.url.includes('firebase') ||
-    event.request.url.includes('firestore') ||
-    event.request.url.includes('googleapis') ||
-    event.request.url.includes('cdnjs')
-  ) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        });
-      })
-      .catch(() => {
-        // Return offline page if available
-        return caches.match('./index.html');
-      })
-  );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== FONTS_CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME && cacheName !== FONTS_CACHE_NAME) {
+                        console.log('Deleting old cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
         })
-      );
-    })
-  );
-  self.clients.claim();
+    );
+    self.clients.claim();
 });
 
-// Handle skip waiting message
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });

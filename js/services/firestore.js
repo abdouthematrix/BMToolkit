@@ -1,6 +1,17 @@
 // firestore.js - Firestore Data Service
 
 import { db } from '../firebase-config.js';
+import {
+    collection,
+    doc,
+    getDocFromCache,
+    getDocFromServer,
+    getDocsFromCache,
+    getDocsFromServer,
+    setDoc,
+    addDoc,
+    deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 export class FirestoreService {
     static COLLECTIONS = {
@@ -10,17 +21,27 @@ export class FirestoreService {
 
     // Get constants (rates, margins, etc.)
     static async getConstants() {
-        try {
-            const doc = await db.collection(this.COLLECTIONS.CONSTANTS).doc('global').get();
-            if (doc.exists) {
-                return doc.data();
-            } else {
-                // Return defaults if not found
+        const docRef = doc(db, 'constants', 'global');
+
+        // 1. If Offline: Strictly use Cache
+        if (!navigator.onLine) {
+            try {
+                const cacheSnap = await getDocFromCache(docRef);
+                return cacheSnap.data();
+            } catch (e) {
+                console.warn("Offline: Constants not found in cache. Using defaults.");
                 return this.getDefaultConstants();
             }
-        } catch (error) {
-            console.error('Error fetching constants:', error);
-            return this.getDefaultConstants();
+        }
+
+        // 2. If Online: Fetch from Server (this updates the cache automatically)
+        try {
+            const serverSnap = await getDocFromServer(docRef);
+            return serverSnap.exists() ? serverSnap.data() : this.getDefaultConstants();
+        } catch (e) {
+            // Fallback to cache if server request fails (e.g. DNS issues)
+            const fallbackSnap = await getDocFromCache(docRef).catch(() => null);
+            return fallbackSnap ? fallbackSnap.data() : this.getDefaultConstants();
         }
     }
 
@@ -32,8 +53,7 @@ export class FirestoreService {
             MIN_RATE: 0.18,
             MAX_LOAN_PERCENT: 0.90,
             MAX_DBR_RATIO: 0.50,
-            STAMP_DUTY_RATE: 0.50, // per thousand
-            // Scenario percentages for Smart Investment Tool
+            STAMP_DUTY_RATE: 0.50,
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: 36,
                 LOAN_CERTIFICATE_PERCENT: 58
@@ -44,7 +64,8 @@ export class FirestoreService {
     // Update constants
     static async updateConstants(constants) {
         try {
-            await db.collection(this.COLLECTIONS.CONSTANTS).doc('global').set(constants, { merge: true });
+            const docRef = doc(db, this.COLLECTIONS.CONSTANTS, 'global');
+            await setDoc(docRef, constants, { merge: true });
             return { success: true };
         } catch (error) {
             console.error('Error updating constants:', error);
@@ -54,25 +75,34 @@ export class FirestoreService {
 
     // Get all products
     static async getProducts() {
+        const colRef = collection(db, 'products');
+
+        if (!navigator.onLine) {
+            try {
+                const cacheSnap = await getDocsFromCache(colRef);
+                return cacheSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            } catch (e) {
+                return [];
+            }
+        }
+
         try {
-            const snapshot = await db.collection(this.COLLECTIONS.PRODUCTS).get();
-            const products = [];
-            snapshot.forEach(doc => {
-                products.push({ id: doc.id, ...doc.data() });
-            });
-            return products;
-        } catch (error) {
-            console.error('Error fetching products:', error);
-            return [];
+            const serverSnap = await getDocsFromServer(colRef);
+            return serverSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (e) {
+            const fallbackSnap = await getDocsFromCache(colRef).catch(() => null);
+            return fallbackSnap ? fallbackSnap.docs.map(d => ({ id: d.id, ...d.data() })) : [];
         }
     }
 
     // Get product by ID
     static async getProduct(id) {
         try {
-            const doc = await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).get();
-            if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
+            const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                return { id: docSnap.id, ...docSnap.data() };
             }
             return null;
         } catch (error) {
@@ -85,9 +115,10 @@ export class FirestoreService {
     static async saveProduct(productData, id = null) {
         try {
             if (id) {
-                await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).set(productData, { merge: true });
+                const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
+                await setDoc(docRef, productData, { merge: true });
             } else {
-                await db.collection(this.COLLECTIONS.PRODUCTS).add(productData);
+                await addDoc(collection(db, this.COLLECTIONS.PRODUCTS), productData);
             }
             return { success: true };
         } catch (error) {
@@ -99,7 +130,8 @@ export class FirestoreService {
     // Delete product
     static async deleteProduct(id) {
         try {
-            await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).delete();
+            const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
+            await deleteDoc(docRef);
             return { success: true };
         } catch (error) {
             console.error('Error deleting product:', error);
@@ -107,20 +139,18 @@ export class FirestoreService {
         }
     }
 
-    // Filter products by criteria
+    // Filter products by criteria (Helper function, logic remains same)
     static filterProducts(products, criteria) {
         return products.filter(product => {
             let match = true;
-
             if (criteria.sector && product.sector !== criteria.sector) match = false;
             if (criteria.payrollType && product.payrollType !== criteria.payrollType) match = false;
             if (criteria.companySegment && product.companySegment !== criteria.companySegment) match = false;
-
             return match;
         });
     }
 
-    // Get rate for product based on tenor
+    // Get rate helper (Logic remains same)
     static getProductRate(product, tenorYears) {
         if (tenorYears <= 5 && product.rate1_5) {
             return parseFloat(product.rate1_5) / 100;

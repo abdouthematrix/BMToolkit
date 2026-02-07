@@ -1,6 +1,11 @@
 // auth.js - Authentication Service
 
 import { auth } from '../firebase-config.js';
+import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export class AuthService {
     static currentUser = null;
@@ -14,7 +19,7 @@ export class AuthService {
     // Initialize auth state listener
     static init() {
         return new Promise((resolve) => {
-            auth.onAuthStateChanged((user) => {
+            onAuthStateChanged(auth, (user) => {
                 this.currentUser = user;
                 this.updateUI();
                 resolve(user);
@@ -25,9 +30,9 @@ export class AuthService {
     // Login with email and password
     static async login(email, password) {
         try {
-            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
             this.currentUser = userCredential.user;
-            this.isAdmin = true; // Simple admin check - can be enhanced
+            this.isAdmin = true;
             this.updateUI();
             return { success: true, user: userCredential.user };
         } catch (error) {
@@ -39,7 +44,7 @@ export class AuthService {
     // Logout
     static async logout() {
         try {
-            await auth.signOut();
+            await signOut(auth);
             this.currentUser = null;
             this.isAdmin = false;
             this.updateUI();
@@ -57,29 +62,24 @@ export class AuthService {
         const adminLinks = document.querySelectorAll('.admin-only');
 
         if (this.currentUser) {
-            // User is logged in
             if (userMenu) userMenu.style.display = 'block';
             if (loginBtn) loginBtn.style.display = 'none';
 
-            // Update user name
             const userName = document.getElementById('user-name');
             if (userName) {
                 userName.textContent = this.currentUser.displayName || this.currentUser.email.split('@')[0];
             }
 
-            // Show admin links if admin
             if (this.isAdmin) {
                 adminLinks.forEach(link => link.style.display = '');
             }
         } else {
-            // User is logged out
             if (userMenu) userMenu.style.display = 'none';
             if (loginBtn) loginBtn.style.display = 'flex';
             adminLinks.forEach(link => link.style.display = 'none');
         }
     }
 
-    // Get current user
     static getCurrentUser() {
         return this.currentUser;
     }

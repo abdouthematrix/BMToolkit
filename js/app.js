@@ -142,6 +142,21 @@ class App {
                 });
             });
         }
+
+        // Listen for the moment the user comes back online
+        window.addEventListener('online', async () => {
+            console.log("Internet restored. Refreshing cache in background...");
+
+            // Silently fetch fresh data to prime the cache
+            await FirestoreService.getConstants();
+            await FirestoreService.getProducts();
+
+            showToast("Back online: Data updated.");
+        });
+
+        window.addEventListener('offline', () => {
+            showToast("Working offline: Using cached data.");
+        });
     }
 
     async handleLogout() {

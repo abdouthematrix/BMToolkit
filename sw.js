@@ -1,7 +1,7 @@
 // sw.js - Service Worker for PWA
 
-const CACHE_NAME = 'bmtoolkit-v1';
-const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v1';
+const CACHE_NAME = 'bmtoolkit-v2';
+const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v2';
 // 1. Define the Firebase Modular SDKs to cache
 const FIREBASE_SDKS = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
@@ -26,123 +26,82 @@ const urlsToCache = [
   './js/pages/unsecured-loans.js',
   './js/pages/advancedtools.js',
   './js/pages/login.js',
-  './js/pages/admin.js'
+  './js/pages/admin.js',
+  ...FIREBASE_SDKS
 ];
 
-// Google Fonts to cache
-const fontsToCache = [
-  'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800&display=swap',
-  'https://fonts.gstatic.com/s/manrope/v15/cHpsfuQw1Vc86XVj_dCyVIVIGQkD7IrY.0.woff2',
-  'https://fonts.gstatic.com/s/manrope/v15/cHpsfuQw1Vc86XVj_dCyVIVIGQkD7IrY.1.woff2',
-  'https://fonts.gstatic.com/s/cairo/v28/SLXsc1NY6HkvangtZmHyx44.0.woff2',
-  'https://fonts.gstatic.com/s/cairo/v28/SLXsc1NZ6HkvangtZmHyV4YE.0.woff2'
-];
-
-// Install event - cache resources
+// Install event - cache core app shell and SDKs
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        Promise.all([
-            caches.open(CACHE_NAME)
-                .then((cache) => {
-                    console.log('Opened cache');
-                    // Cache local files AND Firebase SDKs
-                    return cache.addAll([...urlsToCache, ...FIREBASE_SDKS]);
-                })
-                .catch((error) => {
-                    console.error('Cache installation failed:', error);
-                }),
-            caches.open(FONTS_CACHE_NAME)
-                .then((cache) => {
-                    console.log('Opened fonts cache');
-                    return cache.addAll(fontsToCache);
-                })
-                .catch((error) => {
-                    console.error('Fonts cache installation failed:', error);
-                })
-        ])
+        caches.open(CACHE_NAME)
+            .then((cache) => {
+                console.log('Opened cache and storing app shell');
+                return cache.addAll(urlsToCache);
+            })
     );
     self.skipWaiting();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - handle dynamic fonts and app shell
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests
     if (event.request.method !== 'GET') return;
 
     const url = event.request.url;
 
-    // 2. Handle Firebase SDKs (Cache First strategy)
-    // We want to cache the scripts from gstatic.com, but NOT the data calls to googleapis.com
-    if (FIREBASE_SDKS.includes(url)) {
+    // 1. DYNAMIC GOOGLE FONTS (Cache-First, then Network)
+    if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
         event.respondWith(
-            caches.match(event.request).then((response) => {
-                return response || fetch(event.request).then((fetchResponse) => {
-                    return caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, fetchResponse.clone());
-                        return fetchResponse;
+            caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) return cachedResponse;
+
+                return fetch(event.request).then((networkResponse) => {
+                    if (!networkResponse || networkResponse.status !== 200) return networkResponse;
+
+                    const responseToCache = networkResponse.clone();
+                    caches.open(FONTS_CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
                     });
+                    return networkResponse;
                 });
             })
         );
         return;
     }
 
-    // 3. Ignore Firestore Data / Auth API calls
-    // These are dynamic and handled by the SDK's internal offline logic or network
+    // 2. BYPASS FIREBASE DATA CALLS
+    // Let the Firebase SDK handle its own data persistence
     if (
         url.includes('firestore.googleapis.com') ||
         url.includes('identitytoolkit.googleapis.com') ||
         url.includes('securetoken.googleapis.com')
     ) {
-        return; // Let the browser/SDK handle the network request
-    }
-
-    // Handle Google Fonts
-    if (url.includes('fonts.googleapis.com') || url.includes('fonts.gstatic.com')) {
-        event.respondWith(
-            caches.match(event.request)
-                .then((response) => {
-                    if (response) return response;
-                    return fetch(event.request).then((response) => {
-                        if (!response || response.status !== 200) return response;
-                        const responseToCache = response.clone();
-                        caches.open(FONTS_CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-                        return response;
-                    });
-                })
-        );
         return;
     }
 
-    // Default Stale-While-Revalidate for app shell
+    // 3. APP SHELL (Stale-While-Revalidate)
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                if (response) {
-                    return response;
+        caches.match(event.request).then((cachedResponse) => {
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
                 }
-                return fetch(event.request).then((response) => {
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
-                    const responseToCache = response.clone();
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-                    return response;
-                });
-            })
-            .catch(() => {
-                return caches.match('./index.html');
-            })
+                return networkResponse;
+            }).catch(() => {
+                // Fallback to index.html for navigation requests if offline and not in cache
+                if (event.request.mode === 'navigate') {
+                    return caches.match('./index.html');
+                }
+            });
+
+            return cachedResponse || fetchPromise;
+        })
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - cleanup
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {

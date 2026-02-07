@@ -1,9 +1,8 @@
-// app.js - Main Application Entry Point with Offline Support
+// app.js - Main Application Entry Point
 
 import { Router } from './router.js';
 import { i18n } from './i18n.js';
 import { AuthService } from './services/auth.js';
-import { OfflineManager } from './firebase-config.js';
 import { HomePage } from './pages/home.js';
 import { SecuredLoansPage } from './pages/secured-loans.js';
 import { UnsecuredLoansPage } from './pages/unsecured-loans.js';
@@ -14,11 +13,9 @@ import { AdminPage } from './pages/admin.js';
 class App {
     constructor() {
         this.router = new Router();
-        this.offlineStatusUnsubscribe = null;
         this.setupRoutes();
         this.setupEventListeners();
         this.setupTheme();
-        this.setupOfflineIndicator();
     }
 
     async init() {
@@ -27,9 +24,6 @@ class App {
 
         // Initialize i18n
         i18n.init();
-
-        // Setup offline status monitoring
-        this.setupOfflineMonitoring();
 
         // Start routing
         this.router.handleRoute(true);
@@ -151,12 +145,6 @@ class App {
     }
 
     async handleLogout() {
-        // Wait for any pending writes before logging out
-        const writeResult = await OfflineManager.waitForPendingWrites();
-        if (!writeResult.success) {
-            console.warn('Some writes may not have completed');
-        }
-
         const result = await AuthService.logout();
         if (result.success) {
             this.showToast(i18n.t('logout-success'), 'success');
@@ -186,95 +174,6 @@ class App {
         if (themeIcon) {
             themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
         }
-    }
-
-    // Setup offline status indicator in the UI
-    setupOfflineIndicator() {
-        // Create offline indicator element
-        const indicator = document.createElement('div');
-        indicator.id = 'offline-indicator';
-        indicator.className = 'offline-indicator';
-        indicator.innerHTML = `
-            <div class="offline-indicator-content">
-                <i class="fas fa-wifi-slash"></i>
-                <span data-i18n="offline-mode">Offline Mode - Changes will sync when online</span>
-            </div>
-        `;
-        document.body.appendChild(indicator);
-
-        // Add styles dynamically
-        const style = document.createElement('style');
-        style.textContent = `
-            .offline-indicator {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-                color: white;
-                padding: 0.75rem;
-                text-align: center;
-                font-size: 0.9rem;
-                font-weight: 600;
-                z-index: 10000;
-                transform: translateY(-100%);
-                transition: transform 0.3s ease;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-            }
-
-            .offline-indicator.show {
-                transform: translateY(0);
-            }
-
-            .offline-indicator-content {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-            }
-
-            .offline-indicator i {
-                font-size: 1.1rem;
-            }
-
-            /* Adjust body padding when offline indicator is shown */
-            body.offline-mode {
-                padding-top: 3.5rem;
-            }
-
-            /* Animation for indicator */
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.8; }
-            }
-
-            .offline-indicator.show i {
-                animation: pulse 2s ease-in-out infinite;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Setup offline status monitoring
-    setupOfflineMonitoring() {
-        const indicator = document.getElementById('offline-indicator');
-
-        // Subscribe to offline status changes
-        this.offlineStatusUnsubscribe = OfflineManager.onStatusChange((isOffline) => {
-            if (isOffline) {
-                // Show offline indicator
-                indicator.classList.add('show');
-                document.body.classList.add('offline-mode');
-                this.showToast(i18n.t('offline-detected') || 'You are offline. Changes will be saved locally.', 'warning');
-                console.log('Application is OFFLINE');
-            } else {
-                // Hide offline indicator
-                indicator.classList.remove('show');
-                document.body.classList.remove('offline-mode');
-                this.showToast(i18n.t('online-detected') || 'You are back online. Syncing changes...', 'success');
-                console.log('Application is ONLINE');
-            }
-        });
     }
 
     showToast(message, type = 'info') {
@@ -309,13 +208,6 @@ class App {
             info: 'info-circle'
         };
         return icons[type] || 'info-circle';
-    }
-
-    // Cleanup when app is destroyed
-    destroy() {
-        if (this.offlineStatusUnsubscribe) {
-            this.offlineStatusUnsubscribe();
-        }
     }
 }
 

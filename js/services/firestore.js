@@ -1,4 +1,4 @@
-// firestore.js - Enhanced Firestore Data Service with Offline Support
+// firestore.js - Firestore Data Service
 
 import { db } from '../firebase-config.js';
 
@@ -8,58 +8,18 @@ export class FirestoreService {
         PRODUCTS: 'products'
     };
 
-    // Cache for frequently accessed data
-    static cache = {
-        constants: null,
-        products: null,
-        lastFetch: {
-            constants: null,
-            products: null
-        }
-    };
-
-    // Cache duration in milliseconds (5 minutes)
-    static CACHE_DURATION = 5 * 60 * 1000;
-
-    // Get constants (rates, margins, etc.) with offline support
-    static async getConstants(useCache = true) {
+    // Get constants (rates, margins, etc.)
+    static async getConstants() {
         try {
-            // Check cache first if requested
-            if (useCache && this.cache.constants && this.isCacheValid('constants')) {
-                console.log('Returning constants from cache');
-                return this.cache.constants;
-            }
-
-            const doc = await db.collection(this.COLLECTIONS.CONSTANTS)
-                .doc('global')
-                .get({ source: 'default' }); // Will use cache if offline
-
+            const doc = await db.collection(this.COLLECTIONS.CONSTANTS).doc('global').get();
             if (doc.exists) {
-                const data = doc.data();
-                this.cache.constants = data;
-                this.cache.lastFetch.constants = Date.now();
-
-                // Log if data came from cache
-                if (doc.metadata.fromCache) {
-                    console.log('Constants loaded from offline cache');
-                } else {
-                    console.log('Constants loaded from server');
-                }
-
-                return data;
+                return doc.data();
             } else {
                 // Return defaults if not found
                 return this.getDefaultConstants();
             }
         } catch (error) {
             console.error('Error fetching constants:', error);
-
-            // If we have cached data, return it even if expired
-            if (this.cache.constants) {
-                console.log('Returning expired cache due to error');
-                return this.cache.constants;
-            }
-
             return this.getDefaultConstants();
         }
     }
@@ -81,185 +41,70 @@ export class FirestoreService {
         };
     }
 
-    // Update constants with offline queue support
+    // Update constants
     static async updateConstants(constants) {
         try {
-            await db.collection(this.COLLECTIONS.CONSTANTS)
-                .doc('global')
-                .set(constants, { merge: true });
-
-            // Update cache
-            this.cache.constants = constants;
-            this.cache.lastFetch.constants = Date.now();
-
+            await db.collection(this.COLLECTIONS.CONSTANTS).doc('global').set(constants, { merge: true });
             return { success: true };
         } catch (error) {
             console.error('Error updating constants:', error);
-
-            // If offline, the write is queued automatically
-            if (error.code === 'unavailable') {
-                console.log('Update queued for when online');
-                return { success: true, queued: true };
-            }
-
             return { success: false, error: error.message };
         }
     }
 
-    // Get all products with offline support
-    static async getProducts(useCache = true) {
+    // Get all products
+    static async getProducts() {
         try {
-            // Check cache first if requested
-            if (useCache && this.cache.products && this.isCacheValid('products')) {
-                console.log('Returning products from cache');
-                return this.cache.products;
-            }
-
-            const snapshot = await db.collection(this.COLLECTIONS.PRODUCTS)
-                .get({ source: 'default' }); // Will use cache if offline
-
+            const snapshot = await db.collection(this.COLLECTIONS.PRODUCTS).get();
             const products = [];
             snapshot.forEach(doc => {
                 products.push({ id: doc.id, ...doc.data() });
             });
-
-            // Update cache
-            this.cache.products = products;
-            this.cache.lastFetch.products = Date.now();
-
-            // Log if data came from cache
-            if (snapshot.metadata.fromCache) {
-                console.log('Products loaded from offline cache');
-            } else {
-                console.log('Products loaded from server');
-            }
-
             return products;
         } catch (error) {
             console.error('Error fetching products:', error);
-
-            // If we have cached data, return it even if expired
-            if (this.cache.products) {
-                console.log('Returning expired cache due to error');
-                return this.cache.products;
-            }
-
             return [];
         }
     }
 
-    // Get product by ID with offline support
+    // Get product by ID
     static async getProduct(id) {
         try {
-            const doc = await db.collection(this.COLLECTIONS.PRODUCTS)
-                .doc(id)
-                .get({ source: 'default' });
-
+            const doc = await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).get();
             if (doc.exists) {
-                if (doc.metadata.fromCache) {
-                    console.log(`Product ${id} loaded from offline cache`);
-                }
                 return { id: doc.id, ...doc.data() };
             }
             return null;
         } catch (error) {
             console.error('Error fetching product:', error);
-
-            // Try to find in cached products list
-            if (this.cache.products) {
-                const product = this.cache.products.find(p => p.id === id);
-                if (product) {
-                    console.log('Returning product from products cache');
-                    return product;
-                }
-            }
-
             return null;
         }
     }
 
-    // Add or update product with offline queue support
+    // Add or update product
     static async saveProduct(productData, id = null) {
         try {
             if (id) {
-                await db.collection(this.COLLECTIONS.PRODUCTS)
-                    .doc(id)
-                    .set(productData, { merge: true });
+                await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).set(productData, { merge: true });
             } else {
-                await db.collection(this.COLLECTIONS.PRODUCTS)
-                    .add(productData);
+                await db.collection(this.COLLECTIONS.PRODUCTS).add(productData);
             }
-
-            // Invalidate cache
-            this.cache.products = null;
-
             return { success: true };
         } catch (error) {
             console.error('Error saving product:', error);
-
-            // If offline, the write is queued automatically
-            if (error.code === 'unavailable') {
-                console.log('Save queued for when online');
-                this.cache.products = null; // Invalidate to force refresh
-                return { success: true, queued: true };
-            }
-
             return { success: false, error: error.message };
         }
     }
 
-    // Delete product with offline queue support
+    // Delete product
     static async deleteProduct(id) {
         try {
-            await db.collection(this.COLLECTIONS.PRODUCTS)
-                .doc(id)
-                .delete();
-
-            // Invalidate cache
-            this.cache.products = null;
-
+            await db.collection(this.COLLECTIONS.PRODUCTS).doc(id).delete();
             return { success: true };
         } catch (error) {
             console.error('Error deleting product:', error);
-
-            // If offline, the write is queued automatically
-            if (error.code === 'unavailable') {
-                console.log('Delete queued for when online');
-                this.cache.products = null; // Invalidate to force refresh
-                return { success: true, queued: true };
-            }
-
             return { success: false, error: error.message };
         }
-    }
-
-    // Check if cache is still valid
-    static isCacheValid(key) {
-        if (!this.cache.lastFetch[key]) return false;
-        const age = Date.now() - this.cache.lastFetch[key];
-        return age < this.CACHE_DURATION;
-    }
-
-    // Force cache refresh
-    static async refreshCache() {
-        this.cache.constants = null;
-        this.cache.products = null;
-        this.cache.lastFetch.constants = null;
-        this.cache.lastFetch.products = null;
-
-        // Fetch fresh data
-        await Promise.all([
-            this.getConstants(false),
-            this.getProducts(false)
-        ]);
-    }
-
-    // Clear cache
-    static clearCache() {
-        this.cache.constants = null;
-        this.cache.products = null;
-        this.cache.lastFetch.constants = null;
-        this.cache.lastFetch.products = null;
     }
 
     // Filter products by criteria
@@ -285,37 +130,5 @@ export class FirestoreService {
             return parseFloat(product.rate8Plus) / 100;
         }
         return null;
-    }
-
-    // Listen to real-time updates for constants
-    static listenToConstants(callback) {
-        return db.collection(this.COLLECTIONS.CONSTANTS)
-            .doc('global')
-            .onSnapshot((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    this.cache.constants = data;
-                    this.cache.lastFetch.constants = Date.now();
-                    callback(data);
-                }
-            }, (error) => {
-                console.error('Error listening to constants:', error);
-            });
-    }
-
-    // Listen to real-time updates for products
-    static listenToProducts(callback) {
-        return db.collection(this.COLLECTIONS.PRODUCTS)
-            .onSnapshot((snapshot) => {
-                const products = [];
-                snapshot.forEach(doc => {
-                    products.push({ id: doc.id, ...doc.data() });
-                });
-                this.cache.products = products;
-                this.cache.lastFetch.products = Date.now();
-                callback(products);
-            }, (error) => {
-                console.error('Error listening to products:', error);
-            });
     }
 }

@@ -12,8 +12,6 @@ export class I18n {
                 'login': 'Sign In',
                 'logout': 'Sign Out',
                 'login-panel-desc': 'Access admin controls for rates and products',
-                'offline-detected': 'You are currently offline. Some features may be unavailable, Changes will be saved locally.',
-                'online-detected': 'You are back online. Syncing local changes...',
 
                 // Navigation
                 'nav-home': 'Home',
@@ -246,8 +244,6 @@ export class I18n {
                 'login': 'دخول',
                 'logout': 'خروج',
                 'login-panel-desc': 'لوحة الإدارة للتحكم في الأسعار والمنتجات',
-                'offline-detected': 'أنت حالياً غير متصل بالإنترنت. بعض الميزات قد لا تكون متاحة، وسيتم حفظ التعديلات محلياً.',
-                'online-detected': 'تم استعادة الاتصال بالإنترنت. جاري مزامنة التعديلات المحلية...',
 
                 // Navigation
                 'nav-home': 'الرئيسية',

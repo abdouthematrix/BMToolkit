@@ -1,9 +1,9 @@
-// app.js - Main Application Entry Point with Guaranteed Offline Persistence
+// app.js - Main Application Entry Point with Offline Support
 
 import { Router } from './router.js';
 import { i18n } from './i18n.js';
-import { initializeFirebase, OfflineManager } from './firebase-config.js';
 import { AuthService } from './services/auth.js';
+import { OfflineManager } from './firebase-config.js';
 import { HomePage } from './pages/home.js';
 import { SecuredLoansPage } from './pages/secured-loans.js';
 import { UnsecuredLoansPage } from './pages/unsecured-loans.js';
@@ -15,65 +15,24 @@ class App {
     constructor() {
         this.router = new Router();
         this.offlineStatusUnsubscribe = null;
-        this.initialized = false;
+        this.setupRoutes();
+        this.setupEventListeners();
+        this.setupTheme();
+        this.setupOfflineIndicator();
     }
 
     async init() {
-        if (this.initialized) {
-            console.warn('⚠️ App already initialized');
-            return;
-        }
+        // Initialize Firebase Auth
+        await AuthService.init();
 
-        try {
-            console.log('🚀 Starting BMToolkit initialization...');
+        // Initialize i18n
+        i18n.init();
 
-            // ============================================
-            // CRITICAL: WAIT FOR FIREBASE PERSISTENCE
-            // ============================================
-            console.log('1️⃣ Initializing Firebase with offline persistence...');
-            await initializeFirebase();
-            console.log('✅ Firebase ready - persistence GUARANTEED');
+        // Setup offline status monitoring
+        this.setupOfflineMonitoring();
 
-            // ============================================
-            // NOW SAFE TO USE FIREBASE/FIRESTORE
-            // ============================================
-
-            // Initialize Firebase Auth
-            console.log('2️⃣ Initializing authentication...');
-            await AuthService.init();
-            console.log('✅ Auth ready');
-
-            // Initialize i18n
-            console.log('3️⃣ Initializing i18n...');
-            i18n.init();
-            console.log('✅ i18n ready');
-
-            // Setup UI
-            console.log('4️⃣ Setting up UI...');
-            this.setupRoutes();
-            this.setupEventListeners();
-            this.setupTheme();
-            this.setupOfflineIndicator();
-            console.log('✅ UI ready');
-
-            // Setup offline status monitoring
-            console.log('5️⃣ Setting up offline monitoring...');
-            this.setupOfflineMonitoring();
-            console.log('✅ Offline monitoring active');
-
-            // Start routing
-            console.log('6️⃣ Starting router...');
-            this.router.handleRoute(true);
-            console.log('✅ Router active');
-
-            this.initialized = true;
-            console.log('🎉 BMToolkit initialized successfully!');
-
-        } catch (error) {
-            console.error('❌ FATAL: App initialization failed:', error);
-            this.showFatalError(error);
-            throw error;
-        }
+        // Start routing
+        this.router.handleRoute(true);
     }
 
     setupRoutes() {
@@ -192,28 +151,18 @@ class App {
     }
 
     async handleLogout() {
-        try {
-            console.log('🚪 Logging out...');
+        // Wait for any pending writes before logging out
+        const writeResult = await OfflineManager.waitForPendingWrites();
+        if (!writeResult.success) {
+            console.warn('Some writes may not have completed');
+        }
 
-            // Wait for any pending writes before logging out
-            console.log('⏳ Waiting for pending writes...');
-            const writeResult = await OfflineManager.waitForPendingWrites();
-            if (!writeResult.success) {
-                console.warn('⚠️ Some writes may not have completed');
-            } else {
-                console.log('✅ All writes completed');
-            }
-
-            const result = await AuthService.logout();
-            if (result.success) {
-                this.showToast(i18n.t('logout-success') || 'Logged out successfully', 'success');
-                window.location.hash = 'home';
-            } else {
-                this.showToast(result.error || 'Logout failed', 'error');
-            }
-        } catch (error) {
-            console.error('❌ Logout error:', error);
-            this.showToast('Logout failed: ' + error.message, 'error');
+        const result = await AuthService.logout();
+        if (result.success) {
+            this.showToast(i18n.t('logout-success'), 'success');
+            window.location.hash = 'home';
+        } else {
+            this.showToast(result.error || 'Logout failed', 'error');
         }
     }
 
@@ -317,13 +266,13 @@ class App {
                 indicator.classList.add('show');
                 document.body.classList.add('offline-mode');
                 this.showToast(i18n.t('offline-detected') || 'You are offline. Changes will be saved locally.', 'warning');
-                console.log('📡 Application is OFFLINE - using IndexedDB cache');
+                console.log('Application is OFFLINE');
             } else {
                 // Hide offline indicator
                 indicator.classList.remove('show');
                 document.body.classList.remove('offline-mode');
                 this.showToast(i18n.t('online-detected') || 'You are back online. Syncing changes...', 'success');
-                console.log('📡 Application is ONLINE - syncing with server');
+                console.log('Application is ONLINE');
             }
         });
     }
@@ -362,29 +311,6 @@ class App {
         return icons[type] || 'info-circle';
     }
 
-    showFatalError(error) {
-        const appContent = document.getElementById('app-content');
-        if (appContent) {
-            appContent.innerHTML = `
-                <div class="container">
-                    <div class="card" style="max-width: 600px; margin: 50px auto; text-align: center;">
-                        <div class="card-body">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #e74c3c; margin-bottom: var(--spacing-lg);"></i>
-                            <h2>Initialization Error</h2>
-                            <p style="color: #7f8c8d; margin-bottom: var(--spacing-lg);">
-                                ${error.message || 'Failed to initialize application'}
-                            </p>
-                            <button onclick="location.reload()" class="btn-primary">
-                                <i class="fas fa-redo"></i>
-                                Reload Application
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    }
-
     // Cleanup when app is destroyed
     destroy() {
         if (this.offlineStatusUnsubscribe) {
@@ -394,15 +320,9 @@ class App {
 }
 
 // Initialize app when DOM is ready
-document.addEventListener('DOMContentLoaded', async () => {
-    console.log('📱 DOM ready, starting app...');
-
-    try {
-        window.app = new App();
-        await window.app.init();
-    } catch (error) {
-        console.error('❌ Failed to start app:', error);
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    window.app = new App();
+    window.app.init();
 });
 
 // Make app globally accessible

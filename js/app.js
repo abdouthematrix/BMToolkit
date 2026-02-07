@@ -150,12 +150,10 @@ class App {
             // Silently fetch fresh data to prime the cache
             await FirestoreService.getConstants();
             await FirestoreService.getProducts();
-
-            showToast("Back online: Data updated.");
         });
 
         window.addEventListener('offline', () => {
-            showToast("Working offline: Using cached data.");
+            console.log("Working offline: Using cached data.");
         });
     }
 

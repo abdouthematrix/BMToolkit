@@ -77,6 +77,14 @@ export class AdminPage {
                                     <label class="form-label" data-i18n="max-loan-percent">Max Loan Percent (%)</label>
                                     <input type="number" id="max-loan-percent-admin" class="form-input" min="0" max="100" step="1" required>
                                 </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="secured-min-tenor-months">Min Tenor (Months)</label>
+                                    <input type="number" id="secured-min-tenor-months-admin" class="form-input" min="1" max="120" step="1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="secured-max-tenor-years">Max Tenor (Years)</label>
+                                    <input type="number" id="secured-max-tenor-years-admin" class="form-input" min="1" max="30" step="1" required>
+                                </div>
                             </div>
 
                             <!-- Unsecured Loans Constants -->
@@ -89,6 +97,10 @@ export class AdminPage {
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="stamp-duty-rate">Stamp Duty Rate (‰)</label>
                                     <input type="number" id="stamp-duty-admin" class="form-input" min="0" max="100" step="0.1" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="unsecured-max-tenor-8plus">Max Tenor for Rate8+ (Years)</label>
+                                    <input type="number" id="unsecured-max-tenor-8plus-admin" class="form-input" min="1" max="30" step="1" required>
                                 </div>
                             </div>
 
@@ -235,7 +247,12 @@ export class AdminPage {
         document.getElementById('max-loan-percent-admin').value = (this.constants.MAX_LOAN_PERCENT * 100).toFixed(0);
         document.getElementById('max-dti-admin').value = (this.constants.MAX_DBR_RATIO * 100).toFixed(0);
         document.getElementById('stamp-duty-admin').value = this.constants.STAMP_DUTY_RATE.toFixed(1);
-        
+
+        // Populate tenor limit constants
+        document.getElementById('secured-min-tenor-months-admin').value = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        document.getElementById('secured-max-tenor-years-admin').value = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        document.getElementById('unsecured-max-tenor-8plus-admin').value = this.constants.UNSECURED_MAX_TENOR_8_PLUS_YEARS || 10;
+
         // Populate scenario constants
         document.getElementById('interest-upfront-percent-admin').value = (this.constants.SCENARIOS?.INTEREST_UPFRONT_PERCENT || 0);
         document.getElementById('loan-certificate-percent-admin').value = (this.constants.SCENARIOS?.LOAN_CERTIFICATE_PERCENT || 0);
@@ -506,7 +523,7 @@ export class AdminPage {
             window.app.showToast(result.error || i18n.t('reset-failed'), 'error');
         }
     }
-    
+
     static parseCsv(text) {
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return [];
@@ -578,6 +595,9 @@ export class AdminPage {
             MAX_LOAN_PERCENT: parseFloat(document.getElementById('max-loan-percent-admin').value) / 100,
             MAX_DBR_RATIO: parseFloat(document.getElementById('max-dti-admin').value) / 100,
             STAMP_DUTY_RATE: parseFloat(document.getElementById('stamp-duty-admin').value),
+            SECURED_MIN_TENOR_MONTHS: parseInt(document.getElementById('secured-min-tenor-months-admin').value),
+            SECURED_MAX_TENOR_YEARS: parseInt(document.getElementById('secured-max-tenor-years-admin').value),
+            UNSECURED_MAX_TENOR_8_PLUS_YEARS: parseInt(document.getElementById('unsecured-max-tenor-8plus-admin').value),
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: parseInt(document.getElementById('interest-upfront-percent-admin').value),
                 LOAN_CERTIFICATE_PERCENT: parseInt(document.getElementById('loan-certificate-percent-admin').value)

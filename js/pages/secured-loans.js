@@ -14,11 +14,12 @@ export class SecuredLoansPage {
         if (router) {
             // Determine active tab BEFORE rendering
             this.determineActiveTab();
-            
+
             router.render(this.render());
             i18n.updatePageText();
             await this.loadConstants();
             this.attachEventListeners();
+            this.attachTenorValidation();
             this.autoCalculateIfNeeded();
         }
     }
@@ -26,7 +27,7 @@ export class SecuredLoansPage {
     static determineActiveTab() {
         const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
         const urlParams = window.app?.router?.getQueryParams() || {};
-        
+
         // URL parameter takes precedence over saved tab
         this.activeTab = urlParams.tab || savedTab || 'smart-investment';
     }
@@ -38,7 +39,132 @@ export class SecuredLoansPage {
         document.getElementById('cd-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
         document.getElementById('cd-rate-optimizer').value = (this.constants.CD_RATE * 100).toFixed(2);
 
+        // Update tenor input limits based on constants
+        this.updateTenorLimits();
+
         // Note: loan-rate-optimizer field removed - calculated automatically from CD rate
+    }
+
+    static updateTenorLimits() {
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const maxMonths = maxYears * 12;
+
+        // Smart Investment Tool - years input
+        const tdYearsInput = document.getElementById('td-years');
+        if (tdYearsInput) {
+            tdYearsInput.min = Math.ceil(minMonths / 12);
+            tdYearsInput.max = maxYears;
+        }
+
+        // Smart Optimizer - months input
+        const loanTermInput = document.getElementById('loan-term-optimizer');
+        if (loanTermInput) {
+            loanTermInput.min = minMonths;
+            loanTermInput.max = maxMonths;
+        }
+
+        // Loan Calculator - tenor range inputs (years by default)
+        const minTenorLoan = document.getElementById('min-tenor-loan');
+        const maxTenorLoan = document.getElementById('max-tenor-loan');
+        if (minTenorLoan) {
+            minTenorLoan.min = Math.ceil(minMonths / 12);
+            minTenorLoan.max = maxYears;
+        }
+        if (maxTenorLoan) {
+            maxTenorLoan.min = Math.ceil(minMonths / 12);
+            maxTenorLoan.max = maxYears;
+        }
+
+        // Max Loan Calculator - tenor range inputs (years by default)
+        const minTenorMax = document.getElementById('min-tenor-max');
+        const maxTenorMax = document.getElementById('max-tenor-max');
+        if (minTenorMax) {
+            minTenorMax.min = Math.ceil(minMonths / 12);
+            minTenorMax.max = maxYears;
+        }
+        if (maxTenorMax) {
+            maxTenorMax.min = Math.ceil(minMonths / 12);
+            maxTenorMax.max = maxYears;
+        }
+    }
+
+    static attachTenorValidation() {
+        // Smart Optimizer - validate loan term in months
+        const loanTermInput = document.getElementById('loan-term-optimizer');
+        if (loanTermInput) {
+            loanTermInput.addEventListener('input', () => {
+                const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+                const maxMonths = (this.constants.SECURED_MAX_TENOR_YEARS || 10) * 12;
+                const value = parseInt(loanTermInput.value);
+
+                if (value < minMonths) {
+                    loanTermInput.setCustomValidity(`Minimum tenor is ${minMonths} months`);
+                } else if (value > maxMonths) {
+                    loanTermInput.setCustomValidity(`Maximum tenor is ${maxMonths} months`);
+                } else {
+                    loanTermInput.setCustomValidity('');
+                }
+            });
+        }
+
+        // Loan Calculator - validate tenor range with unit switching
+        const isYearsLoan = document.getElementById('is-years-loan');
+        const minTenorLoan = document.getElementById('min-tenor-loan');
+        const maxTenorLoan = document.getElementById('max-tenor-loan');
+
+        const validateLoanCalculatorTenor = () => {
+            const isYears = isYearsLoan.checked;
+            const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+            const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+            const maxMonths = maxYears * 12;
+
+            if (isYears) {
+                const minYears = Math.ceil(minMonths / 12);
+                minTenorLoan.min = minYears;
+                minTenorLoan.max = maxYears;
+                maxTenorLoan.min = minYears;
+                maxTenorLoan.max = maxYears;
+            } else {
+                minTenorLoan.min = minMonths;
+                minTenorLoan.max = maxMonths;
+                maxTenorLoan.min = minMonths;
+                maxTenorLoan.max = maxMonths;
+            }
+        };
+
+        if (isYearsLoan) {
+            isYearsLoan.addEventListener('change', validateLoanCalculatorTenor);
+        }
+
+        // Max Loan Calculator - validate tenor range with unit switching
+        const isYearsMax = document.getElementById('is-years-max');
+        const minTenorMax = document.getElementById('min-tenor-max');
+        const maxTenorMax = document.getElementById('max-tenor-max');
+
+        const validateMaxLoanTenor = () => {
+            const isYears = isYearsMax.checked;
+            const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+            const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+            const maxMonths = maxYears * 12;
+
+            if (isYears) {
+                const minYears = Math.ceil(minMonths / 12);
+                minTenorMax.min = minYears;
+                minTenorMax.max = maxYears;
+                maxTenorMax.min = minYears;
+                maxTenorMax.max = maxYears;
+            } else {
+                minTenorMax.min = minMonths;
+                minTenorMax.max = maxMonths;
+                maxTenorMax.min = minMonths;
+                maxTenorMax.max = maxMonths;
+            }
+        };
+
+        if (isYearsMax) {
+            isYearsMax.addEventListener('change', validateMaxLoanTenor);
+        }
     }
 
     static render() {
@@ -355,7 +481,7 @@ export class SecuredLoansPage {
                 if (urlParams.rate) document.getElementById('rate-loan').value = urlParams.rate;
                 if (urlParams.minTenor) document.getElementById('min-tenor-loan').value = urlParams.minTenor;
                 if (urlParams.maxTenor) document.getElementById('max-tenor-loan').value = urlParams.maxTenor;
-                if (urlParams.unit) document.getElementById('is-years-loan').checked = urlParams.unit === 'years';
+                if (urlParams.unit) document.getElementById('is-years-loan').checked = (urlParams.unit === 'years');
                 this.calculateLoan();
                 break;
 
@@ -364,7 +490,7 @@ export class SecuredLoansPage {
                 if (urlParams.rate) document.getElementById('rate-max').value = urlParams.rate;
                 if (urlParams.minTenor) document.getElementById('min-tenor-max').value = urlParams.minTenor;
                 if (urlParams.maxTenor) document.getElementById('max-tenor-max').value = urlParams.maxTenor;
-                if (urlParams.unit) document.getElementById('is-years-max').checked = urlParams.unit === 'years';
+                if (urlParams.unit) document.getElementById('is-years-max').checked = (urlParams.unit === 'years');
                 this.calculateMaxLoan();
                 break;
         }
@@ -374,6 +500,20 @@ export class SecuredLoansPage {
         const tdAmount = parseFloat(document.getElementById('td-amount').value);
         const tdRate = parseFloat(document.getElementById('cd-rate').value) / 100;
         const years = parseInt(document.getElementById('td-years').value);
+
+        // Validate tenor using constants (NEW - validation only)
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const tenorMonths = years * 12;
+
+        if (tenorMonths < minMonths) {
+            window.app.showToast(`Minimum tenor is ${minMonths} months (${Math.ceil(minMonths / 12)} years)`, 'error');
+            return;
+        }
+        if (years > maxYears) {
+            window.app.showToast(`Maximum tenor is ${maxYears} years`, 'error');
+            return;
+        }
 
         // Update URL parameters using tab as single identifier
         const router = window.app?.router;
@@ -428,10 +568,85 @@ export class SecuredLoansPage {
         i18n.updatePageText();
     }
 
+    static displaySmartInvestmentResults(result, tdAmount, cdRate, loanRate, tenorYears) {
+        const resultsHtml = `
+            <h4 data-i18n="investment-scenarios">Investment Scenarios Comparison</h4>
+            <div class="results-grid">
+                ${result.scenarios.map((scenario, index) => `
+                    <div class="result-card ${index === result.bestScenarioIndex ? 'best-option' : ''}">
+                        <div class="result-header">
+                            <h5>${scenario.name}</h5>
+                            ${index === result.bestScenarioIndex ? '<span class="badge badge-success" data-i18n="best-option">Best Option</span>' : ''}
+                        </div>
+                        <div class="result-details">
+                            <div class="detail-row">
+                                <span data-i18n="loan-amount">Loan Amount:</span>
+                                <strong>${i18n.formatCurrency(scenario.loanAmount)}</strong>
+                            </div>
+                            <div class="detail-row">
+                                <span data-i18n="monthly-income">Monthly Income:</span>
+                                <strong>${i18n.formatCurrency(scenario.monthlyIncome)}</strong>
+                            </div>
+                            <div class="detail-row">
+                                <span data-i18n="monthly-payment">Monthly Payment:</span>
+                                <strong>${i18n.formatCurrency(scenario.monthlyPayment)}</strong>
+                            </div>
+                            <div class="detail-row">
+                                <span data-i18n="net-monthly-profit">Net Monthly:</span>
+                                <strong class="${scenario.netMonthly >= 0 ? 'text-success' : 'text-danger'}">
+                                    ${i18n.formatCurrency(scenario.netMonthly)}
+                                </strong>
+                            </div>
+                            <div class="detail-row grand-total">
+                                <span data-i18n="grand-total">Grand Total:</span>
+                                <strong class="text-primary">${i18n.formatCurrency(scenario.grandTotal)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="summary-box" style="margin-top: var(--spacing-lg);">
+                <h5 data-i18n="assumptions">Calculation Assumptions</h5>
+                <div class="grid grid-3" style="margin-top: var(--spacing-md);">
+                    <div>
+                        <span class="text-muted" data-i18n="cd-rate">CD Rate:</span>
+                        <strong>${i18n.formatPercent(cdRate)}</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" data-i18n="loan-rate">Loan Rate:</span>
+                        <strong>${i18n.formatPercent(loanRate)}</strong>
+                    </div>
+                    <div>
+                        <span class="text-muted" data-i18n="tenor">Tenor:</span>
+                        <strong>${tenorYears} ${i18n.t('years')}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('smart-investment-results').innerHTML = resultsHtml;
+        document.getElementById('smart-investment-results').style.display = 'block';
+        i18n.updatePageText();
+    }
+
     static async calculateSmartOptimizer() {
         const principal = parseFloat(document.getElementById('principal-optimizer').value);
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
+
+        // Validate tenor using constants (NEW - validation only)
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxMonths = (this.constants.SECURED_MAX_TENOR_YEARS || 10) * 12;
+
+        if (loanTerm < minMonths) {
+            window.app.showToast(`Minimum tenor is ${minMonths} months`, 'error');
+            return;
+        }
+        if (loanTerm > maxMonths) {
+            window.app.showToast(`Maximum tenor is ${maxMonths} months`, 'error');
+            return;
+        }
 
         // Update URL parameters using tab as single identifier
         const router = window.app?.router;
@@ -502,12 +717,99 @@ export class SecuredLoansPage {
         i18n.updatePageText();
     }
 
+    static displaySmartOptimizerResults(result, principal, cdRate, loanRate, tenorMonths) {
+        const resultsHtml = `
+            <div class="best-result-card">
+                <h4 data-i18n="optimal-loan">Optimal Loan Configuration</h4>
+                <div class="result-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div class="metric">
+                        <span class="text-muted" data-i18n="loan-amount">Loan Amount</span>
+                        <div class="metric-value">${i18n.formatCurrency(result.bestResult.loanAmount)}</div>
+                        <small class="text-muted">${i18n.formatPercent(result.bestResult.loanAmount / principal)} of CD</small>
+                    </div>
+                    <div class="metric">
+                        <span class="text-muted" data-i18n="monthly-income">Monthly Income</span>
+                        <div class="metric-value">${i18n.formatCurrency(result.bestResult.totalMonthlyIncome)}</div>
+                    </div>
+                    <div class="metric">
+                        <span class="text-muted" data-i18n="monthly-payment">Monthly Payment</span>
+                        <div class="metric-value">${i18n.formatCurrency(result.bestResult.monthlyPayment)}</div>
+                    </div>
+                    <div class="metric">
+                        <span class="text-muted" data-i18n="net-monthly-profit">Net Monthly Profit</span>
+                        <div class="metric-value text-success">${i18n.formatCurrency(result.bestResult.netMonthlyProfit)}</div>
+                    </div>
+                    <div class="metric highlight">
+                        <span class="text-muted" data-i18n="grand-total">Grand Total Profit</span>
+                        <div class="metric-value text-primary" style="font-size: 1.5em;">${i18n.formatCurrency(result.bestResult.grandTotal)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <h4 style="margin-top: var(--spacing-xl);" data-i18n="detailed-results">Detailed Results</h4>
+            <div class="results-table-wrapper" style="overflow-x: auto;">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="loan-amount">Loan Amount</th>
+                            <th data-i18n="monthly-income-amount">Monthly Income</th>
+                            <th data-i18n="monthly-payment">Monthly Payment</th>
+                            <th data-i18n="net-monthly-profit">Net Monthly Profit</th>
+                            <th data-i18n="grand-total">Grand Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.results.map(row => `
+                            <tr class="${row.loanAmount === result.bestResult.loanAmount ? 'best-option' : ''}">
+                                <td class="number-display">${i18n.formatCurrency(row.loanAmount)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.totalMonthlyIncome)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.monthlyPayment)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.netMonthlyProfit)}</td>
+                                <td class="number-display font-bold">${i18n.formatCurrency(row.grandTotal)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        document.getElementById('smart-optimizer-results').innerHTML = resultsHtml;
+        document.getElementById('smart-optimizer-results').style.display = 'block';
+        i18n.updatePageText();
+    }
+
     static calculateLoan() {
         const principal = parseFloat(document.getElementById('principal-loan').value);
         const annualRate = parseFloat(document.getElementById('rate-loan').value) / 100;
         const minTenor = parseInt(document.getElementById('min-tenor-loan').value);
         const maxTenor = parseInt(document.getElementById('max-tenor-loan').value);
         const isYears = document.getElementById('is-years-loan').checked;
+
+        // Validate tenor using constants
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const maxMonths = maxYears * 12;
+
+        if (isYears) {
+            const minYears = Math.ceil(minMonths / 12);
+            if (minTenor < minYears) {
+                window.app.showToast(`Minimum tenor is ${minYears} years`, 'error');
+                return;
+            }
+            if (maxTenor > maxYears) {
+                window.app.showToast(`Maximum tenor is ${maxYears} years`, 'error');
+                return;
+            }
+        } else {
+            if (minTenor < minMonths) {
+                window.app.showToast(`Minimum tenor is ${minMonths} months`, 'error');
+                return;
+            }
+            if (maxTenor > maxMonths) {
+                window.app.showToast(`Maximum tenor is ${maxMonths} months`, 'error');
+                return;
+            }
+        }
 
         // Update URL parameters using tab as single identifier
         const router = window.app?.router;
@@ -563,6 +865,32 @@ export class SecuredLoansPage {
         const minTenor = parseInt(document.getElementById('min-tenor-max').value);
         const maxTenor = parseInt(document.getElementById('max-tenor-max').value);
         const isYears = document.getElementById('is-years-max').checked;
+
+        // Validate tenor using constants
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const maxMonths = maxYears * 12;
+
+        if (isYears) {
+            const minYears = Math.ceil(minMonths / 12);
+            if (minTenor < minYears) {
+                window.app.showToast(`Minimum tenor is ${minYears} years`, 'error');
+                return;
+            }
+            if (maxTenor > maxYears) {
+                window.app.showToast(`Maximum tenor is ${maxYears} years`, 'error');
+                return;
+            }
+        } else {
+            if (minTenor < minMonths) {
+                window.app.showToast(`Minimum tenor is ${minMonths} months`, 'error');
+                return;
+            }
+            if (maxTenor > maxMonths) {
+                window.app.showToast(`Maximum tenor is ${maxMonths} months`, 'error');
+                return;
+            }
+        }
 
         // Update URL parameters using tab as single identifier
         const router = window.app?.router;

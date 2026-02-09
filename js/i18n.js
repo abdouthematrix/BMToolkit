@@ -160,6 +160,9 @@ export class I18n {
                 'min-rate-label': 'Minimum Interest Floor (%)',
                 'max-dti-label': 'Max DTI Cap (%)',
                 'max-loan-percent': 'Loan-to-Value Cap (%)',
+                'secured-min-tenor-months': 'Min Tenor (Months)',
+                'secured-max-tenor-years': 'Max Tenor (Years)',
+                'unsecured-max-tenor-8plus': 'Max Tenor for Rate8+ (Years)',
                 'save-changes': 'Update Settings',
                 'reset-defaults': 'Restore Defaults',
                 'email': 'Email Address',
@@ -234,7 +237,7 @@ export class I18n {
                 'tab-loan-calculator': 'Loan Calc',
                 'tab-max-loan': 'Loan Limit',
                 'tab-first-month': 'First Month',
-                'tab-amortization': 'Amortization'              
+                'tab-amortization': 'Amortization'
             },
             ar: {
                 // App
@@ -393,6 +396,9 @@ export class I18n {
                 'min-rate-label': 'الحد الأدنى للفائدة (%)',
                 'max-dti-label': 'سقف عبء الدين (DTI) %',
                 'max-loan-percent': 'نسبة التسليف (%)',
+                'secured-min-tenor-months': 'الحد الأدنى للمدة (شهور)',
+                'secured-max-tenor-years': 'الحد الأقصى للمدة (سنوات)',
+                'unsecured-max-tenor-8plus': 'الحد الأقصى لمدة الفائدة 8+ (سنوات)',
                 'save-changes': 'حفظ التعديلات',
                 'reset-defaults': 'استعادة الافتراضي',
                 'email': 'البريد الإلكتروني',

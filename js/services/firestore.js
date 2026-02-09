@@ -57,7 +57,12 @@ export class FirestoreService {
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: 36,
                 LOAN_CERTIFICATE_PERCENT: 58
-            }
+            },
+            // Secured loan tenor limits
+            SECURED_MIN_TENOR_MONTHS: 6,
+            SECURED_MAX_TENOR_YEARS: 10,
+            // Unsecured loan tenor limits
+            UNSECURED_MAX_TENOR_8_PLUS_YEARS: 10
         };
     }
 

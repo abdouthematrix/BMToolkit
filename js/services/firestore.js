@@ -166,4 +166,21 @@ export class FirestoreService {
         }
         return null;
     }
+
+    // Get the effective maximum tenor (in years) for an unsecured product,
+    // based on which rate tiers are populated and the global cap constant.
+    static getProductMaxTenorYears(product, constants = null) {
+        const globalMax = constants?.UNSECURED_MAX_TENOR_8_PLUS_YEARS ?? 10;
+
+        if (product.rate8Plus && parseFloat(product.rate8Plus) > 0) {
+            return globalMax; // Can go all the way to the global cap
+        }
+        if (product.rate5_8 && parseFloat(product.rate5_8) > 0) {
+            return 8; // Rate tier tops out at 8 years
+        }
+        if (product.rate1_5 && parseFloat(product.rate1_5) > 0) {
+            return 5; // Rate tier tops out at 5 years
+        }
+        return 0; // No valid rate — product cannot be used
+    }
 }

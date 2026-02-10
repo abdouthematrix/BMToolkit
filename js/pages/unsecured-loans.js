@@ -325,6 +325,13 @@ export class UnsecuredLoansPage {
         document.getElementById('segment-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('product-select').addEventListener('change', (e) => this.selectProduct(e.target.value));
 
+        // Rescale tenor inputs whenever the years/months toggle changes
+        ['is-years-income', 'is-years-installment', 'is-years-schedule'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                this.updateTenorInputLimits(id);
+            });
+        });
+
         document.getElementById('by-income-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.calculateByIncome();
@@ -507,6 +514,59 @@ export class UnsecuredLoansPage {
         document.getElementById('product-info').innerHTML = infoHtml;
         document.getElementById('product-info').style.display = 'block';
         i18n.updatePageText();
+
+        // Keep tenor input max attributes in sync with the product's effective limit
+        this.updateTenorInputLimits();
+    }
+
+    // Synchronise min/max attributes on all tenor inputs for a given tab when
+    // the unit toggles, and rescale the current values so they stay meaningful.
+    // Also called on product selection to apply the product's tenor ceiling.
+    static updateTenorInputLimits(changedTabId = null) {
+        const maxYears = this.getProductMaxTenorYears();
+
+        const tabs = [
+            {
+                toggleId: 'is-years-income',
+                minId: 'min-tenor-income',
+                maxId: 'max-tenor-income'
+            },
+            {
+                toggleId: 'is-years-installment',
+                minId: 'min-tenor-installment',
+                maxId: 'max-tenor-installment'
+            },
+            {
+                toggleId: 'is-years-schedule',
+                minId: 'min-tenor-schedule',
+                maxId: 'max-tenor-schedule'
+            }
+        ];
+
+        tabs.forEach(({ toggleId, minId, maxId }) => {
+            const toggleEl = document.getElementById(toggleId);
+            const minEl = document.getElementById(minId);
+            const maxEl = document.getElementById(maxId);
+            if (!toggleEl || !minEl || !maxEl) return;
+
+            const isYears = toggleEl.checked;
+            const factor = isYears ? 1 : 12;
+            const absMax = maxYears * factor;
+            const absMin = 1; // 1 year or 1 month
+
+            // When this is a unit-change event, rescale the current values
+            if (changedTabId === toggleId) {
+                const prevFactor = isYears ? 12 : 1; // factor BEFORE the toggle
+                const rescale = v => Math.min(Math.max(Math.round(v / prevFactor * factor), absMin), absMax);
+                minEl.value = rescale(parseFloat(minEl.value) || absMin);
+                maxEl.value = rescale(parseFloat(maxEl.value) || absMax);
+            }
+
+            minEl.min = absMin;
+            minEl.max = absMax;
+            maxEl.min = absMin;
+            maxEl.max = absMax;
+        });
     }
 
     static getProductRate(tenorYears) {
@@ -522,9 +582,26 @@ export class UnsecuredLoansPage {
         return 0.18;
     }
 
+    // Returns the effective maximum tenor in years for the currently selected
+    // product by inspecting which rate tiers are populated and honouring the
+    // global UNSECURED_MAX_TENOR_8_PLUS_YEARS cap stored in constants.
+    static getProductMaxTenorYears() {
+        if (!this.selectedProduct) return 10;
+        const globalMax = this.constants?.UNSECURED_MAX_TENOR_8_PLUS_YEARS ?? 10;
+
+        const r8 = this.selectedProduct.rate8Plus;
+        const r5 = this.selectedProduct.rate5_8;
+        const r1 = this.selectedProduct.rate1_5;
+
+        if (r8 && parseFloat(r8) > 0) return globalMax;
+        if (r5 && parseFloat(r5) > 0) return 8;
+        if (r1 && parseFloat(r1) > 0) return 5;
+        return 0;
+    }
+
     static calculateByIncome() {
         if (!this.selectedProduct) {
-            window.app.showToast('Please select a product first', 'warning');
+            window.app.showToast(i18n.t('select-product-first'), 'warning');
             return;
         }
 
@@ -532,8 +609,23 @@ export class UnsecuredLoansPage {
         const monthlyInstallments = parseFloat(document.getElementById('monthly-installments').value);
         const maxDTI = parseFloat(document.getElementById('max-dti').value) / 100;
         const minTenor = parseInt(document.getElementById('min-tenor-income').value);
-        const maxTenor = parseInt(document.getElementById('max-tenor-income').value);
         const isYears = document.getElementById('is-years-income').checked;
+
+        const productMaxTenorYears = this.getProductMaxTenorYears();
+        const productMaxTenor = isYears ? productMaxTenorYears : productMaxTenorYears * 12;
+        let maxTenor = parseInt(document.getElementById('max-tenor-income').value);
+        if (maxTenor > productMaxTenor) {
+            window.app.showToast(
+                i18n.t('max-tenor-capped', { years: productMaxTenorYears }),
+                'warning'
+            );
+            maxTenor = productMaxTenor;
+            document.getElementById('max-tenor-income').value = maxTenor;
+        }
+        if (minTenor > maxTenor) {
+            window.app.showToast(i18n.t('min-tenor-exceeds-max'), 'error');
+            return;
+        }
 
         const router = window.app?.router;
         if (router) {
@@ -572,7 +664,7 @@ export class UnsecuredLoansPage {
         }
 
         if (results.length === 0) {
-            window.app.showToast('Payment capacity is negative or zero', 'error');
+            window.app.showToast(i18n.t('payment-capacity-zero'), 'error');
             return;
         }
 
@@ -613,14 +705,29 @@ export class UnsecuredLoansPage {
 
     static calculateByInstallment() {
         if (!this.selectedProduct) {
-            window.app.showToast('Please select a product first', 'warning');
+            window.app.showToast(i18n.t('select-product-first'), 'warning');
             return;
         }
 
         const monthlyPayment = parseFloat(document.getElementById('monthly-payment-installment').value);
         const minTenor = parseInt(document.getElementById('min-tenor-installment').value);
-        const maxTenor = parseInt(document.getElementById('max-tenor-installment').value);
         const isYears = document.getElementById('is-years-installment').checked;
+
+        const productMaxTenorYears = this.getProductMaxTenorYears();
+        const productMaxTenor = isYears ? productMaxTenorYears : productMaxTenorYears * 12;
+        let maxTenor = parseInt(document.getElementById('max-tenor-installment').value);
+        if (maxTenor > productMaxTenor) {
+            window.app.showToast(
+                i18n.t('max-tenor-capped', { years: productMaxTenorYears }),
+                'warning'
+            );
+            maxTenor = productMaxTenor;
+            document.getElementById('max-tenor-installment').value = maxTenor;
+        }
+        if (minTenor > maxTenor) {
+            window.app.showToast(i18n.t('min-tenor-exceeds-max'), 'error');
+            return;
+        }
 
         const router = window.app?.router;
         if (router) {
@@ -681,14 +788,29 @@ export class UnsecuredLoansPage {
 
     static calculateLoanSchedule() {
         if (!this.selectedProduct) {
-            window.app.showToast('Please select a product first', 'warning');
+            window.app.showToast(i18n.t('select-product-first'), 'warning');
             return;
         }
 
         const principal = parseFloat(document.getElementById('principal-schedule').value);
         const minTenor = parseInt(document.getElementById('min-tenor-schedule').value);
-        const maxTenor = parseInt(document.getElementById('max-tenor-schedule').value);
         const isYears = document.getElementById('is-years-schedule').checked;
+
+        const productMaxTenorYears = this.getProductMaxTenorYears();
+        const productMaxTenor = isYears ? productMaxTenorYears : productMaxTenorYears * 12;
+        let maxTenor = parseInt(document.getElementById('max-tenor-schedule').value);
+        if (maxTenor > productMaxTenor) {
+            window.app.showToast(
+                i18n.t('max-tenor-capped', { years: productMaxTenorYears }),
+                'warning'
+            );
+            maxTenor = productMaxTenor;
+            document.getElementById('max-tenor-schedule').value = maxTenor;
+        }
+        if (minTenor > maxTenor) {
+            window.app.showToast(i18n.t('min-tenor-exceeds-max'), 'error');
+            return;
+        }
 
         const router = window.app?.router;
         if (router) {

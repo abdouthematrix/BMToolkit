@@ -193,6 +193,9 @@ export class I18n {
                 'invalid-input': 'Please check highlighted fields',
                 'auth-required': 'Please log in first',
                 'select-product-first': 'Please select a loan product to continue',
+                'max-tenor-capped': 'Max tenor capped at {years} years for this product',
+                'min-tenor-exceeds-max': 'Min tenor cannot exceed max tenor',
+                'payment-capacity-zero': 'Payment capacity is negative or zero',
                 'login-failed': 'Incorrect credentials',
                 'product-updated': 'Product updated',
                 'product-added': 'New product added',
@@ -429,6 +432,9 @@ export class I18n {
                 'invalid-input': 'يرجى مراجعة الحقول المميزة',
                 'auth-required': 'يجب تسجيل الدخول أولاً',
                 'select-product-first': 'يرجى اختيار نوع القرض للمتابعة',
+                'max-tenor-capped': 'تم تقليص الحد الأقصى للمدة إلى {years} سنوات لهذا المنتج',
+                'min-tenor-exceeds-max': 'لا يمكن أن تتجاوز الحد الأدنى للمدة الحد الأقصى',
+                'payment-capacity-zero': 'القدرة على السداد صفر أو سالبة',
                 'login-failed': 'بيانات الدخول غير صحيحة',
                 'product-updated': 'تم تحديث المنتج',
                 'product-added': 'تم إضافة المنتج',
@@ -478,9 +484,15 @@ export class I18n {
         };
     }
 
-    // Get translation
-    t(key) {
-        return this.translations[this.currentLanguage][key] || key;
+    // Get translation with optional interpolation params e.g. t('key', { years: 5 })
+    t(key, params = null) {
+        let str = this.translations[this.currentLanguage][key] || key;
+        if (params) {
+            Object.entries(params).forEach(([k, v]) => {
+                str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+            });
+        }
+        return str;
     }
 
     // Set language

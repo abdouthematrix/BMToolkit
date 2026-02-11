@@ -256,7 +256,14 @@ export class I18n {
                 'tab-loan-calculator': 'Loan Calc',
                 'tab-max-loan': 'Loan Limit',
                 'tab-first-month': 'First Month',
-                'tab-amortization': 'Amortization'
+                'tab-amortization': 'Amortization',
+
+                // Share
+                'share-btn-title': 'Share this page',
+                'share-text': 'Check out BMToolkit – smart financial calculators for loans and investments.',
+                'share-copied': 'Link copied to clipboard!',
+                'share-failed': 'Could not copy link',
+                'share-copy-prompt': 'Copy this link:'
             },
             ar: {
                 // App
@@ -511,7 +518,14 @@ export class I18n {
                 'tab-loan-calculator': 'حاسبة القرض',
                 'tab-max-loan': 'الحد الأقصى',
                 'tab-first-month': 'الشهر الأول',
-                'tab-amortization': 'جدول الاستهلاك'
+                'tab-amortization': 'جدول الاستهلاك',
+
+                // Share
+                'share-btn-title': 'مشاركة هذه الصفحة',
+                'share-text': 'اكتشف BMToolkit – حاسبات مالية ذكية للقروض والاستثمارات.',
+                'share-copied': 'تم نسخ الرابط!',
+                'share-failed': 'تعذّر نسخ الرابط',
+                'share-copy-prompt': 'انسخ هذا الرابط:'
             }
         };
     }

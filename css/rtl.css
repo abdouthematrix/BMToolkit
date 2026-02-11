@@ -494,6 +494,11 @@
     direction: ltr; /* Keep illustrations consistent */
 }
 
+/* Share Button */
+[dir="rtl"] .share-btn {
+    /* Inherits row-reverse from header-actions; no extra position needed */
+}
+
 /* =================================
    PRINT STYLES
    ================================= */

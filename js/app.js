@@ -86,6 +86,12 @@ class App {
             themeToggle.addEventListener('click', () => this.toggleTheme());
         }
 
+        // Share button
+        const shareBtn = document.getElementById('share-btn');
+        if (shareBtn) {
+            shareBtn.addEventListener('click', () => this.handleShare());
+        }
+
         // Language toggle
         const langToggle = document.getElementById('lang-toggle');
         if (langToggle) {
@@ -165,6 +171,60 @@ class App {
         } else {
             this.showToast(result.error || 'Logout failed', 'error');
         }
+    }
+
+    async handleShare() {
+        const shareData = {
+            title: document.title || i18n.t('app-name'),
+            text: i18n.t('share-text'),
+            url: window.location.href,
+        };
+
+        // Use native Web Share API if available (ideal for PWA / mobile)
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (err) {
+                // User cancelled or share failed — fall through to clipboard
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        // Fallback: copy URL to clipboard
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            this.showShareFeedback(true);
+        } catch {
+            // Last resort: prompt for manual copy
+            window.prompt(i18n.t('share-copy-prompt'), shareData.url);
+        }
+    }
+
+    showShareFeedback(success) {
+        const btn = document.getElementById('share-btn');
+        const icon = document.getElementById('share-icon');
+        if (!btn || !icon) return;
+
+        const originalClass = icon.className;
+        const originalTitle = btn.title;
+
+        if (success) {
+            icon.className = 'fas fa-check';
+            btn.classList.add('share-btn--copied');
+            btn.title = i18n.t('share-copied');
+            this.showToast(i18n.t('share-copied'), 'success');
+        } else {
+            icon.className = 'fas fa-xmark';
+            btn.classList.add('share-btn--error');
+            this.showToast(i18n.t('share-failed'), 'error');
+        }
+
+        setTimeout(() => {
+            icon.className = originalClass;
+            btn.title = originalTitle;
+            btn.classList.remove('share-btn--copied', 'share-btn--error');
+        }, 2000);
     }
 
     setupTheme() {

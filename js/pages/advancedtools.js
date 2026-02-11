@@ -34,7 +34,7 @@ export class AdvancedToolsPage {
     static async loadConstants() {
         const constants = await FirestoreService.getConstants();
         // Set default stamp duty rate
-        document.getElementById('stamp-duty-rate').value = constants.STAMP_DUTY_RATE.toFixed(1);
+        document.getElementById('stamp-duty-rate').value = constants.STAMP_DUTY_RATE;
     }
 
     static render() {

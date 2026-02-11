@@ -380,7 +380,7 @@ export class FinancialCalculator {
             let stampDutyAmount = 0;
             const pmonth = paymentDate.getMonth();
             if (pmonth === 2 || pmonth === 5 || pmonth === 8 || pmonth === 11) { // Mar, Jun, Sep, Dec
-                stampDutyAmount = remainingBalance * (stampDutyRate / 1000);
+                stampDutyAmount = remainingBalance * (stampDutyRate);
             }
 
             totalStampDuty += stampDutyAmount;

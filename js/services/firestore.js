@@ -3,13 +3,13 @@
 import { db } from '../firebase-config.js';
 import {
     collection,
-    doc,
+    doc,    
     getDocFromCache,
     getDocFromServer,
     getDocsFromCache,
     getDocsFromServer,
     setDoc,
-    addDoc,
+    writeBatch,
     deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -18,6 +18,37 @@ export class FirestoreService {
         CONSTANTS: 'constants',
         PRODUCTS: 'products'
     };
+
+    // Mapping for generating readable IDs
+    static ID_MAPPINGS = {
+        sector: {
+            'Government/Public': 'gov',
+            'Private': 'pr',
+            'Not Specified': 'na'
+        },
+        payrollType: {
+            'Contracted': 'c',
+            'Non-Contracted': 'nc',
+            'Not Specified': 'na'
+        },
+        companySegment: {
+            'A+': 'aa',
+            'A': 'a',
+            'B': 'b',
+            'C': 'c',
+            'Not Specified': 'na'
+        }
+    };
+
+    // Generate a readable Firestore document ID from product data
+    static generateProductId(product) {
+        const ubsCode = (product.ubsCode || '').trim();
+        const sector = this.ID_MAPPINGS.sector[product.sector] || 'na';
+        const payroll = this.ID_MAPPINGS.payrollType[product.payrollType] || 'na';
+        const segment = this.ID_MAPPINGS.companySegment[product.companySegment] || 'na';
+
+        return `${ubsCode}-${sector}-${payroll}-${segment}`.toLowerCase();
+    }
 
     // Get constants (rates, margins, etc.)
     static async getConstants() {
@@ -53,7 +84,7 @@ export class FirestoreService {
             MIN_RATE: 0.18,
             MAX_LOAN_PERCENT: 0.90,
             MAX_DBR_RATIO: 0.50,
-            STAMP_DUTY_RATE: 0.50,
+            STAMP_DUTY_RATE: 0.0005, // Stored as real ratio (0.5‰ = 0.0005)
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: 36,
                 LOAN_CERTIFICATE_PERCENT: 58
@@ -70,7 +101,14 @@ export class FirestoreService {
     static async updateConstants(constants) {
         try {
             const docRef = doc(db, this.COLLECTIONS.CONSTANTS, 'global');
-            await setDoc(docRef, constants, { merge: true });
+
+            // Add metadata
+            const dataToSave = {
+                ...constants,
+                updatedAt: new Date().toISOString()
+            };
+
+            await setDoc(docRef, dataToSave, { merge: true });
             return { success: true };
         } catch (error) {
             console.error('Error updating constants:', error);
@@ -100,43 +138,226 @@ export class FirestoreService {
         }
     }
 
-    // Get product by ID
+    // Get product by ID - FIXED to use proper offline-first logic
     static async getProduct(id) {
-        try {
-            const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
-            const docSnap = await getDoc(docRef);
+        const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
 
-            if (docSnap.exists()) {
-                return { id: docSnap.id, ...docSnap.data() };
+        // 1. If Offline: Use Cache
+        if (!navigator.onLine) {
+            try {
+                const cacheSnap = await getDocFromCache(docRef);
+                return cacheSnap.exists() ? { id: cacheSnap.id, ...cacheSnap.data() } : null;
+            } catch (e) {
+                console.warn("Offline: Product not found in cache.");
+                return null;
             }
-            return null;
-        } catch (error) {
-            console.error('Error fetching product:', error);
-            return null;
+        }
+
+        // 2. If Online: Fetch from Server
+        try {
+            const serverSnap = await getDocFromServer(docRef);
+            return serverSnap.exists() ? { id: serverSnap.id, ...serverSnap.data() } : null;
+        } catch (e) {
+            // Fallback to cache if server request fails
+            const fallbackSnap = await getDocFromCache(docRef).catch(() => null);
+            return fallbackSnap && fallbackSnap.exists() ? { id: fallbackSnap.id, ...fallbackSnap.data() } : null;
         }
     }
 
-    // Add or update product
-    static async saveProduct(productData, id = null) {
-        try {
-            if (id) {
-                const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
-                await setDoc(docRef, productData, { merge: true });
-            } else {
-                await addDoc(collection(db, this.COLLECTIONS.PRODUCTS), productData);
+    // Validate product data before saving
+    static validateProduct(productData) {
+        const errors = [];
+
+        // Required fields
+        if (!productData.ubsCode || !productData.ubsCode.trim()) {
+            errors.push('UBS Code is required');
+        }
+        if (!productData.nameEn || !productData.nameEn.trim()) {
+            errors.push('Product Name (EN) is required');
+        }
+
+        // Rate validation: If rate8Plus exists, rate5_8 must exist
+        if (productData.rate8Plus && productData.rate8Plus !== '' &&
+            (!productData.rate5_8 || productData.rate5_8 === '')) {
+            errors.push('If Rate 8+ exists, Rate 5-8 must also exist');
+        }
+
+        // Rate validation: If rate5_8 exists, rate1_5 must exist
+        if (productData.rate5_8 && productData.rate5_8 !== '' &&
+            (!productData.rate1_5 || productData.rate1_5 === '')) {
+            errors.push('If Rate 5-8 exists, Rate 1-5 must also exist');
+        }
+
+        // Validate rate formats
+        ['rate1_5', 'rate5_8', 'rate8Plus'].forEach(rateField => {
+            if (productData[rateField] && productData[rateField] !== '') {
+                const normalized = this.normalizeInterestRate(productData[rateField]);
+                if (normalized === null) {
+                    errors.push(`Invalid ${rateField}: ${productData[rateField]}`);
+                }
             }
-            return { success: true };
+        });
+
+        return {
+            isValid: errors.length === 0,
+            errors
+        };
+    }
+
+    // Normalize interest rate to always end with %
+    static normalizeInterestRate(value) {
+        if (!value || value === '') return '';
+
+        // Remove any whitespace
+        const trimmed = String(value).trim();
+
+        // Remove % if present
+        const numericValue = trimmed.replace('%', '');
+
+        // Parse as float
+        const parsed = parseFloat(numericValue);
+
+        // Validate
+        if (isNaN(parsed) || parsed < 0) {
+            return null; // Invalid
+        }
+
+        // Return with % suffix
+        return `${parsed}%`;
+    }
+
+    // Add or update product with readable ID
+    static async saveProduct(productData, existingId = null) {
+        try {
+            // Validate product data
+            const validation = this.validateProduct(productData);
+            if (!validation.isValid) {
+                return {
+                    success: false,
+                    error: validation.errors.join('; ')
+                };
+            }
+
+            // Normalize interest rates
+            ['rate1_5', 'rate5_8', 'rate8Plus'].forEach(rateField => {
+                if (productData[rateField]) {
+                    productData[rateField] = this.normalizeInterestRate(productData[rateField]);
+                }
+            });
+
+            // Generate or use existing ID
+            const productId = existingId || this.generateProductId(productData);
+
+            // Check if product already exists (only if creating new)
+            if (!existingId) {
+                const existing = await this.getProduct(productId);
+                if (existing) {
+                    return {
+                        success: false,
+                        error: `Product with ID ${productId} already exists. Edit existing product instead.`
+                    };
+                }
+            }
+
+            // Add metadata
+            const timestamp = new Date().toISOString();
+            const dataToSave = {
+                ...productData,
+                active: productData.active !== undefined ? productData.active : true,
+                updatedAt: timestamp,
+                ...(existingId ? {} : { createdAt: timestamp })
+            };
+
+            const docRef = doc(db, this.COLLECTIONS.PRODUCTS, productId);
+            await setDoc(docRef, dataToSave, { merge: existingId ? true : false });
+
+            return { success: true, id: productId };
         } catch (error) {
             console.error('Error saving product:', error);
             return { success: false, error: error.message };
         }
     }
 
-    // Delete product
-    static async deleteProduct(id) {
+    // Batch import products (for CSV import)
+    static async batchImportProducts(productsArray) {
+        const results = {
+            success: 0,
+            failed: 0,
+            errors: []
+        };
+
+        // Validate all products first
+        const validProducts = [];
+        for (const product of productsArray) {
+            const validation = this.validateProduct(product);
+            if (validation.isValid) {
+                // Normalize rates
+                ['rate1_5', 'rate5_8', 'rate8Plus'].forEach(rateField => {
+                    if (product[rateField]) {
+                        product[rateField] = this.normalizeInterestRate(product[rateField]);
+                    }
+                });
+                validProducts.push(product);
+            } else {
+                results.failed++;
+                results.errors.push({
+                    product: product.nameEn || product.ubsCode || 'Unknown',
+                    errors: validation.errors
+                });
+            }
+        }
+
+        if (validProducts.length === 0) {
+            return results;
+        }
+
+        // Use batch writes for better performance
+        const batch = writeBatch(db);
+        const timestamp = new Date().toISOString();
+
+        for (const product of validProducts) {
+            const productId = this.generateProductId(product);
+            const docRef = doc(db, this.COLLECTIONS.PRODUCTS, productId);
+
+            batch.set(docRef, {
+                ...product,
+                active: true,
+                createdAt: timestamp,
+                updatedAt: timestamp
+            }, { merge: true });
+        }
+
+        try {
+            await batch.commit();
+            results.success = validProducts.length;
+        } catch (error) {
+            console.error('Batch import error:', error);
+            results.failed += validProducts.length;
+            results.errors.push({
+                product: 'Batch operation',
+                errors: [error.message]
+            });
+        }
+
+        return results;
+    }
+
+    // Delete product (or soft delete)
+    static async deleteProduct(id, softDelete = false) {
         try {
             const docRef = doc(db, this.COLLECTIONS.PRODUCTS, id);
-            await deleteDoc(docRef);
+
+            if (softDelete) {
+                // Soft delete: mark as inactive
+                await setDoc(docRef, {
+                    active: false,
+                    deletedAt: new Date().toISOString()
+                }, { merge: true });
+            } else {
+                // Hard delete
+                await deleteDoc(docRef);
+            }
+
             return { success: true };
         } catch (error) {
             console.error('Error deleting product:', error);
@@ -144,43 +365,52 @@ export class FirestoreService {
         }
     }
 
-    // Filter products by criteria (Helper function, logic remains same)
+    // Filter products by criteria (Helper function)
     static filterProducts(products, criteria) {
         return products.filter(product => {
             let match = true;
+
+            // Filter out inactive products by default
+            if (criteria.includeInactive !== true && product.active === false) {
+                return false;
+            }
+
             if (criteria.sector && product.sector !== criteria.sector) match = false;
             if (criteria.payrollType && product.payrollType !== criteria.payrollType) match = false;
             if (criteria.companySegment && product.companySegment !== criteria.companySegment) match = false;
+
             return match;
         });
     }
 
-    // Get rate helper (Logic remains same)
+    // Get rate helper
     static getProductRate(product, tenorYears) {
         if (tenorYears <= 5 && product.rate1_5) {
-            return parseFloat(product.rate1_5) / 100;
+            const rate = product.rate1_5.toString().replace('%', '');
+            return parseFloat(rate) / 100;
         } else if (tenorYears <= 8 && product.rate5_8) {
-            return parseFloat(product.rate5_8) / 100;
+            const rate = product.rate5_8.toString().replace('%', '');
+            return parseFloat(rate) / 100;
         } else if (product.rate8Plus) {
-            return parseFloat(product.rate8Plus) / 100;
+            const rate = product.rate8Plus.toString().replace('%', '');
+            return parseFloat(rate) / 100;
         }
         return null;
     }
 
-    // Get the effective maximum tenor (in years) for an unsecured product,
-    // based on which rate tiers are populated and the global cap constant.
+    // Get the effective maximum tenor (in years) for an unsecured product
     static getProductMaxTenorYears(product, constants = null) {
         const globalMax = constants?.UNSECURED_MAX_TENOR_8_PLUS_YEARS ?? 10;
 
-        if (product.rate8Plus && parseFloat(product.rate8Plus) > 0) {
-            return globalMax; // Can go all the way to the global cap
+        if (product.rate8Plus && product.rate8Plus !== '' && parseFloat(product.rate8Plus.toString().replace('%', '')) > 0) {
+            return globalMax;
         }
-        if (product.rate5_8 && parseFloat(product.rate5_8) > 0) {
-            return 8; // Rate tier tops out at 8 years
+        if (product.rate5_8 && product.rate5_8 !== '' && parseFloat(product.rate5_8.toString().replace('%', '')) > 0) {
+            return 8;
         }
-        if (product.rate1_5 && parseFloat(product.rate1_5) > 0) {
-            return 5; // Rate tier tops out at 5 years
+        if (product.rate1_5 && product.rate1_5 !== '' && parseFloat(product.rate1_5.toString().replace('%', '')) > 0) {
+            return 5;
         }
-        return 0; // No valid rate — product cannot be used
+        return 0; // No valid rate
     }
 }

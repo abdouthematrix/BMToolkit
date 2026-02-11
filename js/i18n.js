@@ -163,6 +163,7 @@ export class I18n {
                 'secured-min-tenor-months': 'Min Tenor (Months)',
                 'secured-max-tenor-years': 'Max Tenor (Years)',
                 'unsecured-max-tenor-8plus': 'Max Tenor for Rate8+ (Years)',
+                'stamp-duty-help': 'Display in per mille (‰). 0.5 = 0.5‰ = 0.0005 ratio',
                 'save-changes': 'Update Settings',
                 'reset-defaults': 'Restore Defaults',
                 'email': 'Email Address',
@@ -181,6 +182,14 @@ export class I18n {
                 'save-product': 'Save Product',
                 'cancel': 'Cancel',
                 'actions': 'Actions',
+                'status': 'Status',
+                'active': 'Active',
+                'inactive': 'Inactive',
+                'product-id': 'Product ID',
+                'rate-rules-title': 'Rate Rules:',
+                'rate-rule-1': 'If Rate 8+ exists, Rate 5-8 must exist',
+                'rate-rule-2': 'If Rate 5-8 exists, Rate 1-5 must exist',
+                'rate-rule-3': 'Rates can be entered as "22.75" or "22.75%"',
 
                 // Messages
                 'success': 'Done',
@@ -210,6 +219,13 @@ export class I18n {
                 'no-products-found': 'No readable product data found',
                 'delete-confirm': 'Delete this product? This cannot be undone.',
                 'import-confirm': 'Importing will append these to your existing list. Continue?',
+                'reset-constants-confirm': 'Are you sure you want to reset all constants to default values?',
+                'delete-product-confirm': 'Are you sure you want to delete this product? This action cannot be undone.',
+                'csv-import-confirm': 'Import {count} products from CSV? Existing products with the same ID will be updated.',
+                'importing-products': 'Importing products...',
+                'csv-import-success': 'Successfully imported {count} products',
+                'csv-import-partial': 'Imported {success} products, {failed} failed.',
+                'check-console': 'Check console for details.',
 
                 // Info Messages
                 'important-note': 'Please Note',
@@ -402,6 +418,7 @@ export class I18n {
                 'secured-min-tenor-months': 'الحد الأدنى للمدة (شهور)',
                 'secured-max-tenor-years': 'الحد الأقصى للمدة (سنوات)',
                 'unsecured-max-tenor-8plus': 'الحد الأقصى لمدة الفائدة 8+ (سنوات)',
+                'stamp-duty-help': 'القيمة بالألف (‰). مثال: 0.5 = 0.5‰ = 0.0005 نسبة',
                 'save-changes': 'حفظ التعديلات',
                 'reset-defaults': 'استعادة الافتراضي',
                 'email': 'البريد الإلكتروني',
@@ -420,6 +437,14 @@ export class I18n {
                 'save-product': 'حفظ البيانات',
                 'cancel': 'إلغاء',
                 'actions': 'إجراءات',
+                'status': 'الحالة',
+                'active': 'نشط',
+                'inactive': 'غير نشط',
+                'product-id': 'رقم المنتج',
+                'rate-rules-title': 'قواعد أسعار الفائدة:',
+                'rate-rule-1': 'إذا كان معدل 8+ موجوداً، يجب أن يكون معدل 5-8 موجوداً',
+                'rate-rule-2': 'إذا كان معدل 5-8 موجوداً، يجب أن يكون معدل 1-5 موجوداً',
+                'rate-rule-3': 'يمكن إدخال الأسعار كـ "22.75" أو "22.75%"',
 
                 // Messages
                 'success': 'تم بنجاح',
@@ -449,6 +474,13 @@ export class I18n {
                 'no-products-found': 'لم يتم العثور على بيانات في الملف',
                 'delete-confirm': 'هل أنت متأكد من الحذف؟ لا يمكن التراجع عن هذا الإجراء.',
                 'import-confirm': 'سيتم إضافة هذه المنتجات للقائمة الحالية. استمرار؟',
+                'reset-constants-confirm': 'هل أنت متأكد من استعادة جميع الإعدادات إلى القيم الافتراضية؟',
+                'delete-product-confirm': 'هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذا الإجراء.',
+                'csv-import-confirm': 'استيراد {count} منتج من ملف CSV؟ سيتم تحديث المنتجات الموجودة بنفس الرقم.',
+                'importing-products': 'جاري استيراد المنتجات...',
+                'csv-import-success': 'تم استيراد {count} منتج بنجاح',
+                'csv-import-partial': 'تم استيراد {success} منتج، فشل {failed}.',
+                'check-console': 'راجع وحدة التحكم للتفاصيل.',
 
                 // Info Messages
                 'important-note': 'ملاحظة هامة',
@@ -468,7 +500,7 @@ export class I18n {
 
                 // Table Headers
                 'table-number': '#',
-                'no-products': 'لا توجد منتجات متاحة',
+                'no-products': 'No products available. Add one or import from CSV.',
 
                 // Tabs
                 'tab-by-income': 'بالدخل',

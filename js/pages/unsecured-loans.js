@@ -11,6 +11,10 @@ export class UnsecuredLoansPage {
     static STORAGE_KEY = 'unsecured-loans-active-tab';
     static activeTab = 'by-income';
 
+    // Holds the subset of products filtered by a UBS code coming from the URL.
+    // When populated, the product dropdown is restricted to these entries.
+    static ubsFilteredProducts = [];
+
     // Product filter criteria for sharing in URLs
     static productFilterCriteria = {
         sector: '',
@@ -50,7 +54,21 @@ export class UnsecuredLoansPage {
         if (this.products.length === 0) {
             this.products = this.getDefaultProducts();
         }
-        this.populateProductSelect();
+
+        // Check if the URL carries a `ubs` param that pre-filters the dropdown
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        if (urlParams.ubs) {
+            this.ubsFilteredProducts = this.products.filter(
+                p => String(p.ubsCode).trim() === String(urlParams.ubs).trim()
+            );
+        } else {
+            this.ubsFilteredProducts = [];
+        }
+
+        // Render the dropdown with the (possibly restricted) list
+        this.populateProductSelect(
+            this.ubsFilteredProducts.length > 0 ? this.ubsFilteredProducts : null
+        );
     }
 
     // Find product by filter criteria
@@ -61,6 +79,15 @@ export class UnsecuredLoansPage {
             if (segment && product.companySegment !== segment) return false;
             return true;
         });
+    }
+
+    // Find a product by its unique ID (Firestore doc id or generated fallback)
+    static findProductById(id) {
+        if (!id) return null;
+        return this.products.find(p => {
+            const pId = p.id ?? FirestoreService.generateProductId(p);
+            return pId === id;
+        }) || null;
     }
 
     // Get filter criteria from selected product
@@ -323,6 +350,8 @@ export class UnsecuredLoansPage {
         document.getElementById('sector-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('payroll-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('segment-filter').addEventListener('change', () => this.filterProducts());
+
+        // Change handler now passes the selected option's *value* (a product ID)
         document.getElementById('product-select').addEventListener('change', (e) => this.selectProduct(e.target.value));
 
         // Rescale tenor inputs whenever the years/months toggle changes
@@ -365,28 +394,67 @@ export class UnsecuredLoansPage {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // autoCalculateIfNeeded
+    //
+    // Reads URL params and:
+    //   1. If `ubs` is present  → restrict dropdown to products with that UBS
+    //      code, then optionally narrow further by sector/payroll/segment.
+    //   2. If `ubs` is absent   → find by sector/payroll/segment as before.
+    //   3. Pre-fills form fields and triggers the matching calculator.
+    // -------------------------------------------------------------------------
     static autoCalculateIfNeeded() {
         const urlParams = window.app?.router?.getQueryParams() || {};
         const tab = urlParams.tab;
 
         if (!tab) return;
 
-        // Select product using filter criteria from URL (sector, payroll, segment)
-        if (urlParams.sector || urlParams.payroll || urlParams.segment) {
-            const product = this.findProductByFilter(urlParams.sector, urlParams.payroll, urlParams.segment);
-            if (product) {
-                // Set filter dropdowns
+        let productToSelect = null;
+
+        if (urlParams.ubs) {
+            // --- UBS-code-based selection ---
+            // ubsFilteredProducts was already populated in loadProducts(); if
+            // sector/payroll/segment params are also present we can narrow to
+            // an exact match, otherwise just pick the first available product.
+            const candidates = this.ubsFilteredProducts.length > 0
+                ? this.ubsFilteredProducts
+                : this.products.filter(p => String(p.ubsCode).trim() === String(urlParams.ubs).trim());
+
+            if (candidates.length > 0) {
+                // Try exact match on criteria first
+                productToSelect =
+                    this.findProductByFilter(urlParams.sector, urlParams.payroll, urlParams.segment) ||
+                    candidates[0];
+
+                // Sync the filter dropdowns to the chosen product's attributes
+                // so the dropdown is not unexpectedly empty.
+                document.getElementById('sector-filter').value = productToSelect.sector || '';
+                document.getElementById('payroll-filter').value = productToSelect.payrollType || '';
+                document.getElementById('segment-filter').value = productToSelect.companySegment || '';
+
+                this.filterProducts();
+
+                const productId = productToSelect.id ?? FirestoreService.generateProductId(productToSelect);
+                document.getElementById('product-select').value = productId;
+                this.selectProduct(productId);
+            }
+        } else if (urlParams.sector || urlParams.payroll || urlParams.segment) {
+            // --- Legacy criteria-based selection (no UBS in URL) ---
+            productToSelect = this.findProductByFilter(urlParams.sector, urlParams.payroll, urlParams.segment);
+            if (productToSelect) {
                 if (urlParams.sector) document.getElementById('sector-filter').value = urlParams.sector;
                 if (urlParams.payroll) document.getElementById('payroll-filter').value = urlParams.payroll;
                 if (urlParams.segment) document.getElementById('segment-filter').value = urlParams.segment;
 
-                // Update dropdown and select product
                 this.filterProducts();
-                document.getElementById('product-select').value = product.nameEn;
-                this.selectProduct(product.nameEn);
+
+                const productId = productToSelect.id ?? FirestoreService.generateProductId(productToSelect);
+                document.getElementById('product-select').value = productId;
+                this.selectProduct(productId);
             }
         }
 
+        // Pre-fill form fields for the active tab and fire the calculation
         switch (tab) {
             case 'by-income':
                 if (urlParams.income) document.getElementById('monthly-income').value = urlParams.income;
@@ -416,58 +484,107 @@ export class UnsecuredLoansPage {
         }
     }
 
-    static populateProductSelect() {
+    // -------------------------------------------------------------------------
+    // populateProductSelect
+    //
+    // Renders the product <select> dropdown.
+    // If `productList` is supplied (e.g. the UBS-restricted subset) only those
+    // products appear; otherwise all products are shown.
+    // Option *values* are product IDs – never display names – so selection
+    // survives language switches and duplicate-name scenarios.
+    // -------------------------------------------------------------------------
+    static populateProductSelect(productList = null) {
+        const list = productList ?? this.products;
         const select = document.getElementById('product-select');
         select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
-        this.products.forEach((product) => {
+        list.forEach((product) => {
+            if (product.active === false) return; // skip inactive
             const option = document.createElement('option');
-            option.value = product.nameEn;
+            option.value = product.id ?? FirestoreService.generateProductId(product);
             option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
             select.appendChild(option);
         });
     }
 
+    // -------------------------------------------------------------------------
+    // filterProducts
+    //
+    // Re-renders the product dropdown according to the current sector / payroll
+    // / segment filter dropdowns.
+    // When `ubsFilteredProducts` is non-empty the search space is restricted to
+    // that subset so multiple products sharing the same UBS code work correctly.
+    // The previously selected product is preserved if it survives the filter.
+    // -------------------------------------------------------------------------
     static filterProducts() {
         const sector = document.getElementById('sector-filter').value;
         const payroll = document.getElementById('payroll-filter').value;
         const segment = document.getElementById('segment-filter').value;
 
-        const filtered = this.products.filter(product => {
-            let match = true;
-            if (sector && product.sector !== sector) match = false;
-            if (payroll && product.payrollType !== payroll) match = false;
-            if (segment && product.companySegment !== segment) match = false;
-            return match;
+        // Start from the UBS-restricted list when present, otherwise all products
+        const baseList = this.ubsFilteredProducts.length > 0
+            ? this.ubsFilteredProducts
+            : this.products;
+
+        const filtered = baseList.filter(product => {
+            if (product.active === false) return false;
+            if (sector && product.sector !== sector) return false;
+            if (payroll && product.payrollType !== payroll) return false;
+            if (segment && product.companySegment !== segment) return false;
+            return true;
         });
 
         const select = document.getElementById('product-select');
+        // Remember the currently selected ID so we can restore it if it
+        // survives the filter change.
+        const previousId = select.value;
+
         select.innerHTML = '<option value="" data-i18n="select-product-placeholder">Select a product</option>';
 
         filtered.forEach((product) => {
             const option = document.createElement('option');
-            option.value = product.nameEn;
+            option.value = product.id ?? FirestoreService.generateProductId(product);
             option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
             select.appendChild(option);
         });
+
+        // Restore the previously selected product if it is still in the list
+        if (previousId && select.querySelector(`option[value="${CSS.escape(previousId)}"]`)) {
+            select.value = previousId;
+        } else if (previousId) {
+            // Previously selected product was filtered out – clear it
+            this.selectedProduct = null;
+            document.getElementById('product-info').style.display = 'none';
+        }
+
+        i18n.updatePageText();
     }
 
-    static selectProduct(productName) {
-        if (!productName) {
+    // -------------------------------------------------------------------------
+    // selectProduct
+    //
+    // Accepts a product **ID** (Firestore doc id or generated fallback).
+    // Updates `selectedProduct`, renders the info card (including segment),
+    // and keeps tenor input limits in sync.
+    // -------------------------------------------------------------------------
+    static selectProduct(productId) {
+        if (!productId) {
             this.selectedProduct = null;
             document.getElementById('product-info').style.display = 'none';
             return;
         }
 
-        // Find product by name
-        this.selectedProduct = this.products.find(p => p.nameEn === productName);
-        if (!this.selectedProduct) {
+        // Find product by ID
+        const product = this.findProductById(productId);
+        if (!product) {
+            this.selectedProduct = null;
             document.getElementById('product-info').style.display = 'none';
             return;
         }
 
-        const product = this.selectedProduct;
+        this.selectedProduct = product;
 
+        // ---- i18n helper maps ----
         const getSectorKey = (sector) => {
             const sectorMap = {
                 'Government/Public': 'government-public',
@@ -486,6 +603,19 @@ export class UnsecuredLoansPage {
             return payrollMap[payrollType] || payrollType;
         };
 
+        const getSegmentKey = (segment) => {
+            const segmentMap = {
+                'Not Specified': 'not-specified'
+            };
+            return segmentMap[segment] || null; // A/A+/B/C have no i18n key – use raw value
+        };
+
+        // Build segment display (raw value for A/A+/B/C, i18n key for "Not Specified")
+        const segmentKey = getSegmentKey(product.companySegment);
+        const segmentDisplay = segmentKey
+            ? `<span data-i18n="${segmentKey}">${product.companySegment || 'N/A'}</span>`
+            : `<span>${product.companySegment || 'N/A'}</span>`;
+
         const infoHtml = `
             <div class="info-box">
                 <h4>${i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn}</h4>
@@ -494,10 +624,18 @@ export class UnsecuredLoansPage {
                         <strong data-i18n="ubs-code">${i18n.t('ubs-code')}:</strong> ${product.ubsCode || 'N/A'}
                     </div>
                     <div>
-                        <strong data-i18n="sector">${i18n.t('sector')}:</strong> <span data-i18n="${product.sector ? getSectorKey(product.sector) : 'not-specified'}">${product.sector || 'N/A'}</span>
+                        <strong data-i18n="sector">${i18n.t('sector')}:</strong>
+                        <span data-i18n="${product.sector ? getSectorKey(product.sector) : 'not-specified'}">${product.sector || 'N/A'}</span>
                     </div>
                     <div>
-                        <strong data-i18n="payroll">${i18n.t('payroll')}:</strong> <span data-i18n="${product.payrollType ? getPayrollKey(product.payrollType) : 'not-specified'}">${product.payrollType || 'N/A'}</span>
+                        <strong data-i18n="payroll">${i18n.t('payroll')}:</strong>
+                        <span data-i18n="${product.payrollType ? getPayrollKey(product.payrollType) : 'not-specified'}">${product.payrollType || 'N/A'}</span>
+                    </div>
+                </div>
+                <div class="grid grid-3" style="margin-top: var(--spacing-sm);">
+                    <div>
+                        <strong data-i18n="company-segment">${i18n.t('company-segment')}:</strong>
+                        ${segmentDisplay}
                     </div>
                 </div>
                 <div style="margin-top: var(--spacing-md);">
@@ -629,15 +767,17 @@ export class UnsecuredLoansPage {
 
         const router = window.app?.router;
         if (router) {
-            // Use filter criteria instead of ubsCode
             const criteria = this.getProductFilterCriteria(this.selectedProduct);
+            const productId = this.selectedProduct.id ?? FirestoreService.generateProductId(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'by-income',
+                ubs: this.selectedProduct.ubsCode || '',
+                productId,
                 income: monthlyIncome,
                 installments: monthlyInstallments,
                 dti: (maxDTI * 100).toFixed(0),
-                minTenor: minTenor,
-                maxTenor: maxTenor,
+                minTenor,
+                maxTenor,
                 unit: isYears ? 'years' : 'months',
                 sector: criteria.sector,
                 payroll: criteria.payroll,
@@ -732,11 +872,14 @@ export class UnsecuredLoansPage {
         const router = window.app?.router;
         if (router) {
             const criteria = this.getProductFilterCriteria(this.selectedProduct);
+            const productId = this.selectedProduct.id ?? FirestoreService.generateProductId(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'by-installment',
+                ubs: this.selectedProduct.ubsCode || '',
+                productId,
                 payment: monthlyPayment,
-                minTenor: minTenor,
-                maxTenor: maxTenor,
+                minTenor,
+                maxTenor,
                 unit: isYears ? 'years' : 'months',
                 sector: criteria.sector,
                 payroll: criteria.payroll,
@@ -815,11 +958,14 @@ export class UnsecuredLoansPage {
         const router = window.app?.router;
         if (router) {
             const criteria = this.getProductFilterCriteria(this.selectedProduct);
+            const productId = this.selectedProduct.id ?? FirestoreService.generateProductId(this.selectedProduct);
             router.updateQueryParams({
                 tab: 'loan-schedule',
-                principal: principal,
-                minTenor: minTenor,
-                maxTenor: maxTenor,
+                ubs: this.selectedProduct.ubsCode || '',
+                productId,
+                principal,
+                minTenor,
+                maxTenor,
                 unit: isYears ? 'years' : 'months',
                 sector: criteria.sector,
                 payroll: criteria.payroll,

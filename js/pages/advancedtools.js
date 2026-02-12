@@ -155,7 +155,7 @@ export class AdvancedToolsPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="stamp-duty-rate">Stamp Duty Rate (‰)</label>
-                                <input type="number" id="stamp-duty-rate" class="form-input" value="0.5" min="0" step="0.1" required>
+                                <input type="number" id="stamp-duty-rate" class="form-input" value="0.0005" min="0" step="0.0001" required>
                             </div>
                         </div>
                         <div class="form-group">

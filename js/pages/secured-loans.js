@@ -8,6 +8,7 @@ export class SecuredLoansPage {
     static constants = null;
     static STORAGE_KEY = 'secured-loans-active-tab';
     static activeTab = 'smart-investment'; // Track active tab
+    static tdRowCounter = 0;
 
     static async init() {
         const router = window.app?.router;
@@ -86,6 +87,18 @@ export class SecuredLoansPage {
         if (maxTenorMax) {
             maxTenorMax.min = Math.ceil(minMonths / 12);
             maxTenorMax.max = maxYears;
+        }
+
+        // TD Secured Loan Calculator - tenor range inputs (years by default)
+        const minTenorTd = document.getElementById('td-min-tenor');
+        const maxTenorTd = document.getElementById('td-max-tenor');
+        if (minTenorTd) {
+            minTenorTd.min = Math.ceil(minMonths / 12);
+            minTenorTd.max = maxYears;
+        }
+        if (maxTenorTd) {
+            maxTenorTd.min = Math.ceil(minMonths / 12);
+            maxTenorTd.max = maxYears;
         }
     }
 
@@ -194,6 +207,10 @@ export class SecuredLoansPage {
                             <i class="fas fa-money-bill-wave"></i>
                             <span data-i18n="max-loan-calc">Max Loan</span>
                         </button>
+                        <button class="tab-btn ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab="td-secured-loan">
+                            <i class="fas fa-piggy-bank"></i>
+                            <span>TD Secured Loan</span>
+                        </button>
                     </div>
 
                     <!-- Tab Content -->
@@ -202,6 +219,7 @@ export class SecuredLoansPage {
                         ${this.renderSmartOptimizerTab()}
                         ${this.renderLoanCalculatorTab()}
                         ${this.renderMaxLoanTab()}
+                        ${this.renderTdSecuredLoanTab()}
                     </div>
                 </div>
 
@@ -417,6 +435,75 @@ export class SecuredLoansPage {
         `;
     }
 
+    static renderTdSecuredLoanTab() {
+        return `
+            <div class="tab-content ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab-content="td-secured-loan">
+                <div class="card-body">
+                    <h3>TD Secured Loan Calculator</h3>
+                    <p class="text-muted">Calculate loan results using the highest TD rate from all your term deposits.</p>
+
+                    <form id="td-secured-loan-form" style="margin-top: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label">Term Deposits (Amount &amp; Rate)</label>
+                            <div id="td-deposits-container" style="display: grid; gap: var(--spacing-sm);"></div>
+                            <button type="button" id="add-td-row-btn" class="btn-secondary" style="margin-top: var(--spacing-sm);">
+                                <i class="fas fa-plus"></i>
+                                <span>Add TD</span>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Loan Amount</label>
+                                <input type="number" id="td-loan-amount" class="form-input" value="90000" min="0" step="1000" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="installment-frequency">Installment Frequency</label>
+                                <select id="td-installment-frequency" class="form-input">
+                                    <option value="monthly" data-i18n="monthly">Monthly</option>
+                                    <option value="quarterly" data-i18n="quarterly">Quarterly</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
+                                <div style="display: flex; gap: var(--spacing-sm);">
+                                    <input type="number" id="td-min-tenor" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
+                                    <input type="number" id="td-max-tenor" class="form-input" value="10" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
+                                </div>
+                            </div>
+                            <div class="form-group" style="display:flex; align-items:end;">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="is-years-td" checked>
+                                    <span data-i18n="years">Years (vs Months)</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="td-reinvest-loan">
+                                <span>Reinvest loan amount in a new term deposit</span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-calculator"></i>
+                                <span data-i18n="calculate">Calculate</span>
+                            </button>
+                            <button type="reset" class="btn-secondary" id="td-secured-loan-reset">
+                                <i class="fas fa-redo"></i>
+                                <span data-i18n="reset">Reset</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="td-secured-loan-results" style="display: none; margin-top: var(--spacing-xl);"></div>
+                </div>
+            </div>
+        `;
+    }
+
     static attachEventListeners() {
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -448,6 +535,101 @@ export class SecuredLoansPage {
             e.preventDefault();
             this.calculateMaxLoan();
         });
+
+        document.getElementById('td-secured-loan-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateTdSecuredLoan();
+        });
+
+        document.getElementById('add-td-row-btn').addEventListener('click', () => {
+            this.addTdDepositRow();
+        });
+
+        document.getElementById('is-years-td').addEventListener('change', () => {
+            this.updateTdTenorLimits();
+        });
+
+        document.getElementById('td-secured-loan-reset').addEventListener('click', () => {
+            setTimeout(() => {
+                this.initializeTdDepositRows();
+                document.getElementById('td-secured-loan-results').style.display = 'none';
+            }, 0);
+        });
+
+        this.initializeTdDepositRows();
+        this.updateTdTenorLimits();
+    }
+
+    static updateTdTenorLimits() {
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const maxMonths = maxYears * 12;
+        const isYears = document.getElementById('is-years-td')?.checked;
+        const minInput = document.getElementById('td-min-tenor');
+        const maxInput = document.getElementById('td-max-tenor');
+
+        if (!minInput || !maxInput) return;
+
+        if (isYears) {
+            const minYears = Math.ceil(minMonths / 12);
+            minInput.min = minYears;
+            minInput.max = maxYears;
+            maxInput.min = minYears;
+            maxInput.max = maxYears;
+            if (parseInt(minInput.value) < minYears) minInput.value = minYears;
+            if (parseInt(maxInput.value) < minYears) maxInput.value = Math.max(minYears, parseInt(maxInput.value) || minYears);
+            if (parseInt(maxInput.value) > maxYears) maxInput.value = maxYears;
+        } else {
+            minInput.min = minMonths;
+            minInput.max = maxMonths;
+            maxInput.min = minMonths;
+            maxInput.max = maxMonths;
+            if (parseInt(minInput.value) < minMonths) minInput.value = minMonths;
+            if (parseInt(maxInput.value) < minMonths) maxInput.value = Math.max(minMonths, parseInt(maxInput.value) || minMonths);
+            if (parseInt(maxInput.value) > maxMonths) maxInput.value = maxMonths;
+        }
+    }
+
+    static initializeTdDepositRows() {
+        this.tdRowCounter = 0;
+        const container = document.getElementById('td-deposits-container');
+        container.innerHTML = '';
+        this.addTdDepositRow(60000, 16);
+        this.addTdDepositRow(40000, 16);
+    }
+
+    static addTdDepositRow(amount = '', rate = '') {
+        const container = document.getElementById('td-deposits-container');
+        this.tdRowCounter += 1;
+
+        const row = document.createElement('div');
+        row.className = 'td-row';
+        row.style.display = 'grid';
+        row.style.gridTemplateColumns = '1fr 1fr auto';
+        row.style.gap = 'var(--spacing-sm)';
+        row.innerHTML = `
+            <input type="number" class="form-input td-amount-input" placeholder="Amount" min="0" step="1000" value="${amount}">
+            <input type="number" class="form-input td-rate-input" placeholder="Rate %" min="0" max="100" step="0.01" value="${rate}">
+            <select class="form-input td-interest-frequency">
+                <option value="monthly" data-i18n="monthly">Monthly</option>
+                <option value="quarterly" data-i18n="quarterly">Quarterly</option>
+            </select>
+            <button type="button" class="btn-secondary td-remove-btn" title="Remove TD">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+
+        row.style.gridTemplateColumns = '1fr 1fr 1fr auto';
+
+        row.querySelector('.td-remove-btn').addEventListener('click', () => {
+            if (container.children.length === 1) {
+                window.app.showToast('At least one term deposit is required.', 'error');
+                return;
+            }
+            row.remove();
+        });
+
+        container.appendChild(row);
     }
 
     static saveTabState(tab) {
@@ -508,6 +690,17 @@ export class SecuredLoansPage {
                 if (urlParams.unit) document.getElementById('is-years-max').checked = (urlParams.unit === 'years');
                 if (urlParams.frequency) document.getElementById('installment-frequency-max').value = urlParams.frequency;
                 this.calculateMaxLoan();
+                break;
+
+            case 'td-secured-loan':
+                if (urlParams.loanAmount) document.getElementById('td-loan-amount').value = urlParams.loanAmount;
+                if (urlParams.minTenor) document.getElementById('td-min-tenor').value = urlParams.minTenor;
+                if (urlParams.maxTenor) document.getElementById('td-max-tenor').value = urlParams.maxTenor;
+                if (urlParams.frequency) document.getElementById('td-installment-frequency').value = urlParams.frequency;
+                if (urlParams.unit) document.getElementById('is-years-td').checked = (urlParams.unit === 'years');
+                if (urlParams.reinvest) document.getElementById('td-reinvest-loan').checked = (urlParams.reinvest === '1');
+                this.updateTdTenorLimits();
+                this.calculateTdSecuredLoan();
                 break;
         }
     }
@@ -961,4 +1154,159 @@ export class SecuredLoansPage {
         document.getElementById('max-loan-results').style.display = 'block';
         i18n.updatePageText();
     }
+
+    static calculateTdSecuredLoan() {
+        const tdRows = Array.from(document.querySelectorAll('#td-deposits-container .td-row'));
+        const deposits = tdRows
+            .map(row => ({
+                amount: parseFloat(row.querySelector('.td-amount-input').value),
+                rate: parseFloat(row.querySelector('.td-rate-input').value) / 100,
+                interestFrequency: row.querySelector('.td-interest-frequency').value
+            }))
+            .filter(d => Number.isFinite(d.amount) && d.amount > 0 && Number.isFinite(d.rate) && d.rate >= 0);
+
+        if (!deposits.length) {
+            window.app.showToast('Please enter at least one valid term deposit (amount and rate).', 'error');
+            return;
+        }
+
+        const loanAmount = parseFloat(document.getElementById('td-loan-amount').value);
+        const minTenor = parseInt(document.getElementById('td-min-tenor').value);
+        const maxTenor = parseInt(document.getElementById('td-max-tenor').value);
+        const installmentFrequency = document.getElementById('td-installment-frequency').value;
+        const isYears = document.getElementById('is-years-td').checked;
+        const reinvestLoan = document.getElementById('td-reinvest-loan').checked;
+
+        if (!Number.isFinite(loanAmount) || loanAmount <= 0) {
+            window.app.showToast('Please enter a valid loan amount.', 'error');
+            return;
+        }
+
+        if (!Number.isFinite(minTenor) || !Number.isFinite(maxTenor) || minTenor > maxTenor) {
+            window.app.showToast('Min tenor must be less than or equal to max tenor.', 'error');
+            return;
+        }
+
+        const minMonthsLimit = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYearsLimit = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const maxMonthsLimit = maxYearsLimit * 12;
+
+        if (isYears) {
+            const minYearsLimit = Math.ceil(minMonthsLimit / 12);
+            if (minTenor < minYearsLimit || maxTenor > maxYearsLimit) {
+                window.app.showToast(`Tenor must be between ${minYearsLimit} and ${maxYearsLimit} years.`, 'error');
+                return;
+            }
+        } else if (minTenor < minMonthsLimit || maxTenor > maxMonthsLimit) {
+            window.app.showToast(`Tenor must be between ${minMonthsLimit} and ${maxMonthsLimit} months.`, 'error');
+            return;
+        }
+
+        const calculation = FinancialCalculator.calculateTdSecuredLoanResults({
+            deposits,
+            loanAmount,
+            minTenor,
+            maxTenor,
+            isYears,
+            installmentFrequency,
+            reinvestLoan
+        }, this.constants);
+
+        const { highestTdRate, loanRate, tdDetails, totalTdInterestPerPeriod, results } = calculation;
+
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                tab: 'td-secured-loan',
+                loanAmount,
+                minTenor,
+                maxTenor,
+                frequency: installmentFrequency,
+                unit: isYears ? 'years' : 'months',
+                reinvest: reinvestLoan ? '1' : '0'
+            });
+        }
+
+        const resultsHtml = `
+            <div class="highlight-box">
+                <h3><i class="fas fa-chart-bar"></i> ${i18n.t('td-loan-rate-summary')}</h3>
+                <div class="grid grid-2" style="margin-top: var(--spacing-md);">
+                    <div>
+                        <p style="margin:0; opacity:0.9;">${i18n.t('highest-td-rate')}</p>
+                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0;">${i18n.formatPercent(highestTdRate)}</p>
+                    </div>
+                    <div>
+                        <p style="margin:0; opacity:0.9;">${i18n.t('calculated-loan-rate')}</p>
+                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--primary);">${i18n.formatPercent(loanRate)}</p>
+                    </div>
+                    <div>
+                        <p style="margin:0; opacity:0.9;">${i18n.t('reinvest-loan-into-td')}</p>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin: 0;">${reinvestLoan ? i18n.t('yes') : i18n.t('no')}</p>
+                    </div>
+                </div>
+            </div>
+
+            <h4 style="margin-top: var(--spacing-xl);">${i18n.t('td-interest-details')}</h4>
+            <div class="results-table-wrapper" style="overflow-x: auto;">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>${i18n.t('td-amount')}</th>
+                            <th>${i18n.t('cd-rate')}</th>
+                            <th>${i18n.t('interest-type')}</th>
+                            <th>${i18n.t('periodic-interest-amount')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tdDetails.map(td => {
+                            return `
+                                <tr>
+                                    <td class="number-display">${i18n.formatCurrency(td.amount)}</td>
+                                    <td class="number-display">${i18n.formatPercent(td.rate)}</td>
+                                    <td>${td.interestFrequency === 'quarterly' ? i18n.t('quarterly') : i18n.t('monthly')}</td>
+                                    <td class="number-display">${i18n.formatCurrency(td.periodicInterest)}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="highlight-box" style="margin-top: var(--spacing-xl);">
+                <p style="margin:0; opacity:0.9;">${i18n.t('total-td-interest-period')}</p>
+                <p style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--accent);">${i18n.formatCurrency(totalTdInterestPerPeriod)}</p>
+            </div>
+
+            <h4 style="margin-top: var(--spacing-xl);">${i18n.t('all-loan-results')}</h4>
+            <div class="results-table-wrapper" style="overflow-x: auto;">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>${i18n.t('tenor')} (${isYears ? i18n.t('years') : i18n.t('months')})</th>
+                            <th>${installmentFrequency === 'quarterly' ? i18n.t('quarterly-installment') : i18n.t('monthly-payment')}</th>
+                            <th>${i18n.t('paid-amount')}</th>
+                            <th>${i18n.t('total-payment')}</th>
+                            <th>${i18n.t('flat-rate')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${results.map(row => `
+                            <tr>
+                                <td>${row.tenor}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.installmentAmount)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.paidAmount)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.totalPayment)}</td>
+                                <td class="number-display">${i18n.formatPercent(row.flatRate)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        document.getElementById('td-secured-loan-results').innerHTML = resultsHtml;
+        document.getElementById('td-secured-loan-results').style.display = 'block';
+        i18n.updatePageText();
+    }
 }
+

@@ -257,6 +257,77 @@ export class FinancialCalculator {
         return results;
     }
 
+    // TD Secured Loan - with TD interest frequency and reinvest option
+    static calculateTdSecuredLoanResults(inputs, constants = {}) {
+        const {
+            deposits,
+            loanAmount,
+            minTenor,
+            maxTenor,
+            isYears,
+            installmentFrequency,
+            reinvestLoan
+        } = inputs;
+
+        const highestTdRate = Math.max(...deposits.map(d => d.rate));
+        const tdMargin = constants.TD_MARGIN !== undefined ? constants.TD_MARGIN : 0.02;
+        const minRate = constants.MIN_RATE !== undefined ? constants.MIN_RATE : 0.18;
+        const loanRate = Math.max(highestTdRate + tdMargin, minRate);
+
+        const totalTdAmount = deposits.reduce((sum, d) => sum + d.amount, 0);
+        const paymentsPerYear = installmentFrequency === 'quarterly' ? 4 : 12;
+        const tdPrincipal = reinvestLoan ? totalTdAmount + loanAmount : totalTdAmount;
+
+        const tdDetails = deposits.map(td => {
+            const periodicInterest = td.interestFrequency === 'quarterly'
+                ? (td.amount * td.rate) / 4
+                : (td.amount * td.rate) / 12;
+            return {
+                ...td,
+                periodicInterest
+            };
+        });
+
+        const totalTdInterestPerPeriod = tdDetails.reduce((sum, td) => {
+            const normalizedMonthly = td.interestFrequency === 'quarterly'
+                ? td.periodicInterest / 3
+                : td.periodicInterest;
+            return sum + (installmentFrequency === 'quarterly' ? normalizedMonthly * 3 : normalizedMonthly);
+        }, 0);
+
+        const results = [];
+        for (let tenor = minTenor; tenor <= maxTenor; tenor++) {
+            const tenorMonths = isYears ? tenor * 12 : tenor;
+            const numberOfPayments = tenorMonths * paymentsPerYear / 12;
+            const periodicRate = loanRate / paymentsPerYear;
+            const installmentAmount = this.PMT(periodicRate, numberOfPayments, loanAmount);
+            const totalPayment = installmentAmount * numberOfPayments;
+
+            const tdEarnings = tdPrincipal * highestTdRate * (tenorMonths / 12);
+            const paidAmount = installmentAmount - totalTdInterestPerPeriod;
+            const totalInterest = totalPayment - loanAmount;
+            const flatRate = (totalInterest / loanAmount / (tenorMonths / 12)) * 100;
+
+            results.push({
+                tenor,
+                tenorMonths,
+                installmentAmount,
+                paidAmount,
+                totalPayment,
+                tdEarnings,
+                flatRate
+            });
+        }
+
+        return {
+            highestTdRate,
+            loanRate,
+            tdDetails,
+            totalTdInterestPerPeriod,
+            results
+        };
+    }
+
     // ===== UNSECURED LOANS =====
 
     // Max Loan by Income

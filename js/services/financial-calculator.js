@@ -228,21 +228,27 @@ export class FinancialCalculator {
     }
 
     // Loan Calculator - Multiple tenors
-    static calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears) {
+    static calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears, installmentFrequency = 'monthly') {
         const results = [];
+        const paymentsPerYear = installmentFrequency === 'quarterly' ? 4 : 12;
         for (let tenor = minTenor; tenor <= maxTenor; tenor++) {
             const tenorMonths = isYears ? tenor * 12 : tenor;
-            const monthlyRate = annualRate / 12;
+            const numberOfPayments = tenorMonths * paymentsPerYear / 12;
+            const periodicRate = annualRate / paymentsPerYear;
 
-            const monthlyPayment = this.PMT(monthlyRate, tenorMonths, principal);
-            const totalPayment = monthlyPayment * tenorMonths;
+            const installmentAmount = this.PMT(periodicRate, numberOfPayments, principal);
+            const totalPayment = installmentAmount * numberOfPayments;
             const totalInterest = totalPayment - principal;
             const flatRate = (totalInterest / principal / (tenorMonths / 12)) * 100;
 
             results.push({
                 tenor,
                 tenorMonths,
-                monthlyPayment,
+                installmentAmount,
+                monthlyPayment: installmentAmount,
+                numberOfPayments,
+                paymentsPerYear,
+                installmentFrequency,
                 totalPayment,
                 totalInterest,
                 flatRate
@@ -275,23 +281,29 @@ export class FinancialCalculator {
     }
 
     // Generate loan results for multiple tenors
-    static generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears) {
+    static generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears, installmentFrequency = 'monthly') {
         const results = [];
+        const paymentsPerYear = installmentFrequency === 'quarterly' ? 4 : 12;
 
         for (let tenor = minTenor; tenor <= maxTenor; tenor++) {
             const tenorMonths = isYears ? tenor * 12 : tenor;
-            const monthlyRate = annualRate / 12;
-            const maxLoan = this.PV(monthlyRate, tenorMonths, monthlyPayment);
+            const numberOfPayments = tenorMonths * paymentsPerYear / 12;
+            const periodicRate = annualRate / paymentsPerYear;
+            const maxLoan = this.PV(periodicRate, numberOfPayments, monthlyPayment);
 
             if (maxLoan > 0) {
-                const totalPayment = monthlyPayment * tenorMonths;
+                const totalPayment = monthlyPayment * numberOfPayments;
                 const totalInterest = totalPayment - maxLoan;
                 const flatRate = (totalInterest / maxLoan / (tenorMonths / 12)) * 100;
 
                 results.push({
                     tenor,
                     tenorMonths,
+                    numberOfPayments,
+                    paymentsPerYear,
+                    installmentFrequency,
                     maxLoan,
+                    installmentAmount: monthlyPayment,
                     monthlyPayment,
                     totalPayment,
                     totalInterest,

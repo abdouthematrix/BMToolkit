@@ -326,6 +326,13 @@ export class SecuredLoansPage {
                                     <input type="number" id="max-tenor-loan" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="installment-frequency">Installment Frequency</label>
+                                <select id="installment-frequency-loan" class="form-input">
+                                    <option value="monthly" data-i18n="monthly">Monthly</option>
+                                    <option value="quarterly" data-i18n="quarterly">Quarterly</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label class="toggle-switch">
@@ -376,6 +383,13 @@ export class SecuredLoansPage {
                                     <input type="number" id="min-tenor-max" class="form-input" value="1" min="1" max="10" data-i18n-placeholder="min-tenor" placeholder="Min" required>
                                     <input type="number" id="max-tenor-max" class="form-input" value="5" min="1" max="10" data-i18n-placeholder="max-tenor" placeholder="Max" required>
                                 </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="installment-frequency">Installment Frequency</label>
+                                <select id="installment-frequency-max" class="form-input">
+                                    <option value="monthly" data-i18n="monthly">Monthly</option>
+                                    <option value="quarterly" data-i18n="quarterly">Quarterly</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-group">
@@ -482,6 +496,7 @@ export class SecuredLoansPage {
                 if (urlParams.minTenor) document.getElementById('min-tenor-loan').value = urlParams.minTenor;
                 if (urlParams.maxTenor) document.getElementById('max-tenor-loan').value = urlParams.maxTenor;
                 if (urlParams.unit) document.getElementById('is-years-loan').checked = (urlParams.unit === 'years');
+                if (urlParams.frequency) document.getElementById('installment-frequency-loan').value = urlParams.frequency;
                 this.calculateLoan();
                 break;
 
@@ -491,6 +506,7 @@ export class SecuredLoansPage {
                 if (urlParams.minTenor) document.getElementById('min-tenor-max').value = urlParams.minTenor;
                 if (urlParams.maxTenor) document.getElementById('max-tenor-max').value = urlParams.maxTenor;
                 if (urlParams.unit) document.getElementById('is-years-max').checked = (urlParams.unit === 'years');
+                if (urlParams.frequency) document.getElementById('installment-frequency-max').value = urlParams.frequency;
                 this.calculateMaxLoan();
                 break;
         }
@@ -784,6 +800,7 @@ export class SecuredLoansPage {
         const minTenor = parseInt(document.getElementById('min-tenor-loan').value);
         const maxTenor = parseInt(document.getElementById('max-tenor-loan').value);
         const isYears = document.getElementById('is-years-loan').checked;
+        const installmentFrequency = document.getElementById('installment-frequency-loan').value;
 
         // Validate tenor using constants
         const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
@@ -820,11 +837,12 @@ export class SecuredLoansPage {
                 rate: (annualRate * 100).toFixed(2),
                 minTenor: minTenor,
                 maxTenor: maxTenor,
-                unit: isYears ? 'years' : 'months'
+                unit: isYears ? 'years' : 'months',
+                frequency: installmentFrequency
             });
         }
 
-        const results = FinancialCalculator.calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears);
+        const results = FinancialCalculator.calculateLoanSchedule(principal, annualRate, minTenor, maxTenor, isYears, installmentFrequency);
 
         const resultsHtml = `
             <h4 data-i18n="payment-schedule">Loan Payment Schedule</h4>
@@ -833,7 +851,7 @@ export class SecuredLoansPage {
                     <thead>
                         <tr>
                             <th data-i18n="tenor">Tenor</th>
-                            <th data-i18n="monthly-payment">Monthly Payment</th>
+                            <th>${installmentFrequency === 'quarterly' ? i18n.t('quarterly-installment') : i18n.t('monthly-payment')}</th>
                             <th data-i18n="total-payment">Total Payment</th>
                             <th data-i18n="total-interest">Total Interest</th>
                             <th data-i18n="flat-rate">Flat Rate (%)</th>
@@ -843,7 +861,7 @@ export class SecuredLoansPage {
                         ${results.map(row => `
                             <tr>
                                 <td>${row.tenor} ${isYears ? i18n.t('years') : i18n.t('months')}</td>
-                                <td class="number-display">${i18n.formatCurrency(row.monthlyPayment)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.installmentAmount)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.totalPayment)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.totalInterest)}</td>
                                 <td class="number-display">${i18n.formatPercent(row.flatRate)}</td>
@@ -865,6 +883,7 @@ export class SecuredLoansPage {
         const minTenor = parseInt(document.getElementById('min-tenor-max').value);
         const maxTenor = parseInt(document.getElementById('max-tenor-max').value);
         const isYears = document.getElementById('is-years-max').checked;
+        const installmentFrequency = document.getElementById('installment-frequency-max').value;
 
         // Validate tenor using constants
         const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
@@ -901,11 +920,12 @@ export class SecuredLoansPage {
                 rate: (annualRate * 100).toFixed(2),
                 minTenor: minTenor,
                 maxTenor: maxTenor,
-                unit: isYears ? 'years' : 'months'
+                unit: isYears ? 'years' : 'months',
+                frequency: installmentFrequency
             });
         }
 
-        const results = FinancialCalculator.generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears);
+        const results = FinancialCalculator.generateLoanResults(annualRate, minTenor, maxTenor, monthlyPayment, isYears, installmentFrequency);
 
         const resultsHtml = `
             <h4 data-i18n="maximum-loan-amounts">Maximum Loan Amounts</h4>
@@ -915,7 +935,7 @@ export class SecuredLoansPage {
                         <tr>
                             <th data-i18n="tenor">Tenor</th>
                             <th data-i18n="max-loan">Max Loan</th>
-                            <th data-i18n="monthly-payment">Monthly Payment</th>
+                            <th>${installmentFrequency === 'quarterly' ? i18n.t('quarterly-installment') : i18n.t('monthly-payment')}</th>
                             <th data-i18n="total-payment">Total Payment</th>
                             <th data-i18n="total-interest">Total Interest</th>
                             <th data-i18n="flat-rate">Flat Rate (%)</th>
@@ -926,7 +946,7 @@ export class SecuredLoansPage {
                             <tr>
                                 <td>${row.tenor} ${isYears ? i18n.t('years') : i18n.t('months')}</td>
                                 <td class="number-display font-bold">${i18n.formatCurrency(row.maxLoan)}</td>
-                                <td class="number-display">${i18n.formatCurrency(row.monthlyPayment)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.installmentAmount)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.totalPayment)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.totalInterest)}</td>
                                 <td class="number-display">${i18n.formatPercent(row.flatRate)}</td>

@@ -127,7 +127,7 @@ export class FinancialCalculator {
 
     // Smart Loan Investment Optimizer (0-90%)
     static async calculateSmartLoan(inputs, constants = {}) {
-        const { principal, cdRate, loanTerm } = inputs;
+        const { principal, cdRate, loanTerm, reinvestLoan = true } = inputs;
 
         // Use constants with fallback defaults
         const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
@@ -159,9 +159,12 @@ export class FinancialCalculator {
             // Monthly CD income from principal
             const monthlyCDIncome = principal * cdMonthlyRate;
 
-            // Monthly CD income from reinvested loan (if any)
-            const roundedLoanAmount = Math.floor(loanAmount / 1000) * 1000;
-            const reinvestedIncome = roundedLoanAmount * cdMonthlyRate;
+            // Monthly CD income from reinvested loan (if enabled)
+            let reinvestedIncome = 0;
+            if (reinvestLoan) {
+                const roundedLoanAmount = Math.floor(loanAmount / 1000) * 1000;
+                reinvestedIncome = roundedLoanAmount * cdMonthlyRate;
+            }
 
             // Total monthly income
             const totalMonthlyIncome = monthlyCDIncome + reinvestedIncome;
@@ -174,7 +177,7 @@ export class FinancialCalculator {
             // Net monthly profit
             const netMonthlyProfit = totalMonthlyIncome - monthlyPayment;
 
-            // Stop calculating if we start losing money monthly
+            // Stop calculating if we start losing money monthly (skip to last step)
             if (loanAmount > 0 && netMonthlyProfit < 0 && i !== steps) {
                 i = steps - 1;
                 continue;
@@ -185,13 +188,23 @@ export class FinancialCalculator {
             const totalLoanPayments = monthlyPayment * loanTerm;
             const netProfit = totalCDIncome - totalLoanPayments;
 
-            // Grand total
-            const grandTotal = principal + loanAmount + netProfit;
+            // Grand total calculation depends on reinvest option
+            let grandTotal;
+            if (reinvestLoan) {
+                // With reinvest: principal + loan + net profit
+                grandTotal = principal + loanAmount + netProfit;
+            } else {
+                // Without reinvest: principal + net profit (loan is spent elsewhere)
+                grandTotal = principal + netProfit;
+            }
 
             // Store zero loan scenario for comparison
             if (loanAmount === 0) {
                 zeroLoanTotal = grandTotal;
-                i += Math.floor((grandTotal - principal) / stepSize) - 1;
+                // Only skip ahead if reinvest is enabled (otherwise taking loans reduces grand total)
+                if (reinvestLoan) {
+                    i += Math.floor((grandTotal - principal) / stepSize) - 1;
+                }
             }
 
             results.push({
@@ -204,9 +217,19 @@ export class FinancialCalculator {
             });
 
             // Track best result
-            if (netMonthlyProfit >= 0 && grandTotal > bestGrandTotal) {
-                bestGrandTotal = grandTotal;
-                bestResult = results[results.length - 1];
+            if (reinvestLoan) {
+                // With reinvest: Find highest grand total where netMonthlyProfit >= 0
+                if (netMonthlyProfit >= 0 && grandTotal > bestGrandTotal) {
+                    bestGrandTotal = grandTotal;
+                    bestResult = results[results.length - 1];
+                }
+            } else {
+                // Without reinvest: Find maximum loan amount where netMonthlyProfit >= 0
+                // (grand total will always be lower than zero loan, but user wants max loan without extra payment)
+                if (netMonthlyProfit >= 0) {
+                    bestGrandTotal = grandTotal;
+                    bestResult = results[results.length - 1];
+                }
             }
         }
 

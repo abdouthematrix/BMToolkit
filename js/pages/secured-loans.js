@@ -300,6 +300,12 @@ export class SecuredLoansPage {
                                 <input type="number" id="loan-term-optimizer" class="form-input" value="36" min="1" max="120" step="1" required>
                             </div>
                         </div>
+                        <div class="form-group" style="margin-top: var(--spacing-md);">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="reinvest-loan-optimizer" checked>
+                                <span data-i18n="reinvest-loan-into-td">Reinvest loan amount in a new term deposit</span>
+                            </label>
+                        </div>
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-search"></i>
@@ -669,6 +675,7 @@ export class SecuredLoansPage {
                 if (urlParams.principal) document.getElementById('principal-optimizer').value = urlParams.principal;
                 if (urlParams.cdRate) document.getElementById('cd-rate-optimizer').value = urlParams.cdRate;
                 if (urlParams.term) document.getElementById('loan-term-optimizer').value = urlParams.term;
+                if (urlParams.reinvest) document.getElementById('reinvest-loan-optimizer').checked = (urlParams.reinvest === '1');
                 this.calculateSmartOptimizer();
                 break;
 
@@ -843,6 +850,7 @@ export class SecuredLoansPage {
         const principal = parseFloat(document.getElementById('principal-optimizer').value);
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
+        const reinvestLoan = document.getElementById('reinvest-loan-optimizer').checked;
 
         // Validate tenor using constants (NEW - validation only)
         const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
@@ -864,7 +872,8 @@ export class SecuredLoansPage {
                 tab: 'smart-optimizer',
                 principal: principal,
                 cdRate: (cdRate * 100).toFixed(2),
-                term: loanTerm
+                term: loanTerm,
+                reinvest: reinvestLoan ? '1' : '0'
             });
         }
 
@@ -872,7 +881,8 @@ export class SecuredLoansPage {
         const result = await FinancialCalculator.calculateSmartLoan({
             principal,
             cdRate,
-            loanTerm
+            loanTerm,
+            reinvestLoan
         }, this.constants);
 
         const resultsHtml = `
@@ -890,6 +900,10 @@ export class SecuredLoansPage {
                     <div>
                         <p style="margin:0; opacity:0.9;" data-i18n="grandTotal">Grand Total:</p>
                         <p style="font-size: 1.25rem; font-weight: 600; margin: 0;">${i18n.formatCurrency(result.bestResult.grandTotal)}</p>
+                    </div>
+                    <div>
+                        <p style="margin:0; opacity:0.9;" data-i18n="reinvest-loan-into-td">Reinvest Loan into TD:</p>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin: 0;">${reinvestLoan ? i18n.t('yes') : i18n.t('no')}</p>
                     </div>
                 </div>
             </div>
@@ -1311,4 +1325,3 @@ export class SecuredLoansPage {
         i18n.updatePageText();
     }
 }
-

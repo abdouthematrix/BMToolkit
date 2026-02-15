@@ -328,6 +328,7 @@ export class FinancialCalculator {
                 installmentAmount,
                 paidAmount,
                 totalPayment,
+                totalInterest,
                 tdEarnings,
                 flatRate
             });

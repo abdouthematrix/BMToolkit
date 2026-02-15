@@ -199,6 +199,10 @@ export class SecuredLoansPage {
                             <i class="fas fa-sliders-h"></i>
                             <span data-i18n="smart-optimizer">Smart Loan Optimizer</span>
                         </button>
+                        <button class="tab-btn ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab="td-secured-loan">
+                            <i class="fas fa-piggy-bank"></i>
+                            <span data-i18n="tab-td-secured-loan">TD Secured Loan</span>
+                        </button>
                         <button class="tab-btn ${this.activeTab === 'loan-calculator' ? 'active' : ''}" data-tab="loan-calculator">
                             <i class="fas fa-calculator"></i>
                             <span data-i18n="loan-calculator">Loan Calculator</span>
@@ -207,19 +211,15 @@ export class SecuredLoansPage {
                             <i class="fas fa-money-bill-wave"></i>
                             <span data-i18n="max-loan-calc">Max Loan</span>
                         </button>
-                        <button class="tab-btn ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab="td-secured-loan">
-                            <i class="fas fa-piggy-bank"></i>
-                            <span>TD Secured Loan</span>
-                        </button>
                     </div>
 
                     <!-- Tab Content -->
                     <div id="calculator-content">
                         ${this.renderSmartInvestmentTab()}
                         ${this.renderSmartOptimizerTab()}
+                        ${this.renderTdSecuredLoanTab()}
                         ${this.renderLoanCalculatorTab()}
                         ${this.renderMaxLoanTab()}
-                        ${this.renderTdSecuredLoanTab()}
                     </div>
                 </div>
 
@@ -439,22 +439,22 @@ export class SecuredLoansPage {
         return `
             <div class="tab-content ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab-content="td-secured-loan">
                 <div class="card-body">
-                    <h3>TD Secured Loan Calculator</h3>
-                    <p class="text-muted">Calculate loan results using the highest TD rate from all your term deposits.</p>
+                    <h3 data-i18n="td-secured-loan-calculator">TD Secured Loan Calculator</h3>
+                    <p class="text-muted" data-i18n="td-secured-loan-desc">Calculate loan results using the highest TD rate from all your term deposits.</p>
 
                     <form id="td-secured-loan-form" style="margin-top: var(--spacing-lg);">
                         <div class="form-group">
-                            <label class="form-label">Term Deposits (Amount &amp; Rate)</label>
+                            <label class="form-label" data-i18n="td-list-label">Term Deposits (Amount &amp; Rate)</label>
                             <div id="td-deposits-container" style="display: grid; gap: var(--spacing-sm);"></div>
                             <button type="button" id="add-td-row-btn" class="btn-secondary" style="margin-top: var(--spacing-sm);">
                                 <i class="fas fa-plus"></i>
-                                <span>Add TD</span>
+                                <span data-i18n="add-td">Add TD</span>
                             </button>
                         </div>
 
                         <div class="grid grid-2">
                             <div class="form-group">
-                                <label class="form-label">Loan Amount</label>
+                                <label class="form-label" data-i18n="loan-amount">Loan Amount</label>
                                 <input type="number" id="td-loan-amount" class="form-input" value="90000" min="0" step="1000" required>
                             </div>
                             <div class="form-group">
@@ -1286,6 +1286,7 @@ export class SecuredLoansPage {
                             <th>${installmentFrequency === 'quarterly' ? i18n.t('quarterly-installment') : i18n.t('monthly-payment')}</th>
                             <th>${i18n.t('paid-amount')}</th>
                             <th>${i18n.t('total-payment')}</th>
+                            <th>${i18n.t('total-interest')}</th>
                             <th>${i18n.t('flat-rate')}</th>
                         </tr>
                     </thead>
@@ -1296,6 +1297,7 @@ export class SecuredLoansPage {
                                 <td class="number-display">${i18n.formatCurrency(row.installmentAmount)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.paidAmount)}</td>
                                 <td class="number-display">${i18n.formatCurrency(row.totalPayment)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.totalInterest)}</td>
                                 <td class="number-display">${i18n.formatPercent(row.flatRate)}</td>
                             </tr>
                         `).join('')}

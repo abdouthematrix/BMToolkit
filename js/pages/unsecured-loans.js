@@ -118,13 +118,16 @@ export class UnsecuredLoansPage {
                     <div class="card-body">
                         <div class="form-group">
                             <label class="form-label" data-i18n="quick-search">Quick Search</label>
-                            <input
-                                type="search"
-                                id="product-search"
-                                class="form-input"
-                                data-i18n-placeholder="quick-search-placeholder"
-                                placeholder="Search by product name or UBS code"
-                            >
+                            <div class="search-input-row">
+                                <input
+                                    type="search"
+                                    id="product-search"
+                                    class="form-input"
+                                    data-i18n-placeholder="quick-search-placeholder"
+                                    placeholder="Search by product name or UBS code"
+                                >
+                                <button type="button" id="clear-search-btn" class="btn-secondary btn-sm" data-i18n="clear-search">Clear</button>
+                            </div>
                             <div id="recent-searches" class="recent-searches" style="display: none;"></div>
                         </div>
                         <div class="grid grid-3">
@@ -378,6 +381,10 @@ export class UnsecuredLoansPage {
             }
         });
 
+        document.getElementById('clear-search-btn').addEventListener('click', () => {
+            this.clearCurrentSearch();
+        });
+
         // Change handler now passes the selected option's *value* (a product ID)
         document.getElementById('product-select').addEventListener('change', (e) => {
             this.selectProduct(e.target.value);
@@ -534,9 +541,30 @@ export class UnsecuredLoansPage {
             if (product.active === false) return; // skip inactive
             const option = document.createElement('option');
             option.value = product.id ?? FirestoreService.generateProductId(product);
-            option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+            option.textContent = this.getProductOptionLabel(product);
             select.appendChild(option);
         });
+    }
+
+
+    static getProductOptionLabel(product) {
+        const productName = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+        const metaParts = [];
+
+        if (product.ubsCode) {
+            metaParts.push(`UBS: ${product.ubsCode}`);
+        }
+
+        const segment = String(product.companySegment || '').trim();
+        if (segment && segment.toLowerCase() !== 'not specified') {
+            metaParts.push(`Segment: ${segment}`);
+        }
+
+        if (metaParts.length === 0) {
+            return productName;
+        }
+
+        return `${productName} (${metaParts.join(' • ')})`;
     }
 
     // -------------------------------------------------------------------------
@@ -595,7 +623,7 @@ export class UnsecuredLoansPage {
         filtered.forEach((product) => {
             const option = document.createElement('option');
             option.value = product.id ?? FirestoreService.generateProductId(product);
-            option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+            option.textContent = this.getProductOptionLabel(product);
             select.appendChild(option);
         });
 
@@ -609,6 +637,20 @@ export class UnsecuredLoansPage {
         }
 
         i18n.updatePageText();
+    }
+
+    static clearCurrentSearch() {
+        this.currentSearchQuery = '';
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        this.filterProducts();
+    }
+
+    static clearRecentSearches() {
+        localStorage.removeItem(this.PRODUCT_SEARCH_STORAGE_KEY);
+        this.renderRecentSearches();
     }
 
     static getRecentSearches() {
@@ -655,7 +697,7 @@ export class UnsecuredLoansPage {
             .join('');
 
         container.style.display = 'flex';
-        container.innerHTML = `<span class="recent-searches-label" data-i18n="recent-searches">Recent searches:</span>${chips}`;
+        container.innerHTML = `<span class="recent-searches-label" data-i18n="recent-searches">Recent searches:</span>${chips}<button type="button" class="recent-search-clear" data-action="clear-recent" data-i18n="clear-recent-searches">Clear recent</button>`;
 
         container.querySelectorAll('.recent-search-chip').forEach(chip => {
             chip.addEventListener('click', (e) => {
@@ -666,6 +708,13 @@ export class UnsecuredLoansPage {
                 this.filterProducts();
             });
         });
+
+        const clearRecentBtn = container.querySelector('[data-action="clear-recent"]');
+        if (clearRecentBtn) {
+            clearRecentBtn.addEventListener('click', () => {
+                this.clearRecentSearches();
+            });
+        }
 
         i18n.updatePageText();
     }

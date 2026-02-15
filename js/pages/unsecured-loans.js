@@ -557,7 +557,7 @@ export class UnsecuredLoansPage {
             : productName;
 
         if (segment && segment.toLowerCase() !== 'not specified') {
-            return `${baseLabel} (Segment: ${segment})`;
+            return `${baseLabel} (${segment})`;
         }
 
         return baseLabel;

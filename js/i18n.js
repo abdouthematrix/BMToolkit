@@ -165,6 +165,11 @@ export class I18n {
                 'contracted': 'Contracted Entity',
                 'non-contracted': 'Non-Contracted',
                 'product-info': 'Product Details',
+                'quick-search': 'Quick Search',
+                'quick-search-placeholder': 'Search by product name or UBS code',
+                'recent-searches': 'Recent searches:',
+                'clear-search': 'Clear',
+                'clear-recent-searches': 'Clear recent',
 
                 // Admin
                 'admin-panel': 'System Settings',
@@ -447,6 +452,11 @@ export class I18n {
                 'contracted': 'جهات متعاقدة',
                 'non-contracted': 'غير متعاقدة',
                 'product-info': 'تفاصيل المنتج',
+                'quick-search': 'بحث سريع',
+                'quick-search-placeholder': 'ابحث باسم المنتج أو كود UBS',
+                'recent-searches': 'آخر عمليات البحث:',
+                'clear-search': 'مسح',
+                'clear-recent-searches': 'مسح آخر عمليات البحث',
 
                 // Admin
                 'admin-panel': 'إعدادات النظام',

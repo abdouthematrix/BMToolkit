@@ -10,6 +10,9 @@ export class UnsecuredLoansPage {
     static constants = null;
     static STORAGE_KEY = 'unsecured-loans-active-tab';
     static activeTab = 'by-income';
+    static PRODUCT_SEARCH_STORAGE_KEY = 'unsecured-loans-recent-searches';
+    static MAX_RECENT_SEARCHES = 5;
+    static currentSearchQuery = '';
 
     // Holds the subset of products filtered by a UBS code coming from the URL.
     // When populated, the product dropdown is restricted to these entries.
@@ -113,6 +116,20 @@ export class UnsecuredLoansPage {
                         <h3 class="card-title" data-i18n="select-product">Select Product</h3>
                     </div>
                     <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="quick-search">Quick Search</label>
+                            <div class="search-input-row">
+                                <input
+                                    type="search"
+                                    id="product-search"
+                                    class="form-input"
+                                    data-i18n-placeholder="quick-search-placeholder"
+                                    placeholder="Search by product name or UBS code"
+                                >
+                                <button type="button" id="clear-search-btn" class="btn-secondary btn-sm" data-i18n="clear-search">Clear</button>
+                            </div>
+                            <div id="recent-searches" class="recent-searches" style="display: none;"></div>
+                        </div>
                         <div class="grid grid-3">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="sector">Sector</label>
@@ -351,8 +368,28 @@ export class UnsecuredLoansPage {
         document.getElementById('payroll-filter').addEventListener('change', () => this.filterProducts());
         document.getElementById('segment-filter').addEventListener('change', () => this.filterProducts());
 
+        const searchInput = document.getElementById('product-search');
+        searchInput.addEventListener('input', (e) => {
+            this.currentSearchQuery = e.target.value.trim();
+            this.filterProducts();
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.saveRecentSearch(e.target.value.trim());
+            }
+        });
+
+        document.getElementById('clear-search-btn').addEventListener('click', () => {
+            this.clearCurrentSearch();
+        });
+
         // Change handler now passes the selected option's *value* (a product ID)
-        document.getElementById('product-select').addEventListener('change', (e) => this.selectProduct(e.target.value));
+        document.getElementById('product-select').addEventListener('change', (e) => {
+            this.selectProduct(e.target.value);
+            this.saveRecentSearch(document.getElementById('product-search')?.value || '');
+        });
 
         // Rescale tenor inputs whenever the years/months toggle changes
         ['is-years-income', 'is-years-installment', 'is-years-schedule'].forEach(id => {
@@ -375,6 +412,8 @@ export class UnsecuredLoansPage {
             e.preventDefault();
             this.calculateLoanSchedule();
         });
+
+        this.renderRecentSearches();
     }
 
     static saveTabState(tab) {
@@ -502,9 +541,26 @@ export class UnsecuredLoansPage {
             if (product.active === false) return; // skip inactive
             const option = document.createElement('option');
             option.value = product.id ?? FirestoreService.generateProductId(product);
-            option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+            option.textContent = this.getProductOptionLabel(product);
             select.appendChild(option);
         });
+    }
+
+
+    static getProductOptionLabel(product) {
+        const productName = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+        const ubsCode = String(product.ubsCode || '').trim();
+        const segment = String(product.companySegment || '').trim();
+
+        const baseLabel = ubsCode
+            ? `${ubsCode} - ${productName}`
+            : productName;
+
+        if (segment && segment.toLowerCase() !== 'not specified') {
+            return `${baseLabel} (${segment})`;
+        }
+
+        return baseLabel;
     }
 
     // -------------------------------------------------------------------------
@@ -520,6 +576,7 @@ export class UnsecuredLoansPage {
         const sector = document.getElementById('sector-filter').value;
         const payroll = document.getElementById('payroll-filter').value;
         const segment = document.getElementById('segment-filter').value;
+        const searchQuery = this.currentSearchQuery.toLowerCase();
 
         // Start from the UBS-restricted list when present, otherwise all products
         const baseList = this.ubsFilteredProducts.length > 0
@@ -531,6 +588,24 @@ export class UnsecuredLoansPage {
             if (sector && product.sector !== sector) return false;
             if (payroll && product.payrollType !== payroll) return false;
             if (segment && product.companySegment !== segment) return false;
+
+            if (searchQuery) {
+                const searchFields = [
+                    product.nameEn,
+                    product.nameAr,
+                    product.ubsCode,
+                    product.sector,
+                    product.payrollType,
+                    product.companySegment
+                ]
+                    .filter(Boolean)
+                    .map(value => String(value).toLowerCase());
+
+                if (!searchFields.some(value => value.includes(searchQuery))) {
+                    return false;
+                }
+            }
+
             return true;
         });
 
@@ -544,7 +619,7 @@ export class UnsecuredLoansPage {
         filtered.forEach((product) => {
             const option = document.createElement('option');
             option.value = product.id ?? FirestoreService.generateProductId(product);
-            option.textContent = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+            option.textContent = this.getProductOptionLabel(product);
             select.appendChild(option);
         });
 
@@ -555,6 +630,86 @@ export class UnsecuredLoansPage {
             // Previously selected product was filtered out – clear it
             this.selectedProduct = null;
             document.getElementById('product-info').style.display = 'none';
+        }
+
+        i18n.updatePageText();
+    }
+
+    static clearCurrentSearch() {
+        this.currentSearchQuery = '';
+        const searchInput = document.getElementById('product-search');
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        this.filterProducts();
+    }
+
+    static clearRecentSearches() {
+        localStorage.removeItem(this.PRODUCT_SEARCH_STORAGE_KEY);
+        this.renderRecentSearches();
+    }
+
+    static getRecentSearches() {
+        try {
+            const raw = localStorage.getItem(this.PRODUCT_SEARCH_STORAGE_KEY);
+            const parsed = JSON.parse(raw || '[]');
+            return Array.isArray(parsed) ? parsed : [];
+        } catch {
+            return [];
+        }
+    }
+
+    static saveRecentSearch(query) {
+        if (!query) return;
+
+        const cleanedQuery = query.trim();
+        if (!cleanedQuery) return;
+
+        const recentSearches = this.getRecentSearches().filter(
+            search => search.toLowerCase() !== cleanedQuery.toLowerCase()
+        );
+        recentSearches.unshift(cleanedQuery);
+
+        localStorage.setItem(
+            this.PRODUCT_SEARCH_STORAGE_KEY,
+            JSON.stringify(recentSearches.slice(0, this.MAX_RECENT_SEARCHES))
+        );
+        this.renderRecentSearches();
+    }
+
+    static renderRecentSearches() {
+        const container = document.getElementById('recent-searches');
+        if (!container) return;
+
+        const recentSearches = this.getRecentSearches();
+        if (recentSearches.length === 0) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+
+        const chips = recentSearches
+            .map(search => `<button type="button" class="recent-search-chip" data-search="${search.replace(/"/g, '&quot;')}">${search}</button>`)
+            .join('');
+
+        container.style.display = 'flex';
+        container.innerHTML = `<span class="recent-searches-label" data-i18n="recent-searches">Recent searches:</span>${chips}<button type="button" class="recent-search-clear" data-action="clear-recent" data-i18n="clear-recent-searches">Clear recent</button>`;
+
+        container.querySelectorAll('.recent-search-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                const searchValue = e.currentTarget.dataset.search || '';
+                this.currentSearchQuery = searchValue;
+                const searchInput = document.getElementById('product-search');
+                if (searchInput) searchInput.value = searchValue;
+                this.filterProducts();
+            });
+        });
+
+        const clearRecentBtn = container.querySelector('[data-action="clear-recent"]');
+        if (clearRecentBtn) {
+            clearRecentBtn.addEventListener('click', () => {
+                this.clearRecentSearches();
+            });
         }
 
         i18n.updatePageText();

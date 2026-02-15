@@ -96,7 +96,7 @@ export class AdminPage {
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="stamp-duty-rate">Stamp Duty Rate (‰)</label>
-                                    <input type="number" id="stamp-duty-admin" class="form-input" min="0" max="100" step="0.1" required>
+                                    <input type="number" id="stamp-duty-admin" class="form-input" min="0" max="100" required>
                                     <small class="text-muted" data-i18n="stamp-duty-help">Display in per mille (‰). 0.5 = 0.5‰ = 0.0005 ratio</small>
                                 </div>
                                 <div class="form-group">

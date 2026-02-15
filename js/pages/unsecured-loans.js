@@ -203,11 +203,11 @@ export class UnsecuredLoansPage {
                         <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="monthly-income">Monthly Income</label>
-                                <input type="number" id="monthly-income" class="form-input" value="10000" min="0" step="100" required>
+                                <input type="number" id="monthly-income" class="form-input" value="10000" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="monthly-installments">Current Monthly Installments</label>
-                                <input type="number" id="monthly-installments" class="form-input" value="0" min="0" step="100" required>
+                                <input type="number" id="monthly-installments" class="form-input" value="0" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="max-dti">Max Debt-to-Income (%)</label>
@@ -258,7 +258,7 @@ export class UnsecuredLoansPage {
                         <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="monthly-payment">Monthly Payment Capacity</label>
-                                <input type="number" id="monthly-payment-installment" class="form-input" value="5000" min="0" step="100" required>
+                                <input type="number" id="monthly-payment-installment" class="form-input" value="5000" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
@@ -304,7 +304,7 @@ export class UnsecuredLoansPage {
                         <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="principal">Principal Amount</label>
-                                <input type="number" id="principal-schedule" class="form-input" value="100000" min="0" step="1000" required>
+                                <input type="number" id="principal-schedule" class="form-input" value="100000" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>

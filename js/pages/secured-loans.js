@@ -251,7 +251,7 @@ export class SecuredLoansPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="cd-rate">Certificate Rate (%)</label>
-                                <input type="number" id="cd-rate" class="form-input" value="16" min="0" max="100" step="0.1" required>
+                                <input type="number" id="cd-rate" class="form-input" value="16" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="loan-term">Loan Term (Years)</label>
@@ -293,7 +293,7 @@ export class SecuredLoansPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="cd-rate">CD Rate (%)</label>
-                                <input type="number" id="cd-rate-optimizer" class="form-input" value="16" min="0" max="100" step="0.1" required>
+                                <input type="number" id="cd-rate-optimizer" class="form-input" value="16" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="loan-term">Loan Term (Months)</label>
@@ -337,11 +337,11 @@ export class SecuredLoansPage {
                         <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="principal">Loan Amount</label>
-                                <input type="number" id="principal-loan" class="form-input" value="100000" min="0" step="1000" required>
+                                <input type="number" id="principal-loan" class="form-input" value="100000" min="0" step="500" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
-                                <input type="number" id="rate-loan" class="form-input" value="18" min="0" max="100" step="0.1" required>
+                                <input type="number" id="rate-loan" class="form-input" value="18" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>
@@ -395,11 +395,11 @@ export class SecuredLoansPage {
                         <div class="grid grid-2">
                             <div class="form-group">
                                 <label class="form-label" data-i18n="monthly-payment">Monthly Payment Capacity</label>
-                                <input type="number" id="monthly-payment-max" class="form-input" value="5000" min="0" step="100" required>
+                                <input type="number" id="monthly-payment-max" class="form-input" value="5000" min="0" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
-                                <input type="number" id="rate-max" class="form-input" value="18" min="0" max="100" step="0.1" required>
+                                <input type="number" id="rate-max" class="form-input" value="18" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="tenor-range">Tenor Range</label>

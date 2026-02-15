@@ -88,7 +88,7 @@ export class AdvancedToolsPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
-                                <input type="number" id="rate-first" class="form-input" value="18" min="0" max="100" step="0.1" required>
+                                <input type="number" id="rate-first" class="form-input" value="18" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="start-date">Loan Start Date</label>
@@ -143,7 +143,7 @@ export class AdvancedToolsPage {
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="interest-rate">Annual Interest Rate (%)</label>
-                                <input type="number" id="rate-amort" class="form-input" value="18" min="0" max="100" step="0.1" required>
+                                <input type="number" id="rate-amort" class="form-input" value="18" min="0" max="100" step="0.01" required>
                             </div>
                             <div class="form-group">
                                 <label class="form-label" data-i18n="start-date">Loan Start Date</label>

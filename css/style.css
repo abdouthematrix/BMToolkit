@@ -488,6 +488,37 @@ p {
     min-height: 100px;
 }
 
+.recent-searches {
+    margin-top: var(--spacing-sm);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.recent-searches-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-inline-end: var(--spacing-xs);
+}
+
+.recent-search-chip {
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.recent-search-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, var(--bg-secondary));
+}
+
 /* Toggle Switch */
 .toggle-switch {
     display: inline-flex;

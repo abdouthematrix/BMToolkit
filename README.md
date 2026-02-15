@@ -9,6 +9,7 @@ A user-friendly financial web application for calculating and comparing bank loa
 - **Smart Loan Optimizer** - Find optimal loan amount (0-90% of certificate)
 - **Loan Calculator** - Calculate payments for multiple tenors
 - **Max Loan Calculator** - Find maximum loan based on monthly payment capacity
+- **TD Secured Loan Calculator** - Multi-TD input with monthly/quarterly interest types, tenor range (years/months), reinvest toggle, and net paid view after TD interest offset
 
 ### 💼 Unsecured Loans
 - **Product Selection** - Filter by sector, payroll type, and company segment
@@ -148,12 +149,18 @@ Upload all files to your web hosting service. Ensure the server supports:
 
 #### Secured Loans
 1. Navigate to **Secured Loans** from the home page
-2. Select a calculator (Smart Investment, Optimizer, Loan Calculator, or Max Loan)
+2. Select a calculator (Smart Investment, Optimizer, Loan Calculator, Max Loan, or TD Secured Loan)
 3. Enter your certificate amount and rate
 4. Specify loan duration in years or months
 5. Click **Calculate Results** to see outputs
 6. Compare scenarios to find the best option
 7. Share results via URL parameters
+
+##### TD Secured Loan workflow
+1. Enter one or more TDs with amount, annual rate, and TD interest type (monthly/quarterly)
+2. Enter the requested loan amount and tenor range
+3. Choose tenor unit (years/months), installment frequency, and optional reinvest mode
+4. Review result tables for tenor, installment, paid amount, total payment, flat rate, plus TD interest details and total TD interest per period
 
 #### Unsecured Loans
 1. Navigate to **Unsecured Loans**

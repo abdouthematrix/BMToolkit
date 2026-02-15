@@ -549,22 +549,18 @@ export class UnsecuredLoansPage {
 
     static getProductOptionLabel(product) {
         const productName = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
-        const metaParts = [];
-
-        if (product.ubsCode) {
-            metaParts.push(`UBS: ${product.ubsCode}`);
-        }
-
+        const ubsCode = String(product.ubsCode || '').trim();
         const segment = String(product.companySegment || '').trim();
+
+        const baseLabel = ubsCode
+            ? `${ubsCode} - ${productName}`
+            : productName;
+
         if (segment && segment.toLowerCase() !== 'not specified') {
-            metaParts.push(`Segment: ${segment}`);
+            return `${baseLabel} (Segment: ${segment})`;
         }
 
-        if (metaParts.length === 0) {
-            return productName;
-        }
-
-        return `${productName} (${metaParts.join(' • ')})`;
+        return baseLabel;
     }
 
     // -------------------------------------------------------------------------

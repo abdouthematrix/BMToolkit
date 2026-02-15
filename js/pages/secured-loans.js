@@ -488,7 +488,7 @@ export class SecuredLoansPage {
                         <div class="form-group">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="td-reinvest-loan">
-                                <span>Reinvest loan amount in a new term deposit</span>
+                                <span data-i18n="reinvest-loan-into-td">Reinvest loan amount in a new term deposit</span>
                             </label>
                         </div>
 

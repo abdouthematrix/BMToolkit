@@ -288,6 +288,20 @@ export class FinancialCalculator {
             };
         });
 
+        if (reinvestLoan) {
+            const reinvestedPeriodicInterest = installmentFrequency === 'quarterly'
+                ? (loanAmount * highestTdRate) / 4
+                : (loanAmount * highestTdRate) / 12;
+
+            tdDetails.push({
+                amount: loanAmount,
+                rate: highestTdRate,
+                interestFrequency: installmentFrequency,
+                periodicInterest: reinvestedPeriodicInterest,
+                isReinvested: true
+            });
+        }
+
         const totalTdInterestPerPeriod = tdDetails.reduce((sum, td) => {
             const normalizedMonthly = td.interestFrequency === 'quarterly'
                 ? td.periodicInterest / 3

@@ -449,6 +449,17 @@ p {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+
+.loans-sections-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+    .loans-sections-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 /* Form Elements */
 .form-group {
     margin-bottom: var(--spacing-lg);
@@ -797,7 +808,8 @@ p {
 
     .grid-2,
     .grid-3,
-    .grid-4 {
+    .grid-4,
+    .loans-sections-grid {
         grid-template-columns: 1fr;
     }
 

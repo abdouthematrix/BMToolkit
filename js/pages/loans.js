@@ -45,7 +45,7 @@ export class LoansPage {
                     <p class="text-muted" data-i18n="loans-desc">Choose your loan type to start calculating</p>
                 </div>
 
-                <div class="grid grid-3" style="margin-top: var(--spacing-lg);">
+                <div class="grid grid-3 loans-sections-grid" style="margin-top: var(--spacing-lg);">
                     ${this.renderLoanCard({
                         route: 'secured-loans',
                         icon: 'fa-shield-alt',

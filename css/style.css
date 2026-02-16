@@ -912,6 +912,25 @@ p {
     font-weight: 600;
 }
 
+/* Credit Cards Responsive Helpers */
+.cc-actions-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.cc-actions-row .btn-primary,
+.cc-actions-row .btn-secondary {
+    min-width: 140px;
+}
+
+.tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-color);
+}
+
 /* Tabs */
 .tab-btn {
     display: flex;
@@ -953,6 +972,8 @@ p {
 /* Results Table Wrapper */
 .results-table-wrapper {
     margin-top: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Modal */
@@ -1004,6 +1025,7 @@ p {
 /* Credit Cards Matrix Tables */
 .cc-matrix-table {
     font-size: 0.95rem;
+    min-width: 760px;
 }
 
 .cc-matrix-table thead th {
@@ -1033,11 +1055,23 @@ p {
 }
 
 @media (max-width: 768px) {
+    .cc-actions-row .btn-primary,
+    .cc-actions-row .btn-secondary {
+        flex: 1 1 100%;
+    }
+
+    .cc-tabs .tab-btn {
+        flex: 1 1 calc(50% - var(--spacing-xs));
+        justify-content: center;
+        padding-inline: var(--spacing-md);
+    }
+
     .cc-matrix-table {
         font-size: 0.85rem;
+        min-width: 680px;
     }
 
     .cc-matrix-table tbody th {
-        min-width: 160px;
+        min-width: 150px;
     }
 }

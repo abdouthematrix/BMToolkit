@@ -111,7 +111,7 @@ export class CreditCardsPage {
                                     </label>
                                 </div>
                             </div>
-                            <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <div class="cc-actions-row" style="margin-top: var(--spacing-md);">
                                 <button type="submit" class="btn-primary">
                                     <i class="fas fa-calculator"></i>
                                     <span data-i18n="calculate">Calculate</span>
@@ -123,7 +123,7 @@ export class CreditCardsPage {
                             </div>
                         </form>
 
-                        <div class="tabs" style="margin-top: var(--spacing-xl);">
+                        <div class="tabs cc-tabs" style="margin-top: var(--spacing-xl);">
                             <button class="tab-btn ${this.activeTab === 'installment' ? 'active' : ''}" data-tab="installment">
                                 <i class="fas fa-receipt"></i>
                                 <span data-i18n="cc-tab-installment">Installment</span>

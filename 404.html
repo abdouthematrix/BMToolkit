@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMToolkit - Redirecting...</title>
+  <script>
+    (function () {
+      const path = window.location.pathname.replace(/\/+$/, '');
+      const repoBase = '/BMToolkit';
+
+      // Remove repo base if present (GitHub Pages project site)
+      const cleanPath = path.startsWith(repoBase) ? path.slice(repoBase.length) : path;
+      const routePath = cleanPath.replace(/^\/+/, '');
+
+      const query = window.location.search || '';
+      const hash = window.location.hash || '';
+
+      // If already at root-ish path, just go home.
+      const targetHash = routePath && routePath !== 'index.html'
+        ? `#${routePath}${query}${hash}`
+        : '#home';
+
+      const target = `${repoBase}/index.html${targetHash}`;
+      window.location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting…</p>
+</body>
+</html>

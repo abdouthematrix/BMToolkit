@@ -988,3 +988,44 @@ p {
 .highlight-row {
     background: rgba(245, 158, 11, 0.1) !important;
 }
+
+/* Credit Cards Matrix Tables */
+.cc-matrix-table {
+    font-size: 0.95rem;
+}
+
+.cc-matrix-table thead th {
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.cc-matrix-table tbody th {
+    background: var(--bg-tertiary);
+    font-weight: 700;
+    min-width: 220px;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+}
+
+[dir="rtl"] .cc-matrix-table tbody th {
+    left: auto;
+    right: 0;
+}
+
+.cc-matrix-table td {
+    text-align: center;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .cc-matrix-table {
+        font-size: 0.85rem;
+    }
+
+    .cc-matrix-table tbody th {
+        min-width: 160px;
+    }
+}

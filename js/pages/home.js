@@ -35,9 +35,13 @@ export class HomePage {
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
                                     <span data-i18n="secured-loans-title">Secured Loans</span>
                                 </li>
-                                <li style="padding: var(--spacing-sm) 0;">
+                                <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
                                     <span data-i18n="unsecured-loans-title">Unsecured Loans</span>
+                                </li>
+                                <li style="padding: var(--spacing-sm) 0;">
+                                    <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
+                                    <span data-i18n="advancedtools-title">Advanced Tools</span>
                                 </li>
                             </ul>
                         </div>

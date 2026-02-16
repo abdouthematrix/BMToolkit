@@ -45,7 +45,7 @@ export class LoansPage {
                     <p class="text-muted" data-i18n="loans-desc">Choose your loan type to start calculating</p>
                 </div>
 
-                <div class="grid grid-2" style="margin-top: var(--spacing-lg);">
+                <div class="grid grid-3" style="margin-top: var(--spacing-lg);">
                     ${this.renderLoanCard({
                         route: 'secured-loans',
                         icon: 'fa-shield-alt',
@@ -75,6 +75,22 @@ export class LoansPage {
                             { key: 'income-proof-loans', fallback: 'Income Proof Loans' },
                             { key: 'business-owner-loans', fallback: 'Business Owner Loans' },
                             { key: 'pension-loans', fallback: 'Pension Loans' }
+                        ]
+                    })}
+
+                    ${this.renderLoanCard({
+                        route: 'advancedtools',
+                        icon: 'fa-puzzle-piece',
+                        gradient: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
+                        titleKey: 'advancedtools-title',
+                        titleFallback: 'Advanced Tools',
+                        descKey: 'advancedtools-desc',
+                        descFallback: 'Deep-dive calculations for specialized scenarios',
+                        items: [
+                            { key: 'first-month-interest', fallback: 'First Month Interest' },
+                            { key: 'amortization-schedule', fallback: 'Amortization Schedule' },
+                            { key: 'loan-term-months', fallback: 'Loan Term (Months)' },
+                            { key: 'payment-date', fallback: 'Payment Date' }
                         ]
                     })}
                 </div>

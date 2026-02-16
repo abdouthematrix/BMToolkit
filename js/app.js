@@ -4,8 +4,10 @@ import { Router } from './router.js';
 import { i18n } from './i18n.js';
 import { AuthService } from './services/auth.js';
 import { HomePage } from './pages/home.js';
+import { LoansPage } from './pages/loans.js';
 import { SecuredLoansPage } from './pages/secured-loans.js';
 import { UnsecuredLoansPage } from './pages/unsecured-loans.js';
+import { CreditCardsPage } from './pages/credit-cards.js';
 import { AdvancedToolsPage } from './pages/advancedtools.js';
 import { LoginPage } from './pages/login.js';
 import { AdminPage } from './pages/admin.js';
@@ -39,8 +41,16 @@ class App {
             title: 'BMToolkit - Secured Loans'
         });
 
+        this.router.register('loans', () => LoansPage.init(), {
+            title: 'BMToolkit - Loans'
+        });
+
         this.router.register('unsecured-loans', () => UnsecuredLoansPage.init(), {
             title: 'BMToolkit - Unsecured Loans'
+        });
+
+        this.router.register('credit-cards', () => CreditCardsPage.init(), {
+            title: 'BMToolkit - Credit Cards'
         });
 
         this.router.register('advancedtools', () => AdvancedToolsPage.init(), {

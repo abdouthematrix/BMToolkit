@@ -24,18 +24,28 @@ export class Router {
 
     // Navigate to a route
     navigate(path) {
-        window.location.hash = path;
+        window.location.hash = this.normalizePath(path);
+    }
+
+    // Normalize route path by removing leading/trailing slashes
+    normalizePath(path) {
+        const normalized = (path || '').replace(/^\/+|\/+$/g, '');
+        return normalized || 'home';
     }
 
     // Get current path (without query parameters)
     getCurrentPath() {
         const hash = window.location.hash.slice(1) || 'home';
-        return hash.split('?')[0];
+        const rawPath = hash.split('?')[0];
+        return this.normalizePath(rawPath);
     }
 
-    // Get full hash including query params
+    // Get full hash including query params (normalized path + original query)
     getFullHash() {
-        return window.location.hash.slice(1) || 'home';
+        const hash = window.location.hash.slice(1) || 'home';
+        const [rawPath, queryString = ''] = hash.split('?');
+        const normalizedPath = this.normalizePath(rawPath);
+        return queryString ? `${normalizedPath}?${queryString}` : normalizedPath;
     }
 
     // Handle route change

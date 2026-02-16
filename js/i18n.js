@@ -15,6 +15,8 @@ export class I18n {
 
                 // Navigation
                 'nav-home': 'Home',
+                'nav-loans': 'Loans',
+                'nav-credit-cards': 'Credit Cards',
                 'nav-secured': 'Secured Loans (CDs)',
                 'nav-unsecured': 'Cash Loans',
                 'nav-advancedtools': 'Advanced Tools',
@@ -32,6 +34,12 @@ export class I18n {
                 'income-proof-loans': 'Income Proof',
                 'business-owner-loans': 'Business Owners',
                 'pension-loans': 'Pensioners',
+                'loans-title': 'Loans',
+                'loans-desc': 'All loan products and calculators in one place',
+                'credit-cards-title': 'Credit Cards',
+                'credit-cards-desc': 'Transactions installment calculator for credit cards',
+                'cc-installment-calculator': 'Transactions Installment for Credit Cards',
+                'cc-installment-range': 'Installment period from 3 to 36 months',
 
                 // Secured Loans
                 'smart-investment': 'Investment Comparator',
@@ -105,6 +113,11 @@ export class I18n {
                 'min-tenor': 'Min',
                 'max-tenor': 'Max',
                 'monthly-payment-amount': 'Desired Monthly Payment',
+                'transaction-amount': 'Transaction Amount (EGP)',
+                'cc-card-type': 'Credit Card Type',
+                'cc-installment-type': 'Installment Type',
+                'cc-installment-period': 'Installment Period',
+                'monthly-installment': 'Monthly Installment',
                 'months-vs-years': 'Duration in Months (default is Years)',
 
                 // Results
@@ -225,6 +238,9 @@ export class I18n {
                 'logout-success': 'Signed out successfully',
                 'save-success': 'Settings updated successfully',
                 'invalid-input': 'Please check highlighted fields',
+                'cc-cash-min-note': 'Cash transactions must be at least 1,000 EGP.',
+                'cc-cash-min-validation': 'Cash installment requires a minimum transaction of 1,000 EGP.',
+                'cc-interest-rates-title': 'Monthly Interest Rates',
                 'auth-required': 'Please log in first',
                 'select-product-first': 'Please select a loan product to continue',
                 'max-tenor-capped': 'Max tenor capped at {years} years for this product',
@@ -302,6 +318,8 @@ export class I18n {
 
                 // Navigation
                 'nav-home': 'الرئيسية',
+                'nav-loans': 'القروض',
+                'nav-credit-cards': 'بطاقات الائتمان',
                 'nav-secured': 'قروض بضمان (شهادات)',
                 'nav-unsecured': 'القروض النقدية',
                 'nav-advancedtools': 'أدوات متقدمة',
@@ -319,6 +337,12 @@ export class I18n {
                 'income-proof-loans': 'بإثبات الدخل',
                 'business-owner-loans': 'أصحاب الأعمال',
                 'pension-loans': 'أصحاب المعاشات',
+                'loans-title': 'القروض',
+                'loans-desc': 'كل منتجات وحاسبات القروض في مكان واحد',
+                'credit-cards-title': 'بطاقات الائتمان',
+                'credit-cards-desc': 'حاسبة تقسيط معاملات بطاقات الائتمان',
+                'cc-installment-calculator': 'تقسيط معاملات بطاقات الائتمان',
+                'cc-installment-range': 'فترة التقسيط من 3 إلى 36 شهرًا',
 
                 // Secured Loans
                 'smart-investment': 'مقارنة الاستثمار',
@@ -392,6 +416,11 @@ export class I18n {
                 'min-tenor': 'أقل مدة',
                 'max-tenor': 'أقصى مدة',
                 'monthly-payment-amount': 'القسط الشهري المرغوب',
+                'transaction-amount': 'قيمة المعاملة (جنيه)',
+                'cc-card-type': 'نوع بطاقة الائتمان',
+                'cc-installment-type': 'نوع التقسيط',
+                'cc-installment-period': 'فترة التقسيط',
+                'monthly-installment': 'القسط الشهري',
                 'months-vs-years': 'المدة بالشهور (بدلاً من السنوات)',
 
                 // Results
@@ -513,6 +542,9 @@ export class I18n {
                 'logout-success': 'تم الخروج بنجاح',
                 'save-success': 'تم تحديث الإعدادات',
                 'invalid-input': 'يرجى مراجعة الحقول المميزة',
+                'cc-cash-min-note': 'معاملات السحب النقدي يجب ألا تقل عن 1000 جنيه.',
+                'cc-cash-min-validation': 'تقسيط السحب النقدي يتطلب حد أدنى 1000 جنيه للمعاملة.',
+                'cc-interest-rates-title': 'أسعار الفائدة الشهرية',
                 'auth-required': 'يجب تسجيل الدخول أولاً',
                 'select-product-first': 'يرجى اختيار نوع القرض للمتابعة',
                 'max-tenor-capped': 'تم تقليص الحد الأقصى للمدة إلى {years} سنوات لهذا المنتج',

@@ -1,4 +1,4 @@
-// credit-cards.js - Credit Cards Installment Calculator (Simple)
+// credit-cards.js - Credit Cards Installment Calculator (Tabbed)
 
 import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
@@ -29,6 +29,7 @@ export class CreditCardsPage {
     };
 
     static MIN_AMOUNT = 1000;
+    static activeTab = 'installment';
 
     static render() {
         return `
@@ -47,8 +48,15 @@ export class CreditCardsPage {
                             <div class="grid grid-2">
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="transaction-amount">Transaction Amount (EGP)</label>
-                                    <input type="number" id="cc-amount" class="form-input" min="${this.MIN_AMOUNT}" step="0.01" value="5000" required>
+                                    <input type="number" id="cc-amount" class="form-input" min="${this.MIN_AMOUNT}" step="0.01" value="22000" required>
                                     <small class="text-muted" data-i18n="cc-cash-min-note">Minimum transaction is 1,000 EGP.</small>
+                                </div>
+                                <div class="form-group" id="cc-staff-toggle-group">
+                                    <label class="form-label" data-i18n="cc-staff-mode">Staff Mode</label>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="cc-staff-toggle">
+                                        <span data-i18n="cc-staff-mode-note">Use staff monthly rate (2.25%)</span>
+                                    </label>
                                 </div>
                             </div>
                             <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
@@ -63,7 +71,19 @@ export class CreditCardsPage {
                             </div>
                         </form>
 
-                        <div id="cc-results" style="display: none; margin-top: var(--spacing-xl);"></div>
+                        <div class="tabs" style="margin-top: var(--spacing-xl);">
+                            <button class="tab-btn ${this.activeTab === 'installment' ? 'active' : ''}" data-tab="installment">
+                                <i class="fas fa-receipt"></i>
+                                <span data-i18n="cc-tab-installment">Installment</span>
+                            </button>
+                            <button class="tab-btn ${this.activeTab === 'admin-fees' ? 'active' : ''}" data-tab="admin-fees">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span data-i18n="cc-tab-admin-fees">Admin Fees</span>
+                            </button>
+                        </div>
+
+                        <div id="cc-tab-installment" class="tab-content ${this.activeTab === 'installment' ? 'active' : ''}" data-tab-content="installment" style="margin-top: var(--spacing-lg);"></div>
+                        <div id="cc-tab-admin-fees" class="tab-content ${this.activeTab === 'admin-fees' ? 'active' : ''}" data-tab-content="admin-fees" style="margin-top: var(--spacing-lg);"></div>
                     </div>
                 </div>
             </div>
@@ -72,21 +92,43 @@ export class CreditCardsPage {
 
     static async init() {
         const router = window.app?.router;
-        if (router) {
-            router.render(this.render());
-            i18n.updatePageText();
-            this.attachEventListeners();
-            this.calculateAllScenarios();
-        }
+        if (!router) return;
+
+        router.render(this.render());
+        i18n.updatePageText();
+        this.attachEventListeners();
+        this.calculateAllScenarios();
     }
 
     static attachEventListeners() {
         const form = document.getElementById('credit-card-installment-form');
+        const staffToggle = document.getElementById('cc-staff-toggle');
+
         if (!form) return;
 
         form.addEventListener('submit', (e) => this.handleCalculate(e));
         form.addEventListener('reset', () => {
-            setTimeout(() => this.calculateAllScenarios(), 0);
+            setTimeout(() => {
+                this.activeTab = 'installment';
+                this.updateTabVisibility();
+                this.calculateAllScenarios();
+            }, 0);
+        });
+
+        if (staffToggle) {
+            staffToggle.addEventListener('change', () => {
+                if (this.activeTab === 'installment') {
+                    this.calculateAllScenarios();
+                }
+            });
+        }
+
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                this.activeTab = btn.getAttribute('data-tab');
+                this.updateTabVisibility();
+                this.calculateAllScenarios();
+            });
         });
     }
 
@@ -95,48 +137,109 @@ export class CreditCardsPage {
         this.calculateAllScenarios();
     }
 
-    static calculateAllScenarios() {
-        const amount = parseFloat(document.getElementById('cc-amount').value);
+    static updateTabVisibility() {
+        document.querySelectorAll('.tab-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.getAttribute('data-tab') === this.activeTab);
+        });
+        document.querySelectorAll('.tab-content').forEach((content) => {
+            content.classList.toggle('active', content.getAttribute('data-tab-content') === this.activeTab);
+        });
 
+        const staffGroup = document.getElementById('cc-staff-toggle-group');
+        if (staffGroup) {
+            staffGroup.style.display = this.activeTab === 'installment' ? '' : 'none';
+        }
+    }
+
+    static calculateAllScenarios() {
+        const amountInput = document.getElementById('cc-amount');
+        if (!amountInput) return;
+
+        const amount = parseFloat(amountInput.value);
         if (Number.isNaN(amount) || amount < this.MIN_AMOUNT) {
             alert(i18n.t('cc-cash-min-validation'));
             return;
         }
 
+        this.renderInstallmentTabResults(amount);
+        this.renderAdminFeesTabResults(amount);
+    }
+
+    static renderInstallmentTabResults(amount) {
+        const isStaff = document.getElementById('cc-staff-toggle')?.checked === true;
         const rows = this.PERIODS.map((period) => {
-            const regularRate = this.REGULAR_RATES[period];
-            const staffRate = this.STAFF_RATE;
-            const adminFeeRate = this.ADMIN_FEES[period];
-
-            const adminFeeAmount = amount * adminFeeRate;
-
-            const regularMonthlyInstallment = FinancialCalculator.PMT(regularRate, period, amount);
-            const staffMonthlyInstallment = FinancialCalculator.PMT(staffRate, period, amount);
-
-            const regularTotalWithoutFees = regularMonthlyInstallment * period;
-            const staffTotalWithoutFees = staffMonthlyInstallment * period;
-
-            const regularTotalWithFees = regularTotalWithoutFees + adminFeeAmount;
-            const staffTotalWithFees = staffTotalWithoutFees + adminFeeAmount;
+            const monthlyRate = isStaff ? this.STAFF_RATE : this.REGULAR_RATES[period];
+            const monthlyInstallment = FinancialCalculator.PMT(monthlyRate, period, amount);
+            const totalPaid = monthlyInstallment * period;
+            const totalInterest = totalPaid - amount;
+            const annualFlatEquivalent = ((totalInterest / amount) / (period / 12)) * 100;
 
             return `
                 <tr>
                     <td>${period} ${i18n.t('months').toLowerCase()}</td>
-                    <td>${(regularRate * 100).toFixed(2)}%</td>
-                    <td>${(staffRate * 100).toFixed(2)}%</td>
-                    <td>${(adminFeeRate * 100).toFixed(2)}%</td>
-                    <td>${this.formatCurrency(regularMonthlyInstallment)}</td>
-                    <td>${this.formatCurrency(staffMonthlyInstallment)}</td>
-                    <td>${this.formatCurrency(regularTotalWithFees)}</td>
-                    <td>${this.formatCurrency(staffTotalWithFees)}</td>
+                    <td>${(monthlyRate * 100).toFixed(2)}%</td>
+                    <td>${this.formatCurrency(totalInterest)}</td>
+                    <td>${this.formatCurrency(totalPaid)}</td>
+                    <td>${annualFlatEquivalent.toFixed(2)}%</td>
+                    <td>${this.formatCurrency(monthlyInstallment)}</td>
                 </tr>
             `;
         }).join('');
 
-        const results = document.getElementById('cc-results');
-        results.innerHTML = `
+        const mount = document.getElementById('cc-tab-installment');
+        if (!mount) return;
+
+        mount.innerHTML = `
             <div class="results-card">
-                <h3 style="margin-bottom: var(--spacing-md);"><i class="fas fa-table"></i> ${i18n.t('results')}</h3>
+                <h3 style="margin-bottom: var(--spacing-md);"><i class="fas fa-table"></i> ${i18n.t('cc-tab-installment')}</h3>
+                <p class="text-muted" style="margin-bottom: var(--spacing-md);">
+                    ${i18n.t('transaction-amount')}: <strong>${this.formatCurrency(amount)}</strong>
+                    • ${i18n.t('cc-active-rate')}: <strong>${isStaff ? i18n.t('cc-staff-rate') : i18n.t('cc-regular-rate')}</strong>
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="cc-installment-period">Installment Period</th>
+                                <th data-i18n="interest-rate">Interest Rate (%)</th>
+                                <th data-i18n="total-interest">Total Interest</th>
+                                <th data-i18n="cc-total-with-interest">Total Amount with Interest</th>
+                                <th data-i18n="cc-flat-equivalent">Approx. Annual Flat Rate</th>
+                                <th data-i18n="monthly-installment">Monthly Installment</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    static renderAdminFeesTabResults(amount) {
+        const rows = this.PERIODS.map((period) => {
+            const adminFeeRate = this.ADMIN_FEES[period];
+            const adminFeeAmount = amount * adminFeeRate;
+            const installmentWithoutInterest = amount / period;
+            const totalWithAdminFees = amount + adminFeeAmount;
+
+            return `
+                <tr>
+                    <td>${period} ${i18n.t('months').toLowerCase()}</td>
+                    <td>${(adminFeeRate * 100).toFixed(2)}%</td>
+                    <td>${this.formatCurrency(adminFeeAmount)}</td>
+                    <td>${this.formatCurrency(installmentWithoutInterest)}</td>
+                    <td>${this.formatCurrency(totalWithAdminFees)}</td>
+                </tr>
+            `;
+        }).join('');
+
+        const mount = document.getElementById('cc-tab-admin-fees');
+        if (!mount) return;
+
+        mount.innerHTML = `
+            <div class="results-card">
+                <h3 style="margin-bottom: var(--spacing-md);"><i class="fas fa-table"></i> ${i18n.t('cc-tab-admin-fees')}</h3>
                 <p class="text-muted" style="margin-bottom: var(--spacing-md);">
                     ${i18n.t('transaction-amount')}: <strong>${this.formatCurrency(amount)}</strong>
                 </p>
@@ -146,31 +249,17 @@ export class CreditCardsPage {
                         <thead>
                             <tr>
                                 <th data-i18n="cc-installment-period">Installment Period</th>
-                                <th data-i18n="cc-regular-rate">Regular Rate (Monthly)</th>
-                                <th data-i18n="cc-staff-rate">Staff Rate (Monthly)</th>
                                 <th data-i18n="cc-admin-fee">Admin Fee (One-time)</th>
-                                <th data-i18n="cc-regular-monthly">Regular Monthly Installment</th>
-                                <th data-i18n="cc-staff-monthly">Staff Monthly Installment</th>
-                                <th data-i18n="cc-regular-total-fees">Regular Total + Fee</th>
-                                <th data-i18n="cc-staff-total-fees">Staff Total + Fee</th>
+                                <th data-i18n="cc-admin-fee-amount">Admin Fee Amount</th>
+                                <th data-i18n="cc-installment-no-interest">Installment Amount (No Interest)</th>
+                                <th data-i18n="cc-total-with-admin">Total Amount with Admin Fee</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${rows}
-                        </tbody>
+                        <tbody>${rows}</tbody>
                     </table>
-                </div>
-
-                <div class="info-box" style="margin-top: var(--spacing-md);">
-                    <i class="fas fa-circle-info"></i>
-                    <p style="margin: 0;">
-                        <span data-i18n="cc-rates-note">Regular rates range from 2.56% to 2.81% monthly, staff rate is 2.25% monthly, and admin fees apply once at installment start.</span>
-                    </p>
                 </div>
             </div>
         `;
-        results.style.display = 'block';
-        i18n.updatePageText();
     }
 
     static formatCurrency(value) {

@@ -1,24 +1,12 @@
-// credit-cards.js - Credit Cards Installment Calculator
+// credit-cards.js - Credit Cards Installment Calculator (Simple)
 
 import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
 
 export class CreditCardsPage {
-    static CARD_TYPES = [
-        'Classic',
-        'Gold',
-        'Titanium',
-        'Platinum',
-        'Signature',
-        'World',
-        'World Elite',
-        'Visa Infinite',
-        'Visa Infinite Private'
-    ];
+    static PERIODS = [3, 6, 9, 12, 18, 24, 36];
 
-    static INSTALLMENT_TYPES = ['Purchase', 'Cash'];
-
-    static PERIOD_RATES = {
+    static REGULAR_RATES = {
         3: 0.0281,
         6: 0.0277,
         9: 0.0276,
@@ -27,6 +15,20 @@ export class CreditCardsPage {
         24: 0.0263,
         36: 0.0256
     };
+
+    static STAFF_RATE = 0.0225;
+
+    static ADMIN_FEES = {
+        3: 0.0485,
+        6: 0.0840,
+        9: 0.1150,
+        12: 0.1450,
+        18: 0.1983,
+        24: 0.2500,
+        36: 0.3300
+    };
+
+    static MIN_AMOUNT = 1000;
 
     static render() {
         return `
@@ -38,39 +40,17 @@ export class CreditCardsPage {
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" data-i18n="cc-installment-calculator">Transactions Installment for Credit Cards</h3>
+                        <h3 class="card-title" data-i18n="cc-installment-calculator-simple">Credit Card Installment Rates Summary</h3>
                     </div>
                     <div class="card-body">
                         <form id="credit-card-installment-form">
                             <div class="grid grid-2">
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="cc-card-type">Credit Card Type</label>
-                                    <select id="cc-card-type" class="form-select" required>
-                                        ${this.CARD_TYPES.map(type => `<option value="${type}">${type}</option>`).join('')}
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" data-i18n="cc-installment-type">Installment Type</label>
-                                    <select id="cc-installment-type" class="form-select" required>
-                                        ${this.INSTALLMENT_TYPES.map(type => `<option value="${type}">${type}</option>`).join('')}
-                                    </select>
-                                    <small class="text-muted" id="cash-min-note" data-i18n="cc-cash-min-note" style="display: none;">Cash transactions must be at least 1,000 EGP.</small>
-                                </div>
-
-                                <div class="form-group">
                                     <label class="form-label" data-i18n="transaction-amount">Transaction Amount (EGP)</label>
-                                    <input type="number" id="cc-amount" class="form-input" min="0" step="0.01" value="5000" required>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="form-label" data-i18n="cc-installment-period">Installment Period</label>
-                                    <select id="cc-period" class="form-select" required>
-                                        ${Object.keys(this.PERIOD_RATES).map(period => `<option value="${period}">${period} months</option>`).join('')}
-                                    </select>
+                                    <input type="number" id="cc-amount" class="form-input" min="${this.MIN_AMOUNT}" step="0.01" value="5000" required>
+                                    <small class="text-muted" data-i18n="cc-cash-min-note">Minimum transaction is 1,000 EGP.</small>
                                 </div>
                             </div>
-
                             <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                                 <button type="submit" class="btn-primary">
                                     <i class="fas fa-calculator"></i>
@@ -86,32 +66,6 @@ export class CreditCardsPage {
                         <div id="cc-results" style="display: none; margin-top: var(--spacing-xl);"></div>
                     </div>
                 </div>
-
-                <div class="card" style="margin-top: var(--spacing-lg);">
-                    <div class="card-header">
-                        <h3 class="card-title" data-i18n="cc-interest-rates-title">Monthly Interest Rates</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th data-i18n="cc-installment-period">Installment Period</th>
-                                        <th data-i18n="interest-rate">Interest Rate (%)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${Object.entries(this.PERIOD_RATES).map(([period, rate]) => `
-                                        <tr>
-                                            <td>${period} months</td>
-                                            <td>${(rate * 100).toFixed(2)}% ${i18n.t('monthly').toLowerCase()}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
             </div>
         `;
     }
@@ -122,100 +76,101 @@ export class CreditCardsPage {
             router.render(this.render());
             i18n.updatePageText();
             this.attachEventListeners();
+            this.calculateAllScenarios();
         }
     }
 
     static attachEventListeners() {
         const form = document.getElementById('credit-card-installment-form');
-        const typeSelect = document.getElementById('cc-installment-type');
-        const amountInput = document.getElementById('cc-amount');
+        if (!form) return;
 
-        if (!form || !typeSelect || !amountInput) return;
-
-        const updateCashValidationUI = () => {
-            const isCash = typeSelect.value === 'Cash';
-            document.getElementById('cash-min-note').style.display = isCash ? 'block' : 'none';
-            amountInput.min = isCash ? '1000' : '0';
-        };
-
-        typeSelect.addEventListener('change', updateCashValidationUI);
         form.addEventListener('submit', (e) => this.handleCalculate(e));
         form.addEventListener('reset', () => {
-            setTimeout(() => {
-                updateCashValidationUI();
-                const results = document.getElementById('cc-results');
-                results.style.display = 'none';
-                results.innerHTML = '';
-            }, 0);
+            setTimeout(() => this.calculateAllScenarios(), 0);
         });
-
-        updateCashValidationUI();
     }
 
     static handleCalculate(event) {
         event.preventDefault();
+        this.calculateAllScenarios();
+    }
 
-        const cardType = document.getElementById('cc-card-type').value;
-        const installmentType = document.getElementById('cc-installment-type').value;
+    static calculateAllScenarios() {
         const amount = parseFloat(document.getElementById('cc-amount').value);
-        const period = parseInt(document.getElementById('cc-period').value, 10);
-        const monthlyRate = this.PERIOD_RATES[period];
 
-        if (Number.isNaN(amount) || amount <= 0) {
-            alert(i18n.t('invalid-input'));
-            return;
-        }
-
-        if (installmentType === 'Cash' && amount < 1000) {
+        if (Number.isNaN(amount) || amount < this.MIN_AMOUNT) {
             alert(i18n.t('cc-cash-min-validation'));
             return;
         }
 
-        const monthlyInstallment = FinancialCalculator.PMT(monthlyRate, period, amount);
-        const totalPaid = monthlyInstallment * period;
-        const totalInterest = totalPaid - amount;
+        const rows = this.PERIODS.map((period) => {
+            const regularRate = this.REGULAR_RATES[period];
+            const staffRate = this.STAFF_RATE;
+            const adminFeeRate = this.ADMIN_FEES[period];
+
+            const adminFeeAmount = amount * adminFeeRate;
+
+            const regularMonthlyInstallment = FinancialCalculator.PMT(regularRate, period, amount);
+            const staffMonthlyInstallment = FinancialCalculator.PMT(staffRate, period, amount);
+
+            const regularTotalWithoutFees = regularMonthlyInstallment * period;
+            const staffTotalWithoutFees = staffMonthlyInstallment * period;
+
+            const regularTotalWithFees = regularTotalWithoutFees + adminFeeAmount;
+            const staffTotalWithFees = staffTotalWithoutFees + adminFeeAmount;
+
+            return `
+                <tr>
+                    <td>${period} ${i18n.t('months').toLowerCase()}</td>
+                    <td>${(regularRate * 100).toFixed(2)}%</td>
+                    <td>${(staffRate * 100).toFixed(2)}%</td>
+                    <td>${(adminFeeRate * 100).toFixed(2)}%</td>
+                    <td>${this.formatCurrency(regularMonthlyInstallment)}</td>
+                    <td>${this.formatCurrency(staffMonthlyInstallment)}</td>
+                    <td>${this.formatCurrency(regularTotalWithFees)}</td>
+                    <td>${this.formatCurrency(staffTotalWithFees)}</td>
+                </tr>
+            `;
+        }).join('');
 
         const results = document.getElementById('cc-results');
         results.innerHTML = `
             <div class="results-card">
-                <h3 style="margin-bottom: var(--spacing-md);"><i class="fas fa-receipt"></i> ${i18n.t('results')}</h3>
-                <div class="grid grid-2">
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('cc-card-type')}</div>
-                        <div class="result-value" style="font-size: 1rem;">${cardType}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('cc-installment-type')}</div>
-                        <div class="result-value" style="font-size: 1rem;">${installmentType}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('transaction-amount')}</div>
-                        <div class="result-value">${this.formatCurrency(amount)}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('cc-installment-period')}</div>
-                        <div class="result-value">${period} ${i18n.t('months').toLowerCase()}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('interest-rate')}</div>
-                        <div class="result-value">${(monthlyRate * 100).toFixed(2)}% ${i18n.t('monthly').toLowerCase()}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('monthly-installment')}</div>
-                        <div class="result-value">${this.formatCurrency(monthlyInstallment)}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('total-interest')}</div>
-                        <div class="result-value">${this.formatCurrency(totalInterest)}</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-label">${i18n.t('total-payment')}</div>
-                        <div class="result-value">${this.formatCurrency(totalPaid)}</div>
-                    </div>
+                <h3 style="margin-bottom: var(--spacing-md);"><i class="fas fa-table"></i> ${i18n.t('results')}</h3>
+                <p class="text-muted" style="margin-bottom: var(--spacing-md);">
+                    ${i18n.t('transaction-amount')}: <strong>${this.formatCurrency(amount)}</strong>
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="cc-installment-period">Installment Period</th>
+                                <th data-i18n="cc-regular-rate">Regular Rate (Monthly)</th>
+                                <th data-i18n="cc-staff-rate">Staff Rate (Monthly)</th>
+                                <th data-i18n="cc-admin-fee">Admin Fee (One-time)</th>
+                                <th data-i18n="cc-regular-monthly">Regular Monthly Installment</th>
+                                <th data-i18n="cc-staff-monthly">Staff Monthly Installment</th>
+                                <th data-i18n="cc-regular-total-fees">Regular Total + Fee</th>
+                                <th data-i18n="cc-staff-total-fees">Staff Total + Fee</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="info-box" style="margin-top: var(--spacing-md);">
+                    <i class="fas fa-circle-info"></i>
+                    <p style="margin: 0;">
+                        <span data-i18n="cc-rates-note">Regular rates range from 2.56% to 2.81% monthly, staff rate is 2.25% monthly, and admin fees apply once at installment start.</span>
+                    </p>
                 </div>
             </div>
         `;
         results.style.display = 'block';
+        i18n.updatePageText();
     }
 
     static formatCurrency(value) {

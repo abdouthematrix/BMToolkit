@@ -93,7 +93,29 @@ export class FirestoreService {
             SECURED_MIN_TENOR_MONTHS: 6,
             SECURED_MAX_TENOR_YEARS: 10,
             // Unsecured loan tenor limits
-            UNSECURED_MAX_TENOR_8_PLUS_YEARS: 10
+            UNSECURED_MAX_TENOR_8_PLUS_YEARS: 10,
+            // Credit cards constants
+            CREDIT_CARDS: {
+                REGULAR_RATES: {
+                    3: 0.0281,
+                    6: 0.0277,
+                    9: 0.0276,
+                    12: 0.0273,
+                    18: 0.0267,
+                    24: 0.0263,
+                    36: 0.0256
+                },
+                STAFF_RATE: 0.0225,
+                ADMIN_FEES: {
+                    3: 0.0485,
+                    6: 0.084,
+                    9: 0.115,
+                    12: 0.145,
+                    18: 0.1983,
+                    24: 0.25,
+                    36: 0.33
+                }
+            }
         };
     }
 

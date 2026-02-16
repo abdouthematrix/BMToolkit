@@ -2,11 +2,12 @@
 
 import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
+import { FirestoreService } from '../services/firestore.js';
 
 export class CreditCardsPage {
     static PERIODS = [3, 6, 9, 12, 18, 24, 36];
 
-    static REGULAR_RATES = {
+    static DEFAULT_REGULAR_RATES = {
         3: 0.0281,
         6: 0.0277,
         9: 0.0276,
@@ -16,9 +17,9 @@ export class CreditCardsPage {
         36: 0.0256
     };
 
-    static STAFF_RATE = 0.0225;
+    static DEFAULT_STAFF_RATE = 0.0225;
 
-    static ADMIN_FEES = {
+    static DEFAULT_ADMIN_FEES = {
         3: 0.0485,
         6: 0.0840,
         9: 0.1150,
@@ -30,6 +31,62 @@ export class CreditCardsPage {
 
     static MIN_AMOUNT = 1000;
     static activeTab = 'installment';
+    static constants = null;
+
+    static STORAGE_KEY = 'credit-cards-active-tab';
+
+    static getRatesConfig() {
+        const source = this.constants?.CREDIT_CARDS || this.constants?.CREDIT_CARD || {};
+        const regularRatesRaw = source.REGULAR_RATES || source.RATES || {};
+        const adminFeesRaw = source.ADMIN_FEES || {};
+
+        const regularRates = {};
+        const adminFees = {};
+
+        this.PERIODS.forEach((period) => {
+            regularRates[period] = this.normalizeRate(regularRatesRaw[period], this.DEFAULT_REGULAR_RATES[period]);
+            adminFees[period] = this.normalizeRate(adminFeesRaw[period], this.DEFAULT_ADMIN_FEES[period]);
+        });
+
+        const staffRate = this.normalizeRate(
+            source.STAFF_RATE ?? source.STAFF_MONTHLY_RATE ?? this.constants?.CREDIT_CARD_STAFF_RATE,
+            this.DEFAULT_STAFF_RATE
+        );
+
+        return {
+            regularRates,
+            staffRate,
+            adminFees
+        };
+    }
+
+    static normalizeRate(value, fallback) {
+        if (value === undefined || value === null || value === '') return fallback;
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return fallback;
+        return parsed > 1 ? parsed / 100 : parsed;
+    }
+
+    static determineActiveTab() {
+        const savedTab = sessionStorage.getItem(this.STORAGE_KEY);
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        const requestedTab = urlParams.tab || savedTab || 'installment';
+        this.activeTab = requestedTab === 'admin-fees' ? 'admin-fees' : 'installment';
+    }
+
+    static getAmountFromUrl() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        if (!urlParams.amount) return null;
+
+        const amount = parseFloat(urlParams.amount);
+        if (Number.isNaN(amount) || amount < this.MIN_AMOUNT) return null;
+        return amount;
+    }
+
+    static getStaffFromUrl() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+        return String(urlParams.staff).toLowerCase() === '1' || String(urlParams.staff).toLowerCase() === 'true';
+    }
 
     static render() {
         return `
@@ -94,10 +151,35 @@ export class CreditCardsPage {
         const router = window.app?.router;
         if (!router) return;
 
+        this.determineActiveTab();
         router.render(this.render());
         i18n.updatePageText();
+
+        this.applyUrlState();
         this.attachEventListeners();
+
+        await this.loadConstants();
         this.calculateAllScenarios();
+    }
+
+    static async loadConstants() {
+        this.constants = await FirestoreService.getConstants();
+    }
+
+    static applyUrlState() {
+        const amountFromUrl = this.getAmountFromUrl();
+        const staffFromUrl = this.getStaffFromUrl();
+
+        const amountInput = document.getElementById('cc-amount');
+        const staffToggle = document.getElementById('cc-staff-toggle');
+
+        if (amountInput && amountFromUrl !== null) {
+            amountInput.value = String(amountFromUrl);
+        }
+
+        if (staffToggle) {
+            staffToggle.checked = staffFromUrl;
+        }
     }
 
     static attachEventListeners() {
@@ -126,6 +208,7 @@ export class CreditCardsPage {
         document.querySelectorAll('.tab-btn').forEach((btn) => {
             btn.addEventListener('click', () => {
                 this.activeTab = btn.getAttribute('data-tab');
+                sessionStorage.setItem(this.STORAGE_KEY, this.activeTab);
                 this.updateTabVisibility();
                 this.calculateAllScenarios();
             });
@@ -151,6 +234,20 @@ export class CreditCardsPage {
         }
     }
 
+    static syncUrlState(amount) {
+        const router = window.app?.router;
+        if (!router) return;
+
+        const staffEnabled = document.getElementById('cc-staff-toggle')?.checked === true;
+        const params = {
+            tab: this.activeTab,
+            amount: Number.isFinite(amount) ? String(amount) : String(this.MIN_AMOUNT),
+            staff: staffEnabled ? '1' : '0'
+        };
+
+        router.updateQueryParams(params);
+    }
+
     static calculateAllScenarios() {
         const amountInput = document.getElementById('cc-amount');
         if (!amountInput) return;
@@ -161,14 +258,17 @@ export class CreditCardsPage {
             return;
         }
 
+        this.syncUrlState(amount);
         this.renderInstallmentTabResults(amount);
         this.renderAdminFeesTabResults(amount);
     }
 
     static renderInstallmentTabResults(amount) {
+        const { regularRates, staffRate } = this.getRatesConfig();
         const isStaff = document.getElementById('cc-staff-toggle')?.checked === true;
+
         const rows = this.PERIODS.map((period) => {
-            const monthlyRate = isStaff ? this.STAFF_RATE : this.REGULAR_RATES[period];
+            const monthlyRate = isStaff ? staffRate : regularRates[period];
             const monthlyInstallment = FinancialCalculator.PMT(monthlyRate, period, amount);
             const totalPaid = monthlyInstallment * period;
             const totalInterest = totalPaid - amount;
@@ -217,8 +317,10 @@ export class CreditCardsPage {
     }
 
     static renderAdminFeesTabResults(amount) {
+        const { adminFees } = this.getRatesConfig();
+
         const rows = this.PERIODS.map((period) => {
-            const adminFeeRate = this.ADMIN_FEES[period];
+            const adminFeeRate = adminFees[period];
             const adminFeeAmount = amount * adminFeeRate;
             const installmentWithoutInterest = amount / period;
             const totalWithAdminFees = amount + adminFeeAmount;

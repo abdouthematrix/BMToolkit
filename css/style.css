@@ -1022,36 +1022,25 @@ p {
     background: rgba(245, 158, 11, 0.1) !important;
 }
 
-/* Credit Cards Matrix Tables */
-.cc-matrix-table {
+/* Credit Cards Scenario Tables */
+.cc-scenarios-table {
     font-size: 0.95rem;
-    min-width: 760px;
+    width: 100%;
 }
 
-.cc-matrix-table thead th {
+.cc-scenarios-table thead th {
     text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 1;
 }
 
-.cc-matrix-table tbody th {
-    background: var(--bg-tertiary);
-    font-weight: 700;
-    min-width: 220px;
-    position: sticky;
-    left: 0;
-    z-index: 1;
-}
-
-[dir="rtl"] .cc-matrix-table tbody th {
-    left: auto;
-    right: 0;
-}
-
-.cc-matrix-table td {
+.cc-scenarios-table tbody th,
+.cc-scenarios-table td {
     text-align: center;
     white-space: nowrap;
+}
+
+.cc-scenarios-table tbody th {
+    background: var(--bg-tertiary);
+    font-weight: 700;
 }
 
 @media (max-width: 768px) {
@@ -1066,12 +1055,52 @@ p {
         padding-inline: var(--spacing-md);
     }
 
-    .cc-matrix-table {
-        font-size: 0.85rem;
-        min-width: 680px;
+    .cc-scenarios-table thead {
+        display: none;
     }
 
-    .cc-matrix-table tbody th {
-        min-width: 150px;
+    .cc-scenarios-table,
+    .cc-scenarios-table tbody,
+    .cc-scenarios-table tr,
+    .cc-scenarios-table th,
+    .cc-scenarios-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .cc-scenarios-table tr {
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        margin-bottom: var(--spacing-sm);
+        background: var(--surface);
+        overflow: hidden;
+    }
+
+    .cc-scenarios-table tbody th {
+        text-align: start;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .cc-scenarios-table td {
+        text-align: end;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-top: 1px solid var(--border-color);
+    }
+
+    .cc-scenarios-table td::before {
+        content: attr(data-label);
+        float: inline-start;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-inline-end: var(--spacing-sm);
+    }
+
+    [dir="rtl"] .cc-scenarios-table tbody th {
+        text-align: right;
+    }
+
+    [dir="rtl"] .cc-scenarios-table td {
+        text-align: left;
     }
 }

@@ -261,37 +261,24 @@ export class CreditCardsPage {
         const { regularRates, staffRate } = this.getRatesConfig();
         const isStaff = document.getElementById('cc-staff-toggle')?.checked === true;
 
-        const buildValueRow = (labelKey, mapper) => `
-            <tr>
-                <th data-i18n="${labelKey}">${i18n.t(labelKey)}</th>
-                ${this.PERIODS.map((period) => `<td>${mapper(period)}</td>`).join('')}
-            </tr>
-        `;
+        const matrixRows = this.PERIODS.map((period) => {
+            const rate = isStaff ? staffRate : regularRates[period];
+            const monthlyInstallment = FinancialCalculator.PMT(rate, period, amount);
+            const totalInterest = (monthlyInstallment * period) - amount;
+            const totalWithInterest = monthlyInstallment * period;
+            const annualFlatEquivalent = ((totalInterest / amount) / (period / 12)) * 100;
 
-        const matrixRows = [
-            buildValueRow('interest-rate', (period) => `${((isStaff ? staffRate : regularRates[period]) * 100).toFixed(2)}%`),
-            buildValueRow('total-interest', (period) => {
-                const rate = isStaff ? staffRate : regularRates[period];
-                const pmt = FinancialCalculator.PMT(rate, period, amount);
-                return this.formatCurrency((pmt * period) - amount);
-            }),
-            buildValueRow('cc-total-with-interest', (period) => {
-                const rate = isStaff ? staffRate : regularRates[period];
-                const pmt = FinancialCalculator.PMT(rate, period, amount);
-                return this.formatCurrency(pmt * period);
-            }),
-            buildValueRow('cc-flat-equivalent', (period) => {
-                const rate = isStaff ? staffRate : regularRates[period];
-                const pmt = FinancialCalculator.PMT(rate, period, amount);
-                const totalInterest = (pmt * period) - amount;
-                const annualFlatEquivalent = ((totalInterest / amount) / (period / 12)) * 100;
-                return `${annualFlatEquivalent.toFixed(2)}%`;
-            }),
-            buildValueRow('monthly-installment', (period) => {
-                const rate = isStaff ? staffRate : regularRates[period];
-                return this.formatCurrency(FinancialCalculator.PMT(rate, period, amount));
-            })
-        ].join('');
+            return `
+                <tr>
+                    <th scope="row">${period} ${i18n.t('months')}</th>
+                    <td data-label="${i18n.t('interest-rate')}">${(rate * 100).toFixed(2)}%</td>
+                    <td data-label="${i18n.t('monthly-installment')}">${this.formatCurrency(monthlyInstallment)}</td>
+                    <td data-label="${i18n.t('total-interest')}">${this.formatCurrency(totalInterest)}</td>
+                    <td data-label="${i18n.t('cc-total-with-interest')}">${this.formatCurrency(totalWithInterest)}</td>
+                    <td data-label="${i18n.t('cc-flat-equivalent')}">${annualFlatEquivalent.toFixed(2)}%</td>
+                </tr>
+            `;
+        }).join('');
 
         const mount = document.getElementById('cc-tab-installment');
         if (!mount) return;
@@ -305,11 +292,15 @@ export class CreditCardsPage {
                 </p>
 
                 <div class="results-table-wrapper">
-                    <table class="results-table cc-matrix-table">
+                    <table class="results-table cc-scenarios-table">
                         <thead>
                             <tr>
-                                <th data-i18n="cc-metric">Metric</th>
-                                ${this.PERIODS.map((period) => `<th>${period}</th>`).join('')}
+                                <th data-i18n="tenor">Duration</th>
+                                <th data-i18n="interest-rate">Interest Rate (%)</th>
+                                <th data-i18n="monthly-installment">Monthly Installment</th>
+                                <th data-i18n="total-interest">Total Interest</th>
+                                <th data-i18n="cc-total-with-interest">Total Amount with Interest</th>
+                                <th data-i18n="cc-flat-equivalent">Approx. Annual Flat Rate</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -326,19 +317,18 @@ export class CreditCardsPage {
     static renderAdminFeesTabResults(amount) {
         const { adminFees } = this.getRatesConfig();
 
-        const buildValueRow = (labelKey, mapper) => `
-            <tr>
-                <th data-i18n="${labelKey}">${i18n.t(labelKey)}</th>
-                ${this.PERIODS.map((period) => `<td>${mapper(period)}</td>`).join('')}
-            </tr>
-        `;
-
-        const matrixRows = [
-            buildValueRow('cc-admin-fee', (period) => `${(adminFees[period] * 100).toFixed(2)}%`),
-            buildValueRow('cc-admin-fee-amount', (period) => this.formatCurrency(amount * adminFees[period])),
-            buildValueRow('cc-installment-no-interest', (period) => this.formatCurrency(amount / period)),
-            buildValueRow('cc-total-with-admin', (period) => this.formatCurrency(amount + (amount * adminFees[period])))
-        ].join('');
+        const matrixRows = this.PERIODS.map((period) => {
+            const adminFeeAmount = amount * adminFees[period];
+            return `
+                <tr>
+                    <th scope="row">${period} ${i18n.t('months')}</th>
+                    <td data-label="${i18n.t('cc-admin-fee')}">${(adminFees[period] * 100).toFixed(2)}%</td>
+                    <td data-label="${i18n.t('cc-admin-fee-amount')}">${this.formatCurrency(adminFeeAmount)}</td>
+                    <td data-label="${i18n.t('cc-installment-no-interest')}">${this.formatCurrency(amount / period)}</td>
+                    <td data-label="${i18n.t('cc-total-with-admin')}">${this.formatCurrency(amount + adminFeeAmount)}</td>
+                </tr>
+            `;
+        }).join('');
 
         const mount = document.getElementById('cc-tab-admin-fees');
         if (!mount) return;
@@ -351,11 +341,14 @@ export class CreditCardsPage {
                 </p>
 
                 <div class="results-table-wrapper">
-                    <table class="results-table cc-matrix-table">
+                    <table class="results-table cc-scenarios-table">
                         <thead>
                             <tr>
-                                <th data-i18n="cc-metric">Metric</th>
-                                ${this.PERIODS.map((period) => `<th>${period}</th>`).join('')}
+                                <th data-i18n="tenor">Duration</th>
+                                <th data-i18n="cc-admin-fee">Admin Fee (One-time)</th>
+                                <th data-i18n="cc-admin-fee-amount">Admin Fee Amount</th>
+                                <th data-i18n="cc-installment-no-interest">Installment Amount (No Interest)</th>
+                                <th data-i18n="cc-total-with-admin">Total Amount with Admin Fee</th>
                             </tr>
                         </thead>
                         <tbody>

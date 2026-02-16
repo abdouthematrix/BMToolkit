@@ -6,6 +6,12 @@
   <title>BMToolkit - Redirecting...</title>
   <script>
     (function () {
+      const isArabic = (navigator.language || '').toLowerCase().startsWith('ar');
+
+      document.documentElement.lang = isArabic ? 'ar' : 'en';
+      document.documentElement.dir = isArabic ? 'rtl' : 'ltr';
+      document.title = isArabic ? 'BMToolkit - جاري التحويل...' : 'BMToolkit - Redirecting...';
+
       const path = window.location.pathname.replace(/\/+$/, '');
       const repoBase = '/BMToolkit';
 
@@ -25,8 +31,25 @@
       window.location.replace(target);
     })();
   </script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f9fafb; color: #111827; }
+    .box { text-align: center; padding: 24px; }
+    .muted { color: #6b7280; }
+  </style>
 </head>
 <body>
-  <p>Redirecting…</p>
+  <div class="box">
+    <p id="redirecting-text">Redirecting...</p>
+    <p class="muted" id="redirecting-note">If this takes too long, return to the home page.</p>
+  </div>
+  <script>
+    (function () {
+      const isArabic = (navigator.language || '').toLowerCase().startsWith('ar');
+      document.getElementById('redirecting-text').textContent = isArabic ? 'جاري التحويل...' : 'Redirecting...';
+      document.getElementById('redirecting-note').textContent = isArabic
+        ? 'إذا استغرق الأمر وقتًا طويلاً، يمكنك الرجوع إلى الصفحة الرئيسية.'
+        : 'If this takes too long, return to the home page.';
+    })();
+  </script>
 </body>
 </html>

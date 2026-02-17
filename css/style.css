@@ -1026,6 +1026,7 @@ p {
 .cc-scenarios-table {
     font-size: 0.95rem;
     width: 100%;
+    min-width: 820px;
 }
 
 .cc-scenarios-table thead th {
@@ -1055,52 +1056,8 @@ p {
         padding-inline: var(--spacing-md);
     }
 
-    .cc-scenarios-table thead {
-        display: none;
-    }
-
-    .cc-scenarios-table,
-    .cc-scenarios-table tbody,
-    .cc-scenarios-table tr,
-    .cc-scenarios-table th,
-    .cc-scenarios-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .cc-scenarios-table tr {
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        margin-bottom: var(--spacing-sm);
-        background: var(--surface);
-        overflow: hidden;
-    }
-
-    .cc-scenarios-table tbody th {
-        text-align: start;
-        padding: var(--spacing-sm) var(--spacing-md);
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .cc-scenarios-table td {
-        text-align: end;
-        padding: var(--spacing-sm) var(--spacing-md);
-        border-top: 1px solid var(--border-color);
-    }
-
-    .cc-scenarios-table td::before {
-        content: attr(data-label);
-        float: inline-start;
-        color: var(--text-secondary);
-        font-weight: 600;
-        margin-inline-end: var(--spacing-sm);
-    }
-
-    [dir="rtl"] .cc-scenarios-table tbody th {
-        text-align: right;
-    }
-
-    [dir="rtl"] .cc-scenarios-table td {
-        text-align: left;
+    .cc-scenarios-table {
+        min-width: 760px;
+        font-size: 0.9rem;
     }
 }

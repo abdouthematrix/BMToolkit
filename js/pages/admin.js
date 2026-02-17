@@ -7,6 +7,7 @@ import { AuthService } from '../services/auth.js';
 export class AdminPage {
     static constants = {};
     static products = [];
+    static CREDIT_CARD_PERIODS = [3, 6, 9, 12, 18, 24, 36];
 
     static async init() {
         // Check if user is authenticated
@@ -116,6 +117,35 @@ export class AdminPage {
                                     <label class="form-label" data-i18n="loan-certificate-label">Loan Certificate Distribution (%)</label>
                                     <input type="number" id="loan-certificate-percent-admin" class="form-input" min="0" max="100" step="1" required>
                                 </div>
+                            </div>
+
+                            <!-- Credit Cards Constants -->
+                            <h4 style="margin-top: var(--spacing-xl);" data-i18n="cc-constants-admin">Credit Cards Constants</h4>
+                            <div class="grid grid-3">
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="cc-staff-rate-admin">Staff Monthly Rate (%)</label>
+                                    <input type="number" id="cc-staff-rate-admin" class="form-input" min="0" max="100" step="0.01" required>
+                                </div>
+                            </div>
+
+                            <h5 style="margin-top: var(--spacing-md);" data-i18n="cc-regular-rates-admin">Regular Monthly Rates (%)</h5>
+                            <div class="grid grid-3">
+                                ${this.CREDIT_CARD_PERIODS.map((period) => `
+                                    <div class="form-group">
+                                        <label class="form-label">${period} ${i18n.t('months')}</label>
+                                        <input type="number" id="cc-regular-rate-${period}-admin" class="form-input" min="0" max="100" step="0.01" required>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <h5 style="margin-top: var(--spacing-md);" data-i18n="cc-admin-fees-admin">Administrative Fees (%)</h5>
+                            <div class="grid grid-3">
+                                ${this.CREDIT_CARD_PERIODS.map((period) => `
+                                    <div class="form-group">
+                                        <label class="form-label">${period} ${i18n.t('months')}</label>
+                                        <input type="number" id="cc-admin-fee-${period}-admin" class="form-input" min="0" max="100" step="0.01" required>
+                                    </div>
+                                `).join('')}
                             </div>
 
                             <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-xl);">
@@ -249,21 +279,41 @@ export class AdminPage {
     }
 
     static populateForm() {
+        const defaults = FirestoreService.getDefaultConstants();
+        const scenarios = this.constants.SCENARIOS || defaults.SCENARIOS;
+        const creditCards = this.constants.CREDIT_CARDS || defaults.CREDIT_CARDS;
+        const regularRates = creditCards.REGULAR_RATES || defaults.CREDIT_CARDS.REGULAR_RATES;
+        const adminFees = creditCards.ADMIN_FEES || defaults.CREDIT_CARDS.ADMIN_FEES;
+
         // Convert from real ratio to percentage for display
-        document.getElementById('cd-rate-admin').value = (this.constants.CD_RATE * 100).toFixed(2);
-        document.getElementById('td-margin-admin').value = (this.constants.TD_MARGIN * 100).toFixed(2);
-        document.getElementById('min-rate-admin').value = (this.constants.MIN_RATE * 100).toFixed(2);
-        document.getElementById('max-loan-percent-admin').value = (this.constants.MAX_LOAN_PERCENT * 100).toFixed(0);
-        document.getElementById('max-dti-admin').value = (this.constants.MAX_DBR_RATIO * 100).toFixed(0);
+        document.getElementById('cd-rate-admin').value = ((this.constants.CD_RATE ?? defaults.CD_RATE) * 100).toFixed(2);
+        document.getElementById('td-margin-admin').value = ((this.constants.TD_MARGIN ?? defaults.TD_MARGIN) * 100).toFixed(2);
+        document.getElementById('min-rate-admin').value = ((this.constants.MIN_RATE ?? defaults.MIN_RATE) * 100).toFixed(2);
+        document.getElementById('max-loan-percent-admin').value = ((this.constants.MAX_LOAN_PERCENT ?? defaults.MAX_LOAN_PERCENT) * 100).toFixed(0);
+        document.getElementById('max-dti-admin').value = ((this.constants.MAX_DBR_RATIO ?? defaults.MAX_DBR_RATIO) * 100).toFixed(0);
 
         // Convert stamp duty from real ratio (0.0005) to per mille (0.5)
-        document.getElementById('stamp-duty-admin').value = (this.constants.STAMP_DUTY_RATE * 1000).toFixed(1);
+        document.getElementById('stamp-duty-admin').value = ((this.constants.STAMP_DUTY_RATE ?? defaults.STAMP_DUTY_RATE) * 1000).toFixed(1);
 
-        document.getElementById('secured-min-tenor-months-admin').value = this.constants.SECURED_MIN_TENOR_MONTHS;
-        document.getElementById('secured-max-tenor-years-admin').value = this.constants.SECURED_MAX_TENOR_YEARS;
-        document.getElementById('unsecured-max-tenor-8plus-admin').value = this.constants.UNSECURED_MAX_TENOR_8_PLUS_YEARS;
-        document.getElementById('interest-upfront-percent-admin').value = this.constants.SCENARIOS.INTEREST_UPFRONT_PERCENT;
-        document.getElementById('loan-certificate-percent-admin').value = this.constants.SCENARIOS.LOAN_CERTIFICATE_PERCENT;
+        document.getElementById('secured-min-tenor-months-admin').value = this.constants.SECURED_MIN_TENOR_MONTHS ?? defaults.SECURED_MIN_TENOR_MONTHS;
+        document.getElementById('secured-max-tenor-years-admin').value = this.constants.SECURED_MAX_TENOR_YEARS ?? defaults.SECURED_MAX_TENOR_YEARS;
+        document.getElementById('unsecured-max-tenor-8plus-admin').value = this.constants.UNSECURED_MAX_TENOR_8_PLUS_YEARS ?? defaults.UNSECURED_MAX_TENOR_8_PLUS_YEARS;
+        document.getElementById('interest-upfront-percent-admin').value = scenarios.INTEREST_UPFRONT_PERCENT;
+        document.getElementById('loan-certificate-percent-admin').value = scenarios.LOAN_CERTIFICATE_PERCENT;
+
+        document.getElementById('cc-staff-rate-admin').value = ((creditCards.STAFF_RATE ?? defaults.CREDIT_CARDS.STAFF_RATE) * 100).toFixed(2);
+        this.CREDIT_CARD_PERIODS.forEach((period) => {
+            const regularRateInput = document.getElementById(`cc-regular-rate-${period}-admin`);
+            const adminFeeInput = document.getElementById(`cc-admin-fee-${period}-admin`);
+
+            if (regularRateInput) {
+                regularRateInput.value = ((regularRates[period] ?? defaults.CREDIT_CARDS.REGULAR_RATES[period]) * 100).toFixed(2);
+            }
+
+            if (adminFeeInput) {
+                adminFeeInput.value = ((adminFees[period] ?? defaults.CREDIT_CARDS.ADMIN_FEES[period]) * 100).toFixed(2);
+            }
+        });
     }
 
     static renderProductsList() {
@@ -591,6 +641,14 @@ export class AdminPage {
     }
 
     static async saveConstants() {
+        const regularRates = {};
+        const adminFees = {};
+
+        this.CREDIT_CARD_PERIODS.forEach((period) => {
+            regularRates[period] = parseFloat(document.getElementById(`cc-regular-rate-${period}-admin`).value) / 100;
+            adminFees[period] = parseFloat(document.getElementById(`cc-admin-fee-${period}-admin`).value) / 100;
+        });
+
         const constants = {
             CD_RATE: parseFloat(document.getElementById('cd-rate-admin').value) / 100,
             TD_MARGIN: parseFloat(document.getElementById('td-margin-admin').value) / 100,
@@ -607,6 +665,11 @@ export class AdminPage {
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: parseInt(document.getElementById('interest-upfront-percent-admin').value),
                 LOAN_CERTIFICATE_PERCENT: parseInt(document.getElementById('loan-certificate-percent-admin').value)
+            },
+            CREDIT_CARDS: {
+                STAFF_RATE: parseFloat(document.getElementById('cc-staff-rate-admin').value) / 100,
+                REGULAR_RATES: regularRates,
+                ADMIN_FEES: adminFees
             }
         };
 

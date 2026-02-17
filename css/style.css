@@ -449,6 +449,17 @@ p {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+
+.loans-sections-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+    .loans-sections-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 /* Form Elements */
 .form-group {
     margin-bottom: var(--spacing-lg);
@@ -797,7 +808,8 @@ p {
 
     .grid-2,
     .grid-3,
-    .grid-4 {
+    .grid-4,
+    .loans-sections-grid {
         grid-template-columns: 1fr;
     }
 
@@ -900,6 +912,25 @@ p {
     font-weight: 600;
 }
 
+/* Credit Cards Responsive Helpers */
+.cc-actions-row {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.cc-actions-row .btn-primary,
+.cc-actions-row .btn-secondary {
+    min-width: 140px;
+}
+
+.tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-color);
+}
+
 /* Tabs */
 .tab-btn {
     display: flex;
@@ -941,6 +972,8 @@ p {
 /* Results Table Wrapper */
 .results-table-wrapper {
     margin-top: var(--spacing-md);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Modal */
@@ -987,4 +1020,44 @@ p {
 /* Highlight Row */
 .highlight-row {
     background: rgba(245, 158, 11, 0.1) !important;
+}
+
+/* Credit Cards Scenario Tables */
+.cc-scenarios-table {
+    font-size: 0.95rem;
+    width: 100%;
+    min-width: 820px;
+}
+
+.cc-scenarios-table thead th {
+    text-align: center;
+}
+
+.cc-scenarios-table tbody th,
+.cc-scenarios-table td {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.cc-scenarios-table tbody th {
+    background: var(--bg-tertiary);
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .cc-actions-row .btn-primary,
+    .cc-actions-row .btn-secondary {
+        flex: 1 1 100%;
+    }
+
+    .cc-tabs .tab-btn {
+        flex: 1 1 calc(50% - var(--spacing-xs));
+        justify-content: center;
+        padding-inline: var(--spacing-md);
+    }
+
+    .cc-scenarios-table {
+        min-width: 760px;
+        font-size: 0.9rem;
+    }
 }

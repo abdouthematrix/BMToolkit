@@ -14,39 +14,34 @@ export class HomePage {
                     </p>
                 </div>
 
-                <!-- Feature Cards -->
+                <!-- Main Sections -->
                 <div class="grid grid-2" style="margin-top: var(--spacing-2xl);">
-                    <!-- Secured Loans -->
-                    <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="window.location.hash='secured-loans'">
+                    <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="window.location.hash='loans'">
                         <div class="card-header">
                             <div style="display: flex; align-items: center; gap: var(--spacing-md);">
                                 <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-shield-alt" style="font-size: 1.75rem; color: white;"></i>
+                                    <i class="fas fa-landmark" style="font-size: 1.75rem; color: white;"></i>
                                 </div>
                                 <div>
-                                    <h3 class="card-title mb-0" data-i18n="secured-loans-title">Secured Loans</h3>
+                                    <h3 class="card-title mb-0" data-i18n="loans-title">Loans</h3>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body">
-                            <p data-i18n="secured-loans-desc">Calculate loans backed by certificates of deposit</p>
-                            
+                            <p data-i18n="loans-desc">All loan products and calculators in one place</p>
+
                             <ul style="list-style: none; padding: 0; margin-top: var(--spacing-md);">
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="smart-investment">Smart Investment Tool</span>
+                                    <span data-i18n="secured-loans-title">Secured Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="smart-optimizer">Smart Loan Optimizer</span>
-                                </li>
-                                <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
-                                    <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="loan-calculator">Loan Calculator</span>
+                                    <span data-i18n="unsecured-loans-title">Unsecured Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0;">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="max-loan-calc">Max Loan Calculator</span>
+                                    <span data-i18n="advancedtools-title">Advanced Tools</span>
                                 </li>
                             </ul>
                         </div>
@@ -58,37 +53,32 @@ export class HomePage {
                         </div>
                     </div>
 
-                    <!-- Unsecured Loans -->
-                    <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="window.location.hash='unsecured-loans'">
+                    <div class="card" style="cursor: pointer; transition: var(--transition);" onclick="window.location.hash='credit-cards'">
                         <div class="card-header">
                             <div style="display: flex; align-items: center; gap: var(--spacing-md);">
-                                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, var(--secondary), var(--secondary-dark)); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-handshake" style="font-size: 1.75rem; color: white;"></i>
+                                <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #7c3aed, #5b21b6); border-radius: var(--border-radius); display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-credit-card" style="font-size: 1.75rem; color: white;"></i>
                                 </div>
                                 <div>
-                                    <h3 class="card-title mb-0" data-i18n="unsecured-loans-title">Unsecured Loans</h3>
+                                    <h3 class="card-title mb-0" data-i18n="credit-cards-title">Credit Cards</h3>
                                 </div>
                             </div>
                         </div>
                         <div class="card-body">
-                            <p data-i18n="unsecured-loans-desc">Personal loans based on income and employment</p>
-                            
+                            <p data-i18n="credit-cards-desc">Transactions installment calculator for credit cards</p>
+
                             <ul style="list-style: none; padding: 0; margin-top: var(--spacing-md);">
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="salary-transfer-loans">Salary Transfer Loans</span>
+                                    <span data-i18n="cc-installment-calculator">Transactions Installment for Credit Cards</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="income-proof-loans">Income Proof Loans</span>
-                                </li>
-                                <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
-                                    <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="business-owner-loans">Business Owner Loans</span>
+                                    <span data-i18n="cc-installment-range">Installment Period from 3 to 36 months</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0;">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="pension-loans">Pension Loans</span>
+                                    <span data-i18n="cc-cash-min-note">Cash transactions must be at least 1,000 EGP.</span>
                                 </li>
                             </ul>
                         </div>

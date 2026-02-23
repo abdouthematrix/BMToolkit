@@ -5,7 +5,7 @@ import { FinancialCalculator } from '../services/financial-calculator.js';
 import { FirestoreService } from '../services/firestore.js';
 
 export class CreditCardsPage {
-    static PERIODS = [36, 24, 18, 12, 9, 6, 3];
+    static PERIODS = [3, 6, 9, 12, 18, 24, 36];
 
     static DEFAULT_REGULAR_RATES = {
         3: 0.0281,
@@ -100,7 +100,7 @@ export class CreditCardsPage {
                             <div class="grid grid-2">
                                 <div class="form-group">
                                     <label class="form-label" data-i18n="transaction-amount">Transaction Amount (EGP)</label>
-                                    <input type="number" id="cc-amount" class="form-input" min="${this.MIN_AMOUNT}" step="0.01" value="22000" required>
+                                    <input type="number" id="cc-amount" class="form-input" min="${this.MIN_AMOUNT}" step="0.01" value="10000" required>
                                     <small class="text-muted" data-i18n="cc-cash-min-note">Minimum transaction is 1,000 EGP.</small>
                                 </div>
                                 <div class="form-group" id="cc-staff-toggle-group">
@@ -270,8 +270,7 @@ export class CreditCardsPage {
 
             return `
                 <tr>
-                    <th scope="row">${period} ${i18n.t('months')}</th>
-                    <td data-label="${i18n.t('interest-rate')}">${(rate * 100).toFixed(2)}%</td>
+                    <th scope="row">${period} ${i18n.t('months')}</th>                    
                     <td data-label="${i18n.t('monthly-installment')}">${this.formatCurrency(monthlyInstallment)}</td>
                     <td data-label="${i18n.t('total-interest')}">${this.formatCurrency(totalInterest)}</td>
                     <td data-label="${i18n.t('cc-total-with-interest')}">${this.formatCurrency(totalWithInterest)}</td>
@@ -295,8 +294,7 @@ export class CreditCardsPage {
                     <table class="results-table cc-scenarios-table">
                         <thead>
                             <tr>
-                                <th data-i18n="tenor">Duration</th>
-                                <th data-i18n="interest-rate">Interest Rate (%)</th>
+                                <th data-i18n="tenor">Duration</th>                                
                                 <th data-i18n="monthly-installment">Monthly Installment</th>
                                 <th data-i18n="total-interest">Total Interest</th>
                                 <th data-i18n="cc-total-with-interest">Total Amount with Interest</th>

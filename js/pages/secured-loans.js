@@ -604,7 +604,7 @@ export class SecuredLoansPage {
         this.addTdDepositRow(40000, 16);
     }
 
-    static addTdDepositRow(amount = '', rate = '') {
+    static addTdDepositRow(amount = '', rate = '', freq = 'monthly') {
         const container = document.getElementById('td-deposits-container');
         this.tdRowCounter += 1;
 
@@ -617,8 +617,8 @@ export class SecuredLoansPage {
             <input type="number" class="form-input td-amount-input" placeholder="Amount" min="0" step="1000" value="${amount}">
             <input type="number" class="form-input td-rate-input" placeholder="Rate %" min="0" max="100" step="0.01" value="${rate}">
             <select class="form-input td-interest-frequency">
-                <option value="monthly" data-i18n="monthly">${i18n.t('monthly')}</option>
-                <option value="quarterly" data-i18n="quarterly">${i18n.t('quarterly')}</option>
+                <option value="monthly" data-i18n="monthly" ${freq === 'monthly' ? 'selected' : ''}>${i18n.t('monthly')}</option>
+                <option value="quarterly" data-i18n="quarterly" ${freq === 'quarterly' ? 'selected' : ''}>${i18n.t('quarterly')}</option>
             </select>
             <button type="button" class="btn-secondary td-remove-btn" title="Remove TD">
                 <i class="fas fa-trash"></i>
@@ -706,6 +706,19 @@ export class SecuredLoansPage {
                 if (urlParams.frequency) document.getElementById('td-installment-frequency').value = urlParams.frequency;
                 if (urlParams.unit) document.getElementById('is-years-td').checked = (urlParams.unit === 'years');
                 if (urlParams.reinvest) document.getElementById('td-reinvest-loan').checked = (urlParams.reinvest === '1');
+                if (urlParams.deposits) {
+                    try {
+                        const savedDeposits = JSON.parse(urlParams.deposits);
+                        if (Array.isArray(savedDeposits) && savedDeposits.length > 0) {
+                            // Clear default rows and rebuild from URL params
+                            this.tdRowCounter = 0;
+                            document.getElementById('td-deposits-container').innerHTML = '';
+                            savedDeposits.forEach(d => this.addTdDepositRow(d.amount, d.rate, d.freq));
+                        }
+                    } catch (e) {
+                        // If parsing fails, keep the default rows
+                    }
+                }
                 this.updateTdTenorLimits();
                 this.calculateTdSecuredLoan();
                 break;
@@ -1230,6 +1243,13 @@ export class SecuredLoansPage {
 
         const router = window.app?.router;
         if (router) {
+            // Serialize deposits as JSON string in URL params
+            const depositsParam = JSON.stringify(deposits.map(d => ({
+                amount: d.amount,
+                rate: +(d.rate * 100).toFixed(4),
+                freq: d.interestFrequency
+            })));
+
             router.updateQueryParams({
                 tab: 'td-secured-loan',
                 loanAmount,
@@ -1237,7 +1257,8 @@ export class SecuredLoansPage {
                 maxTenor,
                 frequency: installmentFrequency,
                 unit: isYears ? 'years' : 'months',
-                reinvest: reinvestLoan ? '1' : '0'
+                reinvest: reinvestLoan ? '1' : '0',
+                deposits: depositsParam
             });
         }
 
@@ -1247,11 +1268,11 @@ export class SecuredLoansPage {
                 <div class="grid grid-2" style="margin-top: var(--spacing-md);">
                     <div>
                         <p style="margin:0; opacity:0.9;">${i18n.t('highest-td-rate')}</p>
-                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0;">${i18n.formatPercent(highestTdRate)}</p>
+                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0;">${i18n.formatPercent(highestTdRate * 100)}</p>
                     </div>
                     <div>
                         <p style="margin:0; opacity:0.9;">${i18n.t('calculated-loan-rate')}</p>
-                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--primary);">${i18n.formatPercent(loanRate)}</p>
+                        <p style="font-size: 1.3rem; font-weight: 700; margin: 0; color: var(--primary);">${i18n.formatPercent(loanRate * 100)}</p>
                     </div>
                     <div>
                         <p style="margin:0; opacity:0.9;">${i18n.t('reinvest-loan-into-td')}</p>
@@ -1276,7 +1297,7 @@ export class SecuredLoansPage {
             return `
                                 <tr>
                                     <td class="number-display">${i18n.formatCurrency(td.amount)}</td>
-                                    <td class="number-display">${i18n.formatPercent(td.rate)}</td>
+                                    <td class="number-display">${i18n.formatPercent(td.rate * 100)}</td>
                                     <td>${td.interestFrequency === 'quarterly' ? i18n.t('quarterly') : i18n.t('monthly')}</td>
                                     <td class="number-display">${i18n.formatCurrency(td.periodicInterest)}</td>
                                 </tr>

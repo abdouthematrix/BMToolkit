@@ -9,25 +9,27 @@ const FIREBASE_SDKS = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
 ];
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './css/style.css',
-  './css/rtl.css',
-  './js/app.js',
-  './js/router.js',
-  './js/i18n.js',
-  './js/firebase-config.js',
-  './js/services/auth.js',
-  './js/services/firestore.js',
-  './js/services/financial-calculator.js',
-  './js/pages/home.js',
-  './js/pages/secured-loans.js',
-  './js/pages/unsecured-loans.js',
-  './js/pages/advancedtools.js',
-  './js/pages/login.js',
-  './js/pages/admin.js',
-  ...FIREBASE_SDKS
+    './',
+    './index.html',
+    './manifest.json',
+    './css/style.css',
+    './css/rtl.css',
+    './js/app.js',
+    './js/router.js',
+    './js/i18n.js',
+    './js/firebase-config.js',
+    './js/services/auth.js',
+    './js/services/firestore.js',
+    './js/services/financial-calculator.js',
+    './js/pages/home.js',
+    './js/pages/credit-cards.js',
+    './js/pages/loans.js',
+    './js/pages/secured-loans.js',
+    './js/pages/unsecured-loans.js',
+    './js/pages/advancedtools.js',
+    './js/pages/login.js',
+    './js/pages/admin.js',
+    ...FIREBASE_SDKS
 ];
 
 // Install event - cache core app shell and SDKs

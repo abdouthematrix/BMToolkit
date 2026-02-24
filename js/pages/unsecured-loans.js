@@ -227,6 +227,11 @@ export class UnsecuredLoansPage {
                                 <input type="number" id="monthly-installments" class="form-input" value="0" min="0" required>
                             </div>
                             <div class="form-group">
+                                <label class="form-label" data-i18n="credit-card-limit">Credit Card Limit</label>
+                                <input type="number" id="credit-card-limit" class="form-input" value="0" min="0">
+                                <small class="text-muted" data-i18n="credit-card-limit-hint">5% of limit will be added as monthly obligation</small>
+                            </div>
+                            <div class="form-group">
                                 <label class="form-label" data-i18n="max-dti">Max Debt-to-Income (%)</label>
                                 <input type="number" id="max-dti" class="form-input" value="50" min="0" max="100" step="1" required>
                             </div>
@@ -498,6 +503,7 @@ export class UnsecuredLoansPage {
             case 'by-income':
                 if (urlParams.income) document.getElementById('monthly-income').value = urlParams.income;
                 if (urlParams.installments) document.getElementById('monthly-installments').value = urlParams.installments;
+                if (urlParams.creditCardLimit) document.getElementById('credit-card-limit').value = urlParams.creditCardLimit;
                 if (urlParams.dti) document.getElementById('max-dti').value = urlParams.dti;
                 if (urlParams.minTenor) document.getElementById('min-tenor-income').value = urlParams.minTenor;
                 if (urlParams.maxTenor) document.getElementById('max-tenor-income').value = urlParams.maxTenor;
@@ -899,7 +905,9 @@ export class UnsecuredLoansPage {
         }
 
         const monthlyIncome = parseFloat(document.getElementById('monthly-income').value);
-        const monthlyInstallments = parseFloat(document.getElementById('monthly-installments').value);
+        const creditCardLimit = parseFloat(document.getElementById('credit-card-limit').value) || 0;
+        const creditCardObligation = creditCardLimit * 0.05; // 5% of credit card limit
+        const monthlyInstallments = (parseFloat(document.getElementById('monthly-installments').value) || 0) + creditCardObligation;
         const maxDTI = parseFloat(document.getElementById('max-dti').value) / 100;
         const minTenor = parseInt(document.getElementById('min-tenor-income').value);
         const isYears = document.getElementById('is-years-income').checked;
@@ -929,7 +937,8 @@ export class UnsecuredLoansPage {
                 ubs: this.selectedProduct.ubsCode || '',
                 productId,
                 income: monthlyIncome,
-                installments: monthlyInstallments,
+                installments: document.getElementById('monthly-installments').value,
+                creditCardLimit,
                 dti: (maxDTI * 100).toFixed(0),
                 minTenor,
                 maxTenor,
@@ -965,6 +974,15 @@ export class UnsecuredLoansPage {
 
         const resultsHtml = `
             <h4 data-i18n="max-loan-by-income">Maximum Loan by Income</h4>
+            ${creditCardObligation > 0 ? `
+            <div class="info-box" style="margin-bottom: var(--spacing-md); font-size: 0.9em;">
+                <i class="fas fa-credit-card"></i>
+                <span>
+                    <strong data-i18n="credit-card-obligation">Credit Card Obligation:</strong>
+                    ${i18n.formatCurrency(creditCardLimit)} × 5% = <strong>${i18n.formatCurrency(creditCardObligation)}</strong>
+                    <span data-i18n="credit-card-obligation-note"> added to existing monthly obligations</span>
+                </span>
+            </div>` : ''}
             <div class="results-table-wrapper" style="overflow-x: auto;">
                 <table class="results-table">
                     <thead>

@@ -79,6 +79,10 @@ export class AdminPage {
                                     <input type="number" id="max-loan-percent-admin" class="form-input" min="0" max="100" step="1" required>
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label" data-i18n="secured-loan-admin-fee-label">Loan Admin Fee (%)</label>
+                                    <input type="number" id="secured-loan-admin-fee-admin" class="form-input" min="0" max="10" step="0.01" required>
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label" data-i18n="secured-min-tenor-months">Min Tenor (Months)</label>
                                     <input type="number" id="secured-min-tenor-months-admin" class="form-input" min="1" max="120" step="1" required>
                                 </div>
@@ -295,6 +299,7 @@ export class AdminPage {
         // Convert stamp duty from real ratio (0.0005) to per mille (0.5)
         document.getElementById('stamp-duty-admin').value = ((this.constants.STAMP_DUTY_RATE ?? defaults.STAMP_DUTY_RATE) * 1000).toFixed(1);
 
+        document.getElementById('secured-loan-admin-fee-admin').value = ((this.constants.SECURED_LOAN_ADMIN_FEE ?? defaults.SECURED_LOAN_ADMIN_FEE) * 100).toFixed(2);
         document.getElementById('secured-min-tenor-months-admin').value = this.constants.SECURED_MIN_TENOR_MONTHS ?? defaults.SECURED_MIN_TENOR_MONTHS;
         document.getElementById('secured-max-tenor-years-admin').value = this.constants.SECURED_MAX_TENOR_YEARS ?? defaults.SECURED_MAX_TENOR_YEARS;
         document.getElementById('unsecured-max-tenor-8plus-admin').value = this.constants.UNSECURED_MAX_TENOR_8_PLUS_YEARS ?? defaults.UNSECURED_MAX_TENOR_8_PLUS_YEARS;
@@ -659,6 +664,7 @@ export class AdminPage {
             // Convert stamp duty from per mille (0.5) to real ratio (0.0005)
             STAMP_DUTY_RATE: parseFloat(document.getElementById('stamp-duty-admin').value) / 1000,
 
+            SECURED_LOAN_ADMIN_FEE: parseFloat(document.getElementById('secured-loan-admin-fee-admin').value) / 100,
             SECURED_MIN_TENOR_MONTHS: parseInt(document.getElementById('secured-min-tenor-months-admin').value),
             SECURED_MAX_TENOR_YEARS: parseInt(document.getElementById('secured-max-tenor-years-admin').value),
             UNSECURED_MAX_TENOR_8_PLUS_YEARS: parseInt(document.getElementById('unsecured-max-tenor-8plus-admin').value),

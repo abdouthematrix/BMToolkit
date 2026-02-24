@@ -65,6 +65,8 @@ export class I18n {
                 'highest-td-rate': 'Highest TD Rate',
                 'calculated-loan-rate': 'Calculated Loan Rate',
                 'reinvest-loan-into-td': 'Reinvest Loan into TD',
+                'admin-fee-rate': 'Admin Fee (%)',
+                'net-reinvested-amount': 'Net Reinvested Amount',
                 'yes': 'Yes',
                 'no': 'No',
 
@@ -206,6 +208,7 @@ export class I18n {
                 'min-rate-label': 'Minimum Interest Floor (%)',
                 'max-dti-label': 'Max DTI Cap (%)',
                 'max-loan-percent': 'Loan-to-Value Cap (%)',
+                'secured-loan-admin-fee-label': 'Loan Admin Fee (%)',
                 'secured-min-tenor-months': 'Min Tenor (Months)',
                 'secured-max-tenor-years': 'Max Tenor (Years)',
                 'unsecured-max-tenor-8plus': 'Max Tenor for Rate8+ (Years)',
@@ -396,6 +399,8 @@ export class I18n {
                 'highest-td-rate': 'أعلى معدل وديعة',
                 'calculated-loan-rate': 'معدل القرض المحسوب',
                 'reinvest-loan-into-td': 'إعادة استثمار مبلغ القرض في وديعة',
+                'admin-fee-rate': 'المصاريف الإدارية (%)',
+                'net-reinvested-amount': 'المبلغ الصافي المُعاد استثماره',
                 'yes': 'نعم',
                 'no': 'لا',
 
@@ -538,6 +543,7 @@ export class I18n {
                 'min-rate-label': 'الحد الأدنى للفائدة (%)',
                 'max-dti-label': 'سقف عبء الدين (DTI) %',
                 'max-loan-percent': 'نسبة التسليف (%)',
+                'secured-loan-admin-fee-label': 'مصاريف إدارية للقرض (%)',
                 'secured-min-tenor-months': 'الحد الأدنى للمدة (شهور)',
                 'secured-max-tenor-years': 'الحد الأقصى للمدة (سنوات)',
                 'unsecured-max-tenor-8plus': 'الحد الأقصى لمدة الفائدة 8+ (سنوات)',

@@ -26,7 +26,7 @@ export class FinancialCalculator {
     // ===== SECURED LOANS =====
 
     // Smart Investment Tool - Calculate single scenario
-    static calculateScenario(tdAmount, tdRate, years, loanPercent = 0, reinvest = false, constants = {}) {
+    static calculateScenario(tdAmount, tdRate, years, loanPercent = 0, reinvest = false, constants = {}, adminFeeRate = 0) {
         const months = years * 12;
         const monthlyCertInterest = (tdAmount * tdRate) / 12;
         const totalCertInterest = tdAmount * tdRate * years;
@@ -55,17 +55,25 @@ export class FinancialCalculator {
         }
 
         if (reinvest) {
-            const loanMonthlyCertInterest = (loan * tdRate) / 12;
-            const totalInvest = tdAmount + loan;
+            // Admin fee is deducted from the loan before reinvesting
+            const adminFee = loan * adminFeeRate;
+            const netLoanAfterFee = loan - adminFee;
+            // Round down to nearest 1000
+            const reinvestedLoanAmount = this.roundTo1000(netLoanAfterFee);
+
+            const loanMonthlyCertInterest = (reinvestedLoanAmount * tdRate) / 12;
+            const totalInvest = tdAmount + reinvestedLoanAmount;
             const totalInterest = totalInvest * tdRate * years;
             return {
                 loan,
+                adminFee,
+                reinvestedLoanAmount,
                 monthlyInterest: (totalInvest * tdRate) / 12,
                 monthlyInstallment,
                 netMonthlyPay: monthlyInstallment - loanMonthlyCertInterest - monthlyCertInterest,
                 totalInterest,
                 loanInterest,
-                finalAmount: tdAmount + totalInterest - loanInterest
+                finalAmount: tdAmount + totalInterest - loanInterest - adminFee
             };
         }
 
@@ -81,7 +89,7 @@ export class FinancialCalculator {
     }
 
     // Smart Investment Tool - All 4 scenarios
-    static calculateAllScenarios(tdAmount, tdRate, years, constants = {}) {
+    static calculateAllScenarios(tdAmount, tdRate, years, constants = {}, adminFeeRate = 0) {
         // Use constants with fallback defaults
         const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
             ? constants.MAX_LOAN_PERCENT * 100
@@ -121,13 +129,13 @@ export class FinancialCalculator {
 
         return scenariosList.map(scenario => ({
             ...scenario,
-            ...this.calculateScenario(tdAmount, tdRate, years, scenario.loanPercent, scenario.reinvest, constants)
+            ...this.calculateScenario(tdAmount, tdRate, years, scenario.loanPercent, scenario.reinvest, constants, adminFeeRate)
         }));
     }
 
     // Smart Loan Investment Optimizer (0-90%)
     static async calculateSmartLoan(inputs, constants = {}) {
-        const { principal, cdRate, loanTerm, reinvestLoan = true } = inputs;
+        const { principal, cdRate, loanTerm, reinvestLoan = true, adminFeeRate = 0 } = inputs;
 
         // Use constants with fallback defaults
         const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
@@ -160,10 +168,15 @@ export class FinancialCalculator {
             const monthlyCDIncome = principal * cdMonthlyRate;
 
             // Monthly CD income from reinvested loan (if enabled)
+            // Admin fee is deducted first, then net amount is rounded down to nearest 1000
             let reinvestedIncome = 0;
+            let reinvestedLoanAmount = 0;
+            let adminFee = 0;
             if (reinvestLoan) {
-                const roundedLoanAmount = Math.floor(loanAmount / 1000) * 1000;
-                reinvestedIncome = roundedLoanAmount * cdMonthlyRate;
+                adminFee = loanAmount * adminFeeRate;
+                const netLoanAfterFee = loanAmount - adminFee;
+                reinvestedLoanAmount = Math.floor(netLoanAfterFee / 1000) * 1000;
+                reinvestedIncome = reinvestedLoanAmount * cdMonthlyRate;
             }
 
             // Total monthly income
@@ -191,8 +204,8 @@ export class FinancialCalculator {
             // Grand total calculation depends on reinvest option
             let grandTotal;
             if (reinvestLoan) {
-                // With reinvest: principal + loan + net profit
-                grandTotal = principal + loanAmount + netProfit;
+                // With reinvest: principal + reinvestedLoanAmount + net profit - adminFee
+                grandTotal = principal + reinvestedLoanAmount + netProfit - adminFee;
             } else {
                 // Without reinvest: principal + net profit (loan is spent elsewhere)
                 grandTotal = principal + netProfit;
@@ -209,6 +222,8 @@ export class FinancialCalculator {
 
             results.push({
                 loanAmount,
+                reinvestedLoanAmount: reinvestLoan ? reinvestedLoanAmount : undefined,
+                adminFee: reinvestLoan ? adminFee : undefined,
                 totalMonthlyIncome,
                 monthlyPayment,
                 netMonthlyProfit,
@@ -289,7 +304,8 @@ export class FinancialCalculator {
             maxTenor,
             isYears,
             installmentFrequency,
-            reinvestLoan
+            reinvestLoan,
+            adminFeeRate = 0
         } = inputs;
 
         const highestTdRate = Math.max(...deposits.map(d => d.rate));
@@ -299,7 +315,13 @@ export class FinancialCalculator {
 
         const totalTdAmount = deposits.reduce((sum, d) => sum + d.amount, 0);
         const paymentsPerYear = installmentFrequency === 'quarterly' ? 4 : 12;
-        const tdPrincipal = reinvestLoan ? totalTdAmount + loanAmount : totalTdAmount;
+
+        // Admin fee deducted from loan before reinvesting; net amount rounded down to nearest 1000
+        const adminFee = reinvestLoan ? loanAmount * adminFeeRate : 0;
+        const netLoanAfterFee = loanAmount - adminFee;
+        const reinvestedLoanAmount = reinvestLoan ? Math.floor(netLoanAfterFee / 1000) * 1000 : 0;
+
+        const tdPrincipal = reinvestLoan ? totalTdAmount + reinvestedLoanAmount : totalTdAmount;
 
         const tdDetails = deposits.map(td => {
             const periodicInterest = td.interestFrequency === 'quarterly'
@@ -313,15 +335,17 @@ export class FinancialCalculator {
 
         if (reinvestLoan) {
             const reinvestedPeriodicInterest = installmentFrequency === 'quarterly'
-                ? (loanAmount * highestTdRate) / 4
-                : (loanAmount * highestTdRate) / 12;
+                ? (reinvestedLoanAmount * highestTdRate) / 4
+                : (reinvestedLoanAmount * highestTdRate) / 12;
 
             tdDetails.push({
-                amount: loanAmount,
+                amount: reinvestedLoanAmount,
                 rate: highestTdRate,
                 interestFrequency: installmentFrequency,
                 periodicInterest: reinvestedPeriodicInterest,
-                isReinvested: true
+                isReinvested: true,
+                adminFee,
+                grossLoanAmount: loanAmount
             });
         }
 
@@ -360,6 +384,8 @@ export class FinancialCalculator {
         return {
             highestTdRate,
             loanRate,
+            adminFee,
+            reinvestedLoanAmount,
             tdDetails,
             totalTdInterestPerPeriod,
             results

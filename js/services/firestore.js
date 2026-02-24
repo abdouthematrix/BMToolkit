@@ -3,7 +3,7 @@
 import { db } from '../firebase-config.js';
 import {
     collection,
-    doc,    
+    doc,
     getDocFromCache,
     getDocFromServer,
     getDocsFromCache,
@@ -87,9 +87,10 @@ export class FirestoreService {
             STAMP_DUTY_RATE: 0.0005, // Stored as real ratio (0.5‰ = 0.0005)
             SCENARIOS: {
                 INTEREST_UPFRONT_PERCENT: 36,
-                LOAN_CERTIFICATE_PERCENT: 58
+                LOAN_CERTIFICATE_PERCENT: 57
             },
             // Secured loan tenor limits
+            SECURED_LOAN_ADMIN_FEE: 0.01,
             SECURED_MIN_TENOR_MONTHS: 6,
             SECURED_MAX_TENOR_YEARS: 10,
             // Unsecured loan tenor limits

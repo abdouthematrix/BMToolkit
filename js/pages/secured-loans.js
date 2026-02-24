@@ -40,6 +40,12 @@ export class SecuredLoansPage {
         document.getElementById('cd-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
         document.getElementById('cd-rate-optimizer').value = (this.constants.CD_RATE * 100).toFixed(2);
 
+        // Set admin fee field defaults from constants
+        const adminFeePct = ((this.constants.SECURED_LOAN_ADMIN_FEE ?? 0.01) * 100).toFixed(2);
+        document.getElementById('smart-admin-fee-rate').value = adminFeePct;
+        document.getElementById('optimizer-admin-fee-rate').value = adminFeePct;
+        document.getElementById('td-admin-fee-rate').value = adminFeePct;
+
         // Update tenor input limits based on constants
         this.updateTenorLimits();
 
@@ -258,6 +264,10 @@ export class SecuredLoansPage {
                                 <input type="number" id="td-years" class="form-input" value="3" min="1" max="10" step="1" required>
                             </div>
                         </div>
+                        <div class="form-group" style="margin-top: var(--spacing-md);">
+                            <label class="form-label" data-i18n="admin-fee-rate">Admin Fee (%) <span class="text-muted" style="font-size:0.85em;">(applied when reinvesting loan)</span></label>
+                            <input type="number" id="smart-admin-fee-rate" class="form-input" value="1" min="0" max="10" step="0.01" style="max-width: 200px;">
+                        </div>
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-calculator"></i>
@@ -305,6 +315,10 @@ export class SecuredLoansPage {
                                 <input type="checkbox" id="reinvest-loan-optimizer" checked>
                                 <span data-i18n="reinvest-loan-into-td">Reinvest loan amount in a new term deposit</span>
                             </label>
+                        </div>
+                        <div class="form-group" id="optimizer-admin-fee-group" style="display: none;">
+                            <label class="form-label" data-i18n="admin-fee-rate">Admin Fee (%)</label>
+                            <input type="number" id="optimizer-admin-fee-rate" class="form-input" value="1" min="0" max="10" step="0.01" style="max-width: 200px;">
                         </div>
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                             <button type="submit" class="btn-primary">
@@ -492,6 +506,11 @@ export class SecuredLoansPage {
                             </label>
                         </div>
 
+                        <div class="form-group" id="td-admin-fee-group" style="display: none;">
+                            <label class="form-label" data-i18n="admin-fee-rate">Admin Fee (%)</label>
+                            <input type="number" id="td-admin-fee-rate" class="form-input" value="1" min="0" max="10" step="0.01" style="max-width: 200px;">
+                        </div>
+
                         <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
                             <button type="submit" class="btn-primary">
                                 <i class="fas fa-calculator"></i>
@@ -564,6 +583,20 @@ export class SecuredLoansPage {
 
         this.initializeTdDepositRows();
         this.updateTdTenorLimits();
+
+        // Show/hide admin fee fields based on reinvest toggles
+        const toggleAdminFee = (checkboxId, groupId) => {
+            const checkbox = document.getElementById(checkboxId);
+            const group = document.getElementById(groupId);
+            if (checkbox && group) {
+                group.style.display = checkbox.checked ? 'block' : 'none';
+                checkbox.addEventListener('change', () => {
+                    group.style.display = checkbox.checked ? 'block' : 'none';
+                });
+            }
+        };
+        toggleAdminFee('td-reinvest-loan', 'td-admin-fee-group');
+        toggleAdminFee('reinvest-loan-optimizer', 'optimizer-admin-fee-group');
     }
 
     static updateTdTenorLimits() {
@@ -755,8 +788,11 @@ export class SecuredLoansPage {
             });
         }
 
+        // Read admin fee field and merge into constants
+        const adminFeeRate = (parseFloat(document.getElementById('smart-admin-fee-rate').value) || 0) / 100;
+
         // Pass constants to calculator
-        const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, tdRate, years, this.constants);
+        const scenarios = FinancialCalculator.calculateAllScenarios(tdAmount, tdRate, years, this.constants, adminFeeRate);
 
         const resultsHtml = `
             <h4 data-i18n="investment-scenarios">Investment Scenarios Comparison</h4>
@@ -864,6 +900,7 @@ export class SecuredLoansPage {
         const cdRate = parseFloat(document.getElementById('cd-rate-optimizer').value) / 100;
         const loanTerm = parseInt(document.getElementById('loan-term-optimizer').value);
         const reinvestLoan = document.getElementById('reinvest-loan-optimizer').checked;
+        const adminFeeRate = reinvestLoan ? (parseFloat(document.getElementById('optimizer-admin-fee-rate').value) || 0) / 100 : 0;
 
         // Validate tenor using constants (NEW - validation only)
         const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
@@ -895,7 +932,8 @@ export class SecuredLoansPage {
             principal,
             cdRate,
             loanTerm,
-            reinvestLoan
+            reinvestLoan,
+            adminFeeRate
         }, this.constants);
 
         const resultsHtml = `
@@ -1203,6 +1241,7 @@ export class SecuredLoansPage {
         const installmentFrequency = document.getElementById('td-installment-frequency').value;
         const isYears = document.getElementById('is-years-td').checked;
         const reinvestLoan = document.getElementById('td-reinvest-loan').checked;
+        const adminFeeRate = reinvestLoan ? (parseFloat(document.getElementById('td-admin-fee-rate').value) || 0) / 100 : 0;
 
         if (!Number.isFinite(loanAmount) || loanAmount <= 0) {
             window.app.showToast('Please enter a valid loan amount.', 'error');
@@ -1236,10 +1275,11 @@ export class SecuredLoansPage {
             maxTenor,
             isYears,
             installmentFrequency,
-            reinvestLoan
+            reinvestLoan,
+            adminFeeRate
         }, this.constants);
 
-        const { highestTdRate, loanRate, tdDetails, totalTdInterestPerPeriod, results } = calculation;
+        const { highestTdRate, loanRate, adminFee, reinvestedLoanAmount, tdDetails, totalTdInterestPerPeriod, results } = calculation;
 
         const router = window.app?.router;
         if (router) {
@@ -1278,6 +1318,16 @@ export class SecuredLoansPage {
                         <p style="margin:0; opacity:0.9;">${i18n.t('reinvest-loan-into-td')}</p>
                         <p style="font-size: 1.1rem; font-weight: 700; margin: 0;">${reinvestLoan ? i18n.t('yes') : i18n.t('no')}</p>
                     </div>
+                    ${reinvestLoan ? `
+                    <div>
+                        <p style="margin:0; opacity:0.9;">${i18n.t('admin-fee-rate')}</p>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--danger);">${i18n.formatCurrency(adminFee)}</p>
+                    </div>
+                    <div>
+                        <p style="margin:0; opacity:0.9;">${i18n.t('net-reinvested-amount')}</p>
+                        <p style="font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--accent);">${i18n.formatCurrency(reinvestedLoanAmount)}</p>
+                    </div>
+                    ` : ''}
                 </div>
             </div>
 

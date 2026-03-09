@@ -4,6 +4,8 @@ import { i18n } from '../i18n.js';
 import { FinancialCalculator } from '../services/financial-calculator.js';
 
 export class MortgagePage {
+    static MAX_DBR_RATIO = 0.40;
+
     static t(en, ar) {
         return i18n.currentLanguage === 'ar' ? ar : en;
     }
@@ -137,31 +139,41 @@ export class MortgagePage {
         return { errors: [this.t('Unit price is outside the initiative range (max 2,500,000 EGP).', 'سعر الوحدة خارج نطاق المبادرة (الحد الأقصى 2,500,000 جنيه).')] };
     }
 
+
+    static calculatePresentValueFromInstallment(monthlyInstallment, monthlyRate, months) {
+        if (monthlyRate === 0) return monthlyInstallment * months;
+        return monthlyInstallment * ((1 - Math.pow(1 + monthlyRate, -months)) / monthlyRate);
+    }
+
+    static calculateEscalatingPresentValue(firstInstallment, annualRate, years, annualIncrease, increaseYearsLimit = years) {
+        const monthlyRate = annualRate / 12;
+        const months = years * 12;
+        let pv = 0;
+
+        for (let month = 1; month <= months; month++) {
+            const yearIndex = Math.ceil(month / 12) - 1;
+            const growthYears = Math.min(yearIndex, increaseYearsLimit);
+            const installment = firstInstallment * Math.pow(1 + annualIncrease, growthYears);
+            pv += installment / Math.pow(1 + monthlyRate, month);
+        }
+
+        return pv;
+    }
+
     static calculateEscalatingFirstInstallment(loanAmount, annualRate, years, annualIncrease, increaseYearsLimit = years) {
         const monthlyRate = annualRate / 12;
         const months = years * 12;
 
-        const pvFromFirstInstallment = (firstInstallment) => {
-            let pv = 0;
-            for (let month = 1; month <= months; month++) {
-                const yearIndex = Math.ceil(month / 12) - 1;
-                const growthYears = Math.min(yearIndex, increaseYearsLimit);
-                const installment = firstInstallment * Math.pow(1 + annualIncrease, growthYears);
-                pv += installment / Math.pow(1 + monthlyRate, month);
-            }
-            return pv;
-        };
-
         let low = 0;
         let high = FinancialCalculator.PMT(monthlyRate, months, loanAmount);
 
-        while (pvFromFirstInstallment(high) < loanAmount) {
+        while (this.calculateEscalatingPresentValue(high, annualRate, years, annualIncrease, increaseYearsLimit) < loanAmount) {
             high *= 1.2;
         }
 
         for (let i = 0; i < 60; i++) {
             const mid = (low + high) / 2;
-            const pv = pvFromFirstInstallment(mid);
+            const pv = this.calculateEscalatingPresentValue(mid, annualRate, years, annualIncrease, increaseYearsLimit);
             if (pv > loanAmount) {
                 high = mid;
             } else {
@@ -194,13 +206,26 @@ export class MortgagePage {
 
         const cappedTermYears = Math.min(termYears, initiativeData.maxTermYears);
         const maxLoanByLtv = unitPrice * initiativeData.ltv;
-        const maxLoanAmount = Math.min(maxLoanByLtv, initiativeData.maxLoanCap);
         const monthlyRate = initiativeData.annualRate / 12;
         const months = cappedTermYears * 12;
 
-        const fixedInstallment = FinancialCalculator.PMT(monthlyRate, months, maxLoanAmount);
         const annualIncrease = initiativeData.initiative === '8' ? 0.05 : 0.07;
         const increaseYearsLimit = initiativeData.initiative === '8' ? cappedTermYears : Math.min(10, cappedTermYears);
+
+        const maxMonthlyInstallment = monthlyIncome * this.MAX_DBR_RATIO;
+        const maxLoanByDbrFixed = this.calculatePresentValueFromInstallment(maxMonthlyInstallment, monthlyRate, months);
+        const maxLoanByDbrEscalating = this.calculateEscalatingPresentValue(
+            maxMonthlyInstallment,
+            initiativeData.annualRate,
+            cappedTermYears,
+            annualIncrease,
+            increaseYearsLimit
+        );
+        const maxLoanByDbr = installmentType === 'fixed' ? maxLoanByDbrFixed : maxLoanByDbrEscalating;
+
+        const maxLoanAmount = Math.min(maxLoanByLtv, initiativeData.maxLoanCap, maxLoanByDbr);
+
+        const fixedInstallment = FinancialCalculator.PMT(monthlyRate, months, maxLoanAmount);
         const escalatingFirstInstallment = this.calculateEscalatingFirstInstallment(
             maxLoanAmount,
             initiativeData.annualRate,
@@ -212,10 +237,14 @@ export class MortgagePage {
         return {
             ...initiativeData,
             cappedTermYears,
+            dbrRatio: this.MAX_DBR_RATIO,
+            maxMonthlyInstallment,
             programName: this.PROGRAMS[initiativeData.initiative][segment],
             productCode: this.PRODUCT_CODES[`${initiativeData.initiative}-${installmentType}`],
             maxLoanByLtv,
+            maxLoanByDbr,
             maxLoanAmount,
+            dbrLimited: maxLoanAmount + 0.5 < Math.min(maxLoanByLtv, initiativeData.maxLoanCap),
             fixedInstallment,
             escalatingFirstInstallment,
             escalatingSchedule: this.getEscalatingSchedule(escalatingFirstInstallment, annualIncrease, cappedTermYears, increaseYearsLimit)
@@ -249,6 +278,7 @@ export class MortgagePage {
                 <div class="card-body">
                     <h3>${this.t('Mortgage Result Summary', 'ملخص نتيجة التمويل العقاري')}</h3>
                     ${termNote}
+                    ${result.dbrLimited ? `<p class="text-muted">${this.t('DBR limit reduced the final loan amount.', 'حد عبء الدين خفّض قيمة التمويل النهائية.')}</p>` : ''}
                     <div class="grid grid-2" style="margin-top:var(--spacing-md);">
                         <div><strong>${this.t('Initiative', 'المبادرة')}:</strong> ${result.initiative}% (${trancheText})</div>
                         <div><strong>${this.t('Program', 'البرنامج')}:</strong> ${result.programName}</div>
@@ -257,6 +287,9 @@ export class MortgagePage {
                         <div><strong>${this.t('Max Financing %', 'نسبة التمويل القصوى')}:</strong> ${(result.ltv * 100).toFixed(0)}%</div>
                         <div><strong>${this.t('Loan Term', 'مدة التمويل')}:</strong> ${result.cappedTermYears} ${this.t('years', 'سنة')}</div>
                         <div><strong>${this.t('Max Loan by LTV', 'الحد الأقصى حسب LTV')}:</strong> ${this.formatAmount(result.maxLoanByLtv)}</div>
+                        <div><strong>${this.t('DBR Cap', 'الحد الأقصى لنسبة عبء الدين')}:</strong> ${(result.dbrRatio * 100).toFixed(0)}%</div>
+                        <div><strong>${this.t('Max Installment by DBR', 'الحد الأقصى للقسط وفق عبء الدين')}:</strong> ${this.formatAmount(result.maxMonthlyInstallment)}</div>
+                        <div><strong>${this.t('Max Loan by DBR', 'الحد الأقصى للتمويل وفق عبء الدين')}:</strong> ${this.formatAmount(result.maxLoanByDbr)}</div>
                         <div><strong>${this.t('Final Max Loan (after cap)', 'قيمة القرض النهائية بعد الحد الأقصى')}:</strong> ${this.formatAmount(result.maxLoanAmount)}</div>
                         <div><strong>${this.t('Admin Fees', 'المصاريف الإدارية')}:</strong> ${result.adminFeeRate > 0 ? `${(result.adminFeeRate * 100).toFixed(0)}%` : this.t('None', 'لا يوجد')}</div>
                         <div><strong>${this.t('Fixed Monthly Installment (est.)', 'القسط الشهري الثابت (تقديري)')}:</strong> ${this.formatAmount(result.fixedInstallment)}</div>

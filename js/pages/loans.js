@@ -47,34 +47,34 @@ export class LoansPage {
 
                 <div class="grid grid-3 loans-sections-grid" style="margin-top: var(--spacing-lg);">
                     ${this.renderLoanCard({
-                        route: 'secured-loans',
-                        icon: 'fa-shield-alt',
-                        gradient: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                        titleKey: 'secured-loans-title',
-                        titleFallback: 'Secured Loans',
-                        descKey: 'secured-loans-desc',
-                        descFallback: 'Calculate loans backed by certificates of deposit',
+                        route: 'cash-loans',
+                        icon: 'fa-wallet',
+                        gradient: 'linear-gradient(135deg, var(--secondary), var(--secondary-dark))',
+                        titleKey: 'cash-loans-title',
+                        titleFallback: 'Cash Loans',
+                        descKey: 'cash-loans-desc',
+                        descFallback: 'Access secured and unsecured cash loan calculators',
                         items: [
-                            { key: 'smart-investment', fallback: 'Smart Investment Tool' },
-                            { key: 'smart-optimizer', fallback: 'Smart Loan Optimizer' },
-                            { key: 'loan-calculator', fallback: 'Loan Calculator' },
-                            { key: 'max-loan-calc', fallback: 'Max Loan Calculator' }
+                            { key: 'secured-loans-title', fallback: 'Secured Loans' },
+                            { key: 'unsecured-loans-title', fallback: 'Unsecured Loans' },
+                            { key: 'salary-transfer-loans', fallback: 'Salary Transfer Loans' },
+                            { key: 'loan-calculator', fallback: 'Loan Calculator' }
                         ]
                     })}
 
                     ${this.renderLoanCard({
-                        route: 'unsecured-loans',
-                        icon: 'fa-handshake',
-                        gradient: 'linear-gradient(135deg, var(--secondary), var(--secondary-dark))',
-                        titleKey: 'unsecured-loans-title',
-                        titleFallback: 'Unsecured Loans',
-                        descKey: 'unsecured-loans-desc',
-                        descFallback: 'Personal loans based on income and employment',
+                        route: 'mortgage',
+                        icon: 'fa-house',
+                        gradient: 'linear-gradient(135deg, #0284c7, #0369a1)',
+                        titleKey: 'mortgage-title',
+                        titleFallback: 'Mortgage',
+                        descKey: 'mortgage-desc',
+                        descFallback: 'CBE mortgage initiatives with fixed and escalating installments',
                         items: [
-                            { key: 'salary-transfer-loans', fallback: 'Salary Transfer Loans' },
-                            { key: 'income-proof-loans', fallback: 'Income Proof Loans' },
-                            { key: 'business-owner-loans', fallback: 'Business Owner Loans' },
-                            { key: 'pension-loans', fallback: 'Pension Loans' }
+                            { key: 'mortgage-initiative-8', fallback: '8% Initiative (Middle Income)' },
+                            { key: 'mortgage-initiative-12', fallback: '12% Initiative (Middle Income)' },
+                            { key: 'fixed-installment', fallback: 'Fixed Installment' },
+                            { key: 'escalating-installment', fallback: 'Escalating Installment' }
                         ]
                     })}
 

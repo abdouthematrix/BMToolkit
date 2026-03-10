@@ -88,6 +88,8 @@ export class I18n {
                 'validation-number': 'Enter a valid number.',
                 'validation-min': 'Value must be at least {min}.',
                 'validation-max': 'Value must be at most {max}.',
+                'validation-unit-range': 'Unit price must be between {min} and {max} EGP.',
+                'validation-income-max': 'Income must not exceed {max} EGP for selected income type.',
                 'field': 'Field',
 
                 // Secured Loans
@@ -471,6 +473,8 @@ export class I18n {
                 'validation-number': 'أدخل رقمًا صحيحًا.',
                 'validation-min': 'يجب أن تكون القيمة أكبر من أو تساوي {min}.',
                 'validation-max': 'يجب أن تكون القيمة أقل من أو تساوي {max}.',
+                'validation-unit-range': 'يجب أن يكون سعر الوحدة بين {min} و {max} جنيه.',
+                'validation-income-max': 'يجب ألا يتجاوز الدخل {max} جنيه حسب نوع الدخل المختار.',
                 'field': 'حقل',
 
                 // Secured Loans

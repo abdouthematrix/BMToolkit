@@ -299,6 +299,12 @@ export class MortgagePage {
         i18n.updatePageText();
     }
 
+    static getUnitPriceBounds(initiativeKey) {
+        if (initiativeKey === 'cbe8') return { min: 1, max: 1400000 };
+        if (initiativeKey === 'cbe12') return { min: 1400001, max: 2500000 };
+        return { min: 1, max: Number.POSITIVE_INFINITY };
+    }
+
     static validateForm(form, data, initiative) {
         const requiredFields = ['unit-price', 'tenor'];
         if (form.dataset.form === 'max-income') requiredFields.push('income', 'obligations');
@@ -306,6 +312,8 @@ export class MortgagePage {
 
         const messages = [];
         const values = {};
+        const unitBounds = this.getUnitPriceBounds(initiative.key);
+
         requiredFields.forEach((field) => {
             const input = form.querySelector(`[name="${field}"]`);
             if (!input) return;
@@ -337,8 +345,24 @@ export class MortgagePage {
                 return;
             }
 
+            if (field === 'unit-price' && (value < unitBounds.min || value > unitBounds.max)) {
+                this.markInvalid(input);
+                messages.push(`${this.getLabel(input)}: ${i18n.t('validation-unit-range').replace('{min}', unitBounds.min.toLocaleString('en-US')).replace('{max}', unitBounds.max.toLocaleString('en-US'))}`);
+                return;
+            }
+
             values[field] = value;
         });
+
+        if (form.dataset.form === 'max-income' && Number.isFinite(values.income)) {
+            const incomeType = data['income-type'] || 'individual';
+            const incomeCap = incomeType === 'family' ? initiative.maxFamilyIncome : initiative.maxIndividualIncome;
+            if (values.income > incomeCap) {
+                const incomeInput = form.querySelector('[name="income"]');
+                if (incomeInput) this.markInvalid(incomeInput);
+                messages.push(`${i18n.t('net-monthly-income')}: ${i18n.t('validation-income-max').replace('{max}', incomeCap.toLocaleString('en-US'))}`);
+            }
+        }
 
         return { valid: messages.length === 0, messages, values };
     }

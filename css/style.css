@@ -500,6 +500,22 @@ p {
 }
 
 
+.mortgage-input-group .form-input,
+.mortgage-input-group .form-select {
+    box-shadow: var(--shadow-sm);
+    background: color-mix(in srgb, var(--surface) 75%, var(--bg-secondary));
+}
+
+.mortgage-input-group .form-input:hover,
+.mortgage-input-group .form-select:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.mortgage-invalid-input {
+    border-color: #dc2626 !important;
+    background: color-mix(in srgb, #dc2626 10%, var(--surface));
+}
+
 .search-input-row {
     display: flex;
     gap: var(--spacing-sm);

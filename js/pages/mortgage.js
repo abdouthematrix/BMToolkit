@@ -156,11 +156,11 @@ export class MortgagePage {
     }
 
     static input(name, labelKey, value = '', min = 0) {
-        return `<div class="form-group"><label data-i18n="${labelKey}"></label><input type="number" name="${name}" min="${min}" value="${value}" required></div>`;
+        return `<div class="form-group mortgage-input-group"><label class="form-label" data-i18n="${labelKey}"></label><input class="form-input" type="number" step="any" name="${name}" min="${min}" value="${value}" required></div>`;
     }
 
     static select(name, labelKey, options, selectedValue) {
-        return `<div class="form-group"><label data-i18n="${labelKey}"></label><select name="${name}">${options.map((o) => `<option value="${o.value}" ${o.value === selectedValue ? 'selected' : ''} data-i18n="${o.label}">${i18n.t(o.label)}</option>`).join('')}</select></div>`;
+        return `<div class="form-group mortgage-input-group"><label class="form-label" data-i18n="${labelKey}"></label><select class="form-select" name="${name}">${options.map((o) => `<option value="${o.value}" ${o.value === selectedValue ? 'selected' : ''} data-i18n="${o.label}">${i18n.t(o.label)}</option>`).join('')}</select></div>`;
     }
 
     static attachListeners() {
@@ -182,6 +182,9 @@ export class MortgagePage {
         });
 
         document.querySelectorAll('form[data-form]').forEach((form) => {
+            form.querySelectorAll('input[type="number"]').forEach((input) => {
+                input.addEventListener('input', () => this.clearInvalidState(input));
+            });
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.calculate(form);
@@ -209,9 +212,17 @@ export class MortgagePage {
         const type = form.dataset.form;
         const initiative = this.initiatives[form.dataset.initiative];
         const data = Object.fromEntries(new FormData(form).entries());
-        const requestedTenor = Number(data.tenor);
+        const validation = this.validateForm(form, data, initiative);
+        const out = document.querySelector(`[data-results="${type}"][data-initiative="${initiative.key}"]`);
+        if (!validation.valid) {
+            out.innerHTML = `<div class="warning-box">${validation.messages.map((m) => `<div>${m}</div>`).join('')}</div>`;
+            i18n.updatePageText();
+            return;
+        }
+
+        const requestedTenor = validation.values.tenor;
         const tenor = Math.min(requestedTenor, initiative.maxTenor);
-        const unitPrice = Number(data['unit-price']);
+        const unitPrice = validation.values['unit-price'];
         const tier = initiative.getTier(unitPrice);
         const limitByLtv = tier ? unitPrice * tier.ltv : 0;
         const limitByPolicy = tier ? tier.maxLoan : 0;
@@ -220,8 +231,8 @@ export class MortgagePage {
         let html = requestedTenor > initiative.maxTenor ? `<div class="warning-box">${i18n.t('tenor-capped-warning').replace('{max}', initiative.maxTenor)}</div>` : '';
 
         if (type === 'max-income') {
-            const income = Number(data.income);
-            const obligations = Number(data.obligations);
+            const income = validation.values.income;
+            const obligations = validation.values.obligations;
             const incomeType = data['income-type'] || 'individual';
             const incomeCap = incomeType === 'family' ? initiative.maxFamilyIncome : initiative.maxIndividualIncome;
             const dbrCapacity = income * initiative.dbr;
@@ -253,7 +264,7 @@ export class MortgagePage {
         }
 
         if (type === 'fixed') {
-            const loanAmount = Number(data['loan-amount']);
+            const loanAmount = validation.values['loan-amount'];
             const n = tenor * 12;
             const r = initiative.rate / 12;
             const monthly = this.pmt(loanAmount, r, n);
@@ -271,7 +282,7 @@ export class MortgagePage {
         }
 
         if (type === 'escalating') {
-            const loanAmount = Number(data['loan-amount']);
+            const loanAmount = validation.values['loan-amount'];
             const result = this.solveEscalating(initiative.key, loanAmount, tenor, initiative.rate / 12);
             html += this.metrics([
                 ['year-1-installment', result.year1],
@@ -284,9 +295,66 @@ export class MortgagePage {
             html += this.renderScheduleTable(result.schedule, 'escalating-installment');
         }
 
-        const out = document.querySelector(`[data-results="${type}"][data-initiative="${initiative.key}"]`);
         out.innerHTML = html;
         i18n.updatePageText();
+    }
+
+    static validateForm(form, data, initiative) {
+        const requiredFields = ['unit-price', 'tenor'];
+        if (form.dataset.form === 'max-income') requiredFields.push('income', 'obligations');
+        if (form.dataset.form === 'fixed' || form.dataset.form === 'escalating') requiredFields.push('loan-amount');
+
+        const messages = [];
+        const values = {};
+        requiredFields.forEach((field) => {
+            const input = form.querySelector(`[name="${field}"]`);
+            if (!input) return;
+            this.clearInvalidState(input);
+            const raw = String(data[field] ?? '').trim();
+            if (raw === '') {
+                this.markInvalid(input);
+                messages.push(`${this.getLabel(input)}: ${i18n.t('validation-required')}`);
+                return;
+            }
+
+            const value = Number(raw);
+            if (!Number.isFinite(value)) {
+                this.markInvalid(input);
+                messages.push(`${this.getLabel(input)}: ${i18n.t('validation-number')}`);
+                return;
+            }
+
+            const min = Number(input.min);
+            if (!Number.isNaN(min) && value < min) {
+                this.markInvalid(input);
+                messages.push(`${this.getLabel(input)}: ${i18n.t('validation-min').replace('{min}', min)}`);
+                return;
+            }
+
+            if (field === 'tenor' && value > initiative.maxTenor * 2) {
+                this.markInvalid(input);
+                messages.push(`${this.getLabel(input)}: ${i18n.t('validation-max').replace('{max}', initiative.maxTenor * 2)}`);
+                return;
+            }
+
+            values[field] = value;
+        });
+
+        return { valid: messages.length === 0, messages, values };
+    }
+
+    static getLabel(input) {
+        return i18n.t(input.closest('.form-group')?.querySelector('label')?.dataset.i18n || 'field');
+    }
+
+    static markInvalid(input) {
+        input.classList.add('mortgage-invalid-input');
+        input.setAttribute('aria-invalid', 'true');
+    }
+
+    static clearInvalidState(input) {
+        input.classList.remove('mortgage-invalid-input');
+        input.removeAttribute('aria-invalid');
     }
 
     static getEligibilityWarnings({ initiative, unitPrice, income, incomeCap, tier, fixedPotential, escalatingPotential, limitByLtv, limitByPolicy }) {

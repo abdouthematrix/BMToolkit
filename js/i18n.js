@@ -84,6 +84,11 @@ export class I18n {
                 'year': 'Year',
                 'annual-payment': 'Annual Payment',
                 'remaining-balance': 'Remaining Balance',
+                'validation-required': 'This field is required.',
+                'validation-number': 'Enter a valid number.',
+                'validation-min': 'Value must be at least {min}.',
+                'validation-max': 'Value must be at most {max}.',
+                'field': 'Field',
 
                 // Secured Loans
                 'smart-investment': 'Investment Comparator',
@@ -461,6 +466,12 @@ export class I18n {
                 'tenor-capped-warning': 'تم تقليص المدة إلى الحد الأقصى للمبادرة ({max} سنة).',
                 'year': 'السنة',
                 'annual-payment': 'إجمالي دفعة السنة',
+                'remaining-balance': 'الرصيد المتبقي',
+                'validation-required': 'هذا الحقل مطلوب.',
+                'validation-number': 'أدخل رقمًا صحيحًا.',
+                'validation-min': 'يجب أن تكون القيمة أكبر من أو تساوي {min}.',
+                'validation-max': 'يجب أن تكون القيمة أقل من أو تساوي {max}.',
+                'field': 'حقل',
 
                 // Secured Loans
                 'smart-investment': 'مقارنة الاستثمار',

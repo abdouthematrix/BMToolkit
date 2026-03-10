@@ -10,9 +10,10 @@ export class MortgagePage {
             adminFee: 0.01,
             maxIndividualIncome: 13000,
             maxFamilyIncome: 18000,
+            escalatingLabel: 'escalating-policy-8',
             getTier(unitPrice) {
-                if (unitPrice <= 1100000) return { name: 'tier-1', ltv: 0.85, maxLoan: 935000 };
-                if (unitPrice <= 1400000) return { name: 'tier-2', ltv: 0.8, maxLoan: 1120000 };
+                if (unitPrice <= 1100000) return { name: 'tier-1', ltv: 0.85, maxLoan: 935000, range: '≤ 1,100,000' };
+                if (unitPrice <= 1400000) return { name: 'tier-2', ltv: 0.8, maxLoan: 1120000, range: '1,100,001 - 1,400,000' };
                 return null;
             }
         },
@@ -24,15 +25,13 @@ export class MortgagePage {
             adminFee: 0,
             maxIndividualIncome: 40000,
             maxFamilyIncome: 50000,
+            escalatingLabel: 'escalating-policy-12',
             getTier(unitPrice) {
                 if (unitPrice < 1400001 || unitPrice > 2500000) return null;
-                return { name: null, ltv: 0.8, maxLoan: 2000000 };
+                return { name: null, ltv: 0.8, maxLoan: 2000000, range: '1,400,001 - 2,500,000' };
             }
         }
     };
-
-    static activeInitiative = 'cbe8';
-    static activeSubtab = 'max-income';
 
     static init() {
         const router = window.app?.router;
@@ -61,9 +60,13 @@ export class MortgagePage {
     }
 
     static renderInitiativeSection(initiativeKey, isActive) {
+        const initiative = this.initiatives[initiativeKey];
         return `
             <div class="card tab-content ${isActive ? 'active' : ''}" data-main-content="${initiativeKey}" style="margin-top: var(--spacing-lg);">
-                <div class="tabs">
+                <div class="card-body" style="padding-bottom: 0;">
+                    ${this.renderInitiativeDetails(initiative)}
+                </div>
+                <div class="tabs" style="padding: 0 var(--spacing-lg); margin-bottom: var(--spacing-md);">
                     <button class="tab-btn active" data-sub-tab="max-income" data-initiative="${initiativeKey}"><span data-i18n="tab-max-income">Max Loan by Income</span></button>
                     <button class="tab-btn" data-sub-tab="fixed" data-initiative="${initiativeKey}"><span data-i18n="tab-fixed">Fixed Installment</span></button>
                     <button class="tab-btn" data-sub-tab="escalating" data-initiative="${initiativeKey}"><span data-i18n="tab-escalating">Escalating Installment</span></button>
@@ -75,6 +78,27 @@ export class MortgagePage {
         `;
     }
 
+    static renderInitiativeDetails(initiative) {
+        const rows = [
+            ['rate-annual', `${(initiative.rate * 100).toFixed(0)}%`],
+            ['dbr-limit', `${(initiative.dbr * 100).toFixed(0)}%`],
+            ['max-tenor-years', `${initiative.maxTenor}`],
+            ['escalating-policy', i18n.t(initiative.escalatingLabel)],
+            ['max-income-individual', this.currency(initiative.maxIndividualIncome)],
+            ['max-income-family', this.currency(initiative.maxFamilyIncome)],
+            ['admin-fee-rate', initiative.adminFee ? `${(initiative.adminFee * 100).toFixed(0)}%` : i18n.t('none')]
+        ];
+
+        if (initiative.key === 'cbe12') rows.push(['unit-range', '1,400,001 - 2,500,000']);
+
+        return `
+            <h3 style="margin-bottom: var(--spacing-md);" data-i18n="initiative-details">Initiative Details</h3>
+            <div class="grid grid-3" style="margin-bottom: var(--spacing-md);">
+                ${rows.map(([k, v]) => `<div class="card" style="padding: var(--spacing-md);"><div class="text-muted" data-i18n="${k}"></div><strong>${v}</strong></div>`).join('')}
+            </div>
+        `;
+    }
+
     static renderMaxIncomeTab(initiativeKey, active = false) {
         return `
             <div class="tab-content ${active ? 'active' : ''}" data-inner-content="max-income" data-initiative="${initiativeKey}">
@@ -82,6 +106,7 @@ export class MortgagePage {
                     <form data-form="max-income" data-initiative="${initiativeKey}">
                         <div class="grid grid-2">
                             ${this.input('income', 'net-monthly-income', 20000)}
+                            ${this.select('income-type', 'income-type', [{ value: 'individual', label: 'individual' }, { value: 'family', label: 'family' }], 'individual')}
                             ${this.input('obligations', 'monthly-installments', 0)}
                             ${this.input('unit-price', 'unit-price', 1200000)}
                             ${this.input('tenor', 'tenor-years', 20, 1)}
@@ -130,36 +155,40 @@ export class MortgagePage {
         `;
     }
 
-    static input(name, labelKey, value, min = 0) {
-        return `<div class="form-group"><label class="form-label" data-i18n="${labelKey}"></label><input class="form-input" type="number" name="${name}" value="${value}" min="${min}" required></div>`;
+    static input(name, labelKey, value = '', min = 0) {
+        return `<div class="form-group"><label data-i18n="${labelKey}"></label><input type="number" name="${name}" min="${min}" value="${value}" required></div>`;
+    }
+
+    static select(name, labelKey, options, selectedValue) {
+        return `<div class="form-group"><label data-i18n="${labelKey}"></label><select name="${name}">${options.map((o) => `<option value="${o.value}" ${o.value === selectedValue ? 'selected' : ''} data-i18n="${o.label}">${i18n.t(o.label)}</option>`).join('')}</select></div>`;
     }
 
     static attachListeners() {
-        document.querySelectorAll('[data-main-tab]').forEach(btn => {
+        document.querySelectorAll('[data-main-tab]').forEach((btn) => {
             btn.addEventListener('click', () => {
-                this.activeInitiative = btn.dataset.mainTab;
-                document.querySelectorAll('[data-main-tab]').forEach(b => b.classList.toggle('active', b === btn));
-                document.querySelectorAll('[data-main-content]').forEach(c => c.classList.toggle('active', c.dataset.mainContent === this.activeInitiative));
+                const tab = btn.dataset.mainTab;
+                document.querySelectorAll('[data-main-tab]').forEach((b) => b.classList.toggle('active', b === btn));
+                document.querySelectorAll('[data-main-content]').forEach((c) => c.classList.toggle('active', c.dataset.mainContent === tab));
             });
         });
 
-        document.querySelectorAll('[data-sub-tab]').forEach(btn => {
+        document.querySelectorAll('[data-sub-tab]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const initiative = btn.dataset.initiative;
                 const tab = btn.dataset.subTab;
-                document.querySelectorAll(`[data-sub-tab][data-initiative="${initiative}"]`).forEach(b => b.classList.toggle('active', b === btn));
-                document.querySelectorAll(`[data-inner-content][data-initiative="${initiative}"]`).forEach(c => c.classList.toggle('active', c.dataset.innerContent === tab));
+                document.querySelectorAll(`[data-sub-tab][data-initiative="${initiative}"]`).forEach((b) => b.classList.toggle('active', b === btn));
+                document.querySelectorAll(`[data-inner-content][data-initiative="${initiative}"]`).forEach((c) => c.classList.toggle('active', c.dataset.innerContent === tab));
             });
         });
 
-        document.querySelectorAll('form[data-form]').forEach(form => {
+        document.querySelectorAll('form[data-form]').forEach((form) => {
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.calculate(form);
             });
         });
 
-        document.querySelectorAll('form[data-form="fixed"], form[data-form="escalating"]').forEach(form => {
+        document.querySelectorAll('form[data-form="fixed"], form[data-form="escalating"]').forEach((form) => {
             const unitPriceInput = form.querySelector('input[name="unit-price"]');
             const loanInput = form.querySelector('input[name="loan-amount"]');
             const initiative = this.initiatives[form.dataset.initiative];
@@ -180,41 +209,47 @@ export class MortgagePage {
         const type = form.dataset.form;
         const initiative = this.initiatives[form.dataset.initiative];
         const data = Object.fromEntries(new FormData(form).entries());
-        const tenor = Math.min(Number(data.tenor), initiative.maxTenor);
+        const requestedTenor = Number(data.tenor);
+        const tenor = Math.min(requestedTenor, initiative.maxTenor);
         const unitPrice = Number(data['unit-price']);
         const tier = initiative.getTier(unitPrice);
         const limitByLtv = tier ? unitPrice * tier.ltv : 0;
         const limitByPolicy = tier ? tier.maxLoan : 0;
         const cap = Math.max(0, Math.min(limitByLtv, limitByPolicy));
 
-        let html = '';
+        let html = requestedTenor > initiative.maxTenor ? `<div class="warning-box">${i18n.t('tenor-capped-warning').replace('{max}', initiative.maxTenor)}</div>` : '';
+
         if (type === 'max-income') {
             const income = Number(data.income);
             const obligations = Number(data.obligations);
+            const incomeType = data['income-type'] || 'individual';
+            const incomeCap = incomeType === 'family' ? initiative.maxFamilyIncome : initiative.maxIndividualIncome;
             const dbrCapacity = income * initiative.dbr;
             const available = Math.max(0, dbrCapacity - obligations);
             const n = tenor * 12;
             const r = initiative.rate / 12;
-            const fixedPv = this.pvAnnuity(available, r, n);
-            const maxFixed = Math.min(fixedPv, cap);
+            const fixedPotential = this.pvAnnuity(available, r, n);
+            const maxFixed = Math.min(fixedPotential, cap);
+            const fixedInstallment = maxFixed > 0 ? this.pmt(maxFixed, r, n) : 0;
             const factor = this.getEscalatingFactor(initiative.key, r, n);
-            const escalatingPv = available * factor;
-            const maxEsc = Math.min(escalatingPv, cap);
-            const warnings = this.getEligibilityWarnings({ initiative, unitPrice, income, tier, fixedPv, escalatingPv, limitByLtv, limitByPolicy });
+            const escalatingPotential = available * factor;
+            const maxEsc = Math.min(escalatingPotential, cap);
+            const escYear1 = maxEsc > 0 ? maxEsc / factor : 0;
+            const warnings = this.getEligibilityWarnings({ initiative, unitPrice, income, incomeCap, tier, fixedPotential, escalatingPotential, limitByLtv, limitByPolicy });
 
-            html = this.metrics([
+            html += this.metrics([
                 ['dbr-capacity', dbrCapacity],
                 ['obligations-used', obligations],
                 ['available-installment', available],
                 ['max-fixed-loan', maxFixed],
-                ['fixed-installment', available],
+                ['fixed-installment', fixedInstallment],
                 ['max-escalating-loan', maxEsc],
-                ['year-1-installment', available],
+                ['year-1-installment', escYear1],
                 ...(initiative.adminFee ? [['admin-fee-amount', maxFixed * initiative.adminFee]] : []),
                 ...(tier?.name ? [['detected-tier', i18n.t(tier.name)]] : [])
             ]);
 
-            if (warnings.length) html += `<div class="warning-box">${warnings.map(w => `<div>${w}</div>`).join('')}</div>`;
+            if (warnings.length) html += `<div class="warning-box">${warnings.map((w) => `<div>${w}</div>`).join('')}</div>`;
         }
 
         if (type === 'fixed') {
@@ -224,45 +259,53 @@ export class MortgagePage {
             const monthly = this.pmt(loanAmount, r, n);
             const total = monthly * n;
             const interest = total - loanAmount;
-            html = this.metrics([
+            html += this.metrics([
                 ['fixed-installment', monthly],
                 ['total-payment', total],
                 ['total-interest', interest],
                 ...(initiative.adminFee ? [['admin-fee-amount', loanAmount * initiative.adminFee]] : [])
-            ]) + this.renderScheduleTable(this.buildFixedSchedule(loanAmount, monthly, r, tenor));
+            ]);
+            if (tier && loanAmount > cap) html += `<div class="warning-box"><div>${i18n.t('eligibility-ltv-cap')}</div></div>`;
+            if (!tier) html += `<div class="warning-box"><div>${i18n.t('eligibility-unit-range')}</div></div>`;
+            html += this.renderScheduleTable(this.buildFixedSchedule(loanAmount, monthly, r, tenor), 'fixed-installment');
         }
 
         if (type === 'escalating') {
             const loanAmount = Number(data['loan-amount']);
             const result = this.solveEscalating(initiative.key, loanAmount, tenor, initiative.rate / 12);
-            html = this.metrics([
+            html += this.metrics([
                 ['year-1-installment', result.year1],
                 ['total-payment', result.totalPayment],
                 ['total-interest', result.totalPayment - loanAmount],
                 ...(initiative.adminFee ? [['admin-fee-amount', loanAmount * initiative.adminFee]] : [])
-            ]) + this.renderScheduleTable(result.schedule);
+            ]);
+            if (tier && loanAmount > cap) html += `<div class="warning-box"><div>${i18n.t('eligibility-ltv-cap')}</div></div>`;
+            if (!tier) html += `<div class="warning-box"><div>${i18n.t('eligibility-unit-range')}</div></div>`;
+            html += this.renderScheduleTable(result.schedule, 'escalating-installment');
         }
 
         const out = document.querySelector(`[data-results="${type}"][data-initiative="${initiative.key}"]`);
         out.innerHTML = html;
+        i18n.updatePageText();
     }
 
-    static getEligibilityWarnings({ initiative, unitPrice, income, tier, fixedPv, escalatingPv, limitByLtv, limitByPolicy }) {
+    static getEligibilityWarnings({ initiative, unitPrice, income, incomeCap, tier, fixedPotential, escalatingPotential, limitByLtv, limitByPolicy }) {
         const warnings = [];
         if (!tier) warnings.push(i18n.t('eligibility-unit-range'));
-        if (income > initiative.maxFamilyIncome) warnings.push(i18n.t('eligibility-income-max'));
-        if (fixedPv > limitByLtv || escalatingPv > limitByLtv) warnings.push(i18n.t('eligibility-ltv-cap'));
-        if (fixedPv > limitByPolicy || escalatingPv > limitByPolicy) warnings.push(i18n.t('eligibility-loan-cap'));
+        if (income > incomeCap) warnings.push(i18n.t('eligibility-income-max'));
+        if (fixedPotential > limitByLtv || escalatingPotential > limitByLtv) warnings.push(i18n.t('eligibility-ltv-cap'));
+        if (fixedPotential > limitByPolicy || escalatingPotential > limitByPolicy) warnings.push(i18n.t('eligibility-loan-cap'));
+        if (unitPrice <= 0) warnings.push(i18n.t('eligibility-unit-range'));
         return warnings;
     }
 
     static getEscalatingFactor(type, r, n) {
         let factor = 0;
         for (let m = 1; m <= n; m++) {
-            let p = 1;
-            if (type === 'cbe8') p = Math.pow(1 + 0.05 / 12, m - 1);
-            if (type === 'cbe12') p = m <= 120 ? Math.pow(1 + 0.07, Math.floor((m - 1) / 12)) : Math.pow(1 + 0.07, 9);
-            factor += p / Math.pow(1 + r, m);
+            let stepUp = 1;
+            if (type === 'cbe8') stepUp = Math.pow(1 + 0.05 / 12, m - 1);
+            if (type === 'cbe12') stepUp = m <= 120 ? Math.pow(1 + 0.07, Math.floor((m - 1) / 12)) : Math.pow(1 + 0.07, 9);
+            factor += stepUp / Math.pow(1 + r, m);
         }
         return factor;
     }
@@ -312,8 +355,8 @@ export class MortgagePage {
         return `<div class="grid grid-2">${rows.map(([k, v]) => `<div class="card"><strong data-i18n="${k}"></strong><div>${typeof v === 'number' ? this.currency(v) : v}</div></div>`).join('')}</div>`;
     }
 
-    static renderScheduleTable(schedule) {
-        return `<div class="results-table-wrapper"><table class="results-table"><thead><tr><th data-i18n="year"></th><th data-i18n="fixed-installment"></th><th data-i18n="annual-payment"></th><th data-i18n="remaining-balance"></th></tr></thead><tbody>${schedule.map(s => `<tr><td>${s.year}</td><td>${this.currency(s.monthly)}</td><td>${this.currency(s.annual)}</td><td>${this.currency(s.balance)}</td></tr>`).join('')}</tbody></table></div>`;
+    static renderScheduleTable(schedule, paymentLabelKey) {
+        return `<div class="results-table-wrapper"><table class="results-table"><thead><tr><th data-i18n="year"></th><th data-i18n="${paymentLabelKey}"></th><th data-i18n="annual-payment"></th><th data-i18n="remaining-balance"></th></tr></thead><tbody>${schedule.map((s) => `<tr><td>${s.year}</td><td>${this.currency(s.monthly)}</td><td>${this.currency(s.annual)}</td><td>${this.currency(s.balance)}</td></tr>`).join('')}</tbody></table></div>`;
     }
 
     static currency(v) { return `${Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 })} EGP`; }

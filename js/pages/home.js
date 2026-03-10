@@ -33,11 +33,11 @@ export class HomePage {
                             <ul style="list-style: none; padding: 0; margin-top: var(--spacing-md);">
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="secured-loans-title">Secured Loans</span>
+                                    <span data-i18n="unsecured-loans-title">Cash Loans</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--border-color);">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>
-                                    <span data-i18n="unsecured-loans-title">Unsecured Loans</span>
+                                    <span data-i18n="mortgage-title">Mortgage</span>
                                 </li>
                                 <li style="padding: var(--spacing-sm) 0;">
                                     <i class="fas fa-check-circle" style="color: var(--secondary); margin-right: var(--spacing-sm);"></i>

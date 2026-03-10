@@ -9,6 +9,8 @@ import { SecuredLoansPage } from './pages/secured-loans.js';
 import { UnsecuredLoansPage } from './pages/unsecured-loans.js';
 import { CreditCardsPage } from './pages/credit-cards.js';
 import { AdvancedToolsPage } from './pages/advancedtools.js';
+import { MortgagePage } from './pages/mortgage.js';
+import { CashLoansPage } from './pages/cash-loans.js';
 import { LoginPage } from './pages/login.js';
 import { AdminPage } from './pages/admin.js';
 
@@ -37,12 +39,25 @@ class App {
             title: 'BMToolkit - Home'
         });
 
-        this.router.register('secured-loans', () => SecuredLoansPage.init(), {
-            title: 'BMToolkit - Secured Loans'
-        });
-
         this.router.register('loans', () => LoansPage.init(), {
             title: 'BMToolkit - Loans'
+        });
+
+        this.router.register('loans/cash', () => CashLoansPage.init(), {
+            title: 'BMToolkit - Cash Loans'
+        });
+
+        this.router.register('loans/mortgage', () => MortgagePage.init(), {
+            title: 'BMToolkit - Mortgage'
+        });
+
+        this.router.register('loans/advanced', () => AdvancedToolsPage.init(), {
+            title: 'BMToolkit - Advanced Tools'
+        });
+
+        // Backward compatibility aliases
+        this.router.register('secured-loans', () => SecuredLoansPage.init(), {
+            title: 'BMToolkit - Secured Loans'
         });
 
         this.router.register('unsecured-loans', () => UnsecuredLoansPage.init(), {

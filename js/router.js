@@ -89,11 +89,8 @@ export class Router {
         const navLinks = document.querySelectorAll('[data-route]');
         navLinks.forEach(link => {
             const linkRoute = link.getAttribute('data-route');
-            if (linkRoute === this.currentRoute) {
-                link.classList.add('active');
-            } else {
-                link.classList.remove('active');
-            }
+            const isActive = this.currentRoute === linkRoute || this.currentRoute.startsWith(`${linkRoute}/`);
+            link.classList.toggle('active', isActive);
         });
     }
 

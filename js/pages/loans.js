@@ -47,39 +47,39 @@ export class LoansPage {
 
                 <div class="grid grid-3 loans-sections-grid" style="margin-top: var(--spacing-lg);">
                     ${this.renderLoanCard({
-                        route: 'secured-loans',
-                        icon: 'fa-shield-alt',
+                        route: 'loans/cash',
+                        icon: 'fa-hand-holding-dollar',
                         gradient: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
-                        titleKey: 'secured-loans-title',
-                        titleFallback: 'Secured Loans',
-                        descKey: 'secured-loans-desc',
-                        descFallback: 'Calculate loans backed by certificates of deposit',
-                        items: [
-                            { key: 'smart-investment', fallback: 'Smart Investment Tool' },
-                            { key: 'smart-optimizer', fallback: 'Smart Loan Optimizer' },
-                            { key: 'loan-calculator', fallback: 'Loan Calculator' },
-                            { key: 'max-loan-calc', fallback: 'Max Loan Calculator' }
-                        ]
-                    })}
-
-                    ${this.renderLoanCard({
-                        route: 'unsecured-loans',
-                        icon: 'fa-handshake',
-                        gradient: 'linear-gradient(135deg, var(--secondary), var(--secondary-dark))',
                         titleKey: 'unsecured-loans-title',
-                        titleFallback: 'Unsecured Loans',
+                        titleFallback: 'Cash Loans',
                         descKey: 'unsecured-loans-desc',
-                        descFallback: 'Personal loans based on income and employment',
+                        descFallback: 'Secured + unsecured cash loan tools',
                         items: [
-                            { key: 'salary-transfer-loans', fallback: 'Salary Transfer Loans' },
-                            { key: 'income-proof-loans', fallback: 'Income Proof Loans' },
-                            { key: 'business-owner-loans', fallback: 'Business Owner Loans' },
-                            { key: 'pension-loans', fallback: 'Pension Loans' }
+                            { key: 'secured-loans-title', fallback: 'Secured Loans' },
+                            { key: 'unsecured-loans-title', fallback: 'Cash Loans' },
+                            { key: 'max-loan-by-income', fallback: 'Max Loan by Income' },
+                            { key: 'loan-schedule', fallback: 'Loan Schedule' }
                         ]
                     })}
 
                     ${this.renderLoanCard({
-                        route: 'advancedtools',
+                        route: 'loans/mortgage',
+                        icon: 'fa-house',
+                        gradient: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                        titleKey: 'mortgage-title',
+                        titleFallback: 'Mortgage',
+                        descKey: 'mortgage-desc',
+                        descFallback: 'CBE initiatives with fixed and escalating plans',
+                        items: [
+                            { key: 'tab-cbe-8', fallback: 'CBE 8% Initiative' },
+                            { key: 'tab-cbe-12', fallback: 'CBE 12% Initiative' },
+                            { key: 'tab-fixed', fallback: 'Fixed Installment' },
+                            { key: 'tab-escalating', fallback: 'Escalating Installment' }
+                        ]
+                    })}
+
+                    ${this.renderLoanCard({
+                        route: 'loans/advanced',
                         icon: 'fa-puzzle-piece',
                         gradient: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
                         titleKey: 'advancedtools-title',

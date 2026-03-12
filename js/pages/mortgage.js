@@ -64,8 +64,8 @@ export class MortgagePage {
     };
 
     static INCOME_CAPS = {
-        '8': { individual: 13_000, family: 18_000 },
-        '12': { individual: 40_000, family: 50_000 },
+        '8': { individual: { min: 0, max: 13_000 }, family: { min: 0, max: 18_000 } },
+        '12': { individual: { min: 13_001, max: 40_000 }, family: { min: 18_001, max: 50_000 } },
     };
 
     static ESCALATING_PARAMS = {
@@ -237,12 +237,13 @@ export class MortgagePage {
         }
 
         const cap = this.INCOME_CAPS[rateKey];
-        const incomeOk = incomeType === 'family' ? income <= cap.family : income <= cap.individual;
+        const capBand = incomeType === 'family' ? cap.family : cap.individual;
+        const incomeOk = income >= capBand.min && income <= capBand.max;
         if (!incomeOk) {
             return {
                 errors: [this.t(
-                    `Income exceeds the ${rateKey}% initiative cap. Max: ${cap.individual.toLocaleString()} EGP (individual) / ${cap.family.toLocaleString()} EGP (family).`,
-                    `الدخل يتجاوز حد مبادرة ${rateKey}%. الحد الأقصى: ${cap.individual.toLocaleString()} جنيه (فرد) / ${cap.family.toLocaleString()} جنيه (أسرة).`
+                    `Income is outside the ${rateKey}% initiative range. Allowed: ${capBand.min.toLocaleString()} – ${capBand.max.toLocaleString()} EGP.`,
+                    `الدخل خارج نطاق مبادرة ${rateKey}%. المسموح: ${capBand.min.toLocaleString()} – ${capBand.max.toLocaleString()} جنيه.`
                 )]
             };
         }
@@ -355,11 +356,6 @@ export class MortgagePage {
         const maxLoanByDbr = installmentType === 'fixed' ? maxLoanByDbrFixed : maxLoanByDbrEscalating;
         const maxLoanAmount = Math.min(maxLoanByLtv, initiativeData.maxLoanCap, maxLoanByDbr);
 
-        const fixedInstallment = FinancialCalculator.PMT(monthlyRate, months, maxLoanAmount);
-        const escalatingFirstInstallment = this.calculateEscalatingFirstInstallment(
-            maxLoanAmount, initiativeData.annualRate, cappedTermYears, annualIncrease, increaseYearsLimit
-        );
-
         const instNorm = installmentType === 'escalating' ? 'variable' : installmentType;
         const productRecord = this.getProduct(segment, unitPrice, instNorm);
         const ubsCode = productRecord?.ubs_code ?? null;
@@ -368,6 +364,19 @@ export class MortgagePage {
         const limitingFactor =
             maxLoanAmount < Math.min(maxLoanByLtv, initiativeData.maxLoanCap) - 0.5 ? 'dbr' :
                 maxLoanAmount < maxLoanByLtv - 0.5 ? 'cap' : 'ltv';
+
+        // ── Fixed scenario (its own max loan) ────────────────────────────────
+        const maxLoanFixed = Math.min(maxLoanByLtv, initiativeData.maxLoanCap, maxLoanByDbrFixed);
+        const fixedInstallment = FinancialCalculator.PMT(monthlyRate, months, maxLoanFixed);
+
+        // ── Escalating scenario (its own max loan) ───────────────────────────
+        const maxLoanEscalating = Math.min(maxLoanByLtv, initiativeData.maxLoanCap, maxLoanByDbrEscalating);
+        const escalatingFirstInstallment = this.calculateEscalatingFirstInstallment(
+            maxLoanEscalating, initiativeData.annualRate, cappedTermYears, annualIncrease, increaseYearsLimit
+        );
+        const escalatingSchedule = this.getEscalatingSchedule(
+            escalatingFirstInstallment, annualIncrease, cappedTermYears, increaseYearsLimit
+        );
 
         return {
             ...initiativeData,
@@ -382,19 +391,17 @@ export class MortgagePage {
             maxLoanByDbr,
             maxLoanAmount,
             limitingFactor,
+            // Fixed scenario
+            maxLoanFixed,
             fixedInstallment,
-            escalatingFirstInstallment,
             totalPaymentFixed: fixedInstallment * months,
-            totalInterestFixed: (fixedInstallment * months) - maxLoanAmount,
-            escalatingSchedule: this.getEscalatingSchedule(
-                escalatingFirstInstallment, annualIncrease, cappedTermYears, increaseYearsLimit
-            ),
+            totalInterestFixed: (fixedInstallment * months) - maxLoanFixed,
+            // Escalating scenario
+            maxLoanEscalating,
+            escalatingFirstInstallment,
+            escalatingSchedule,
         };
     }
-
-    // ─── FORMAT HELPERS ──────────────────────────────────────────────────────────
-    static fmt(n) { return n != null ? `${i18n.formatNumber(n, 0)} EGP` : '—'; }
-    static pct(n) { return n != null ? `${(n * 100).toFixed(0)}%` : '—'; }
 
     // ─── RENDER RESULTS ──────────────────────────────────────────────────────────
     static renderResults(result, inputs, showSchedule = false) {
@@ -451,36 +458,38 @@ export class MortgagePage {
                 <i class="fas fa-credit-card"></i>
                 <span>
                     <strong data-i18n="credit-card-obligation">${this.t('Credit card obligation:', 'التزام البطاقة:')}</strong>
-                    ${this.fmt(inputs.creditCardLimit)} × 5% = <strong>${this.fmt(result.creditCardObligation)}</strong>
+                    ${i18n.formatCurrency(inputs.creditCardLimit)} × 5% = <strong>${i18n.formatCurrency(result.creditCardObligation)}</strong>
                     <span data-i18n="credit-card-obligation-note">${this.t('added to monthly obligations', 'مضافة للالتزامات الشهرية')}</span>
                 </span>
             </div>` : ''}
 
-            <!-- ── Metric summary cards ── -->
+            <!-- ── KEY metric cards (always visible) ── -->
             <div class="grid grid-4" style="margin-bottom:var(--spacing-lg);">
                 <div class="metric-card">
                     <div class="metric-label">${this.t('Max Loan Amount', 'قيمة التمويل القصوى')}</div>
-                    <div class="metric-value primary">${this.fmt(result.maxLoanAmount)}</div>
+                    <div class="metric-value primary">${i18n.formatCurrency(result.maxLoanAmount)}</div>
                     <div class="metric-sub">${limitBadge}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">
                         ${inputs.installmentType === 'fixed'
                 ? this.t('Monthly Installment', 'القسط الشهري')
-                : this.t('Year 1 Installment', 'قسط السنة الأولى')}
+                : this.t('Min Monthly Installment', 'الحد الأدنى للقسط')}
                     </div>
-                    <div class="metric-value">${this.fmt(chosenInst)}</div>
-                    <div class="metric-sub">
-                        ${inputs.installmentType === 'escalating'
-                ? this.t('escalating', 'متزايد')
-                : this.t('fixed', 'ثابت')}
-                    </div>
+                    <div class="metric-value">${i18n.formatCurrency(inputs.installmentType === 'escalating' ? result.escalatingFirstInstallment : result.fixedInstallment)}</div>
+                    <div class="metric-sub">${inputs.installmentType === 'escalating' ? this.t('Year 1 (min)', 'سنة 1 (أدنى)') : this.t('fixed', 'ثابت')}</div>
                 </div>
+                ${inputs.installmentType === 'escalating' ? `
+                <div class="metric-card">
+                    <div class="metric-label">${this.t('Max Monthly Installment', 'الحد الأقصى للقسط')}</div>
+                    <div class="metric-value">${i18n.formatCurrency(result.escalatingSchedule[result.escalatingSchedule.length - 1]?.monthlyInstallment)}</div>
+                    <div class="metric-sub">${this.t('Last year', 'السنة الأخيرة')}</div>
+                </div>` : `
                 <div class="metric-card">
                     <div class="metric-label">${this.t('Initiative / Rate', 'المبادرة / السعر')}</div>
                     <div class="metric-value">${result.initiative}%</div>
                     <div class="metric-sub">${trancheLabel}</div>
-                </div>
+                </div>`}
                 <div class="metric-card">
                     <div class="metric-label">${this.t('Loan Term', 'مدة التمويل')}</div>
                     <div class="metric-value">${result.cappedTermYears}</div>
@@ -488,7 +497,32 @@ export class MortgagePage {
                 </div>
             </div>
 
-            <!-- ── Full detail card ── -->
+            <!-- ── Selected Product Summary bar (always visible) ── -->
+            <div class="card" style="margin-bottom:var(--spacing-md);">
+                <div class="card-body" style="padding:var(--spacing-md) var(--spacing-lg);">
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:var(--spacing-sm);">
+                        <div style="display:flex; align-items:center; gap:var(--spacing-md); flex-wrap:wrap;">
+                            <span style="font-size:0.8em; text-transform:uppercase; color:var(--text-muted); letter-spacing:.06em;">${this.t('Product', 'المنتج')}</span>
+                            <strong>${result.programName}</strong>
+                            <span class="badge badge-info">${result.initiative}% · ${trancheLabel}</span>
+                            ${result.ubsCode ? `<span style="font-size:0.85em; color:var(--text-muted);">${this.t('UBS', 'كود')}: <strong>${result.ubsCode}</strong></span>` : ''}
+                            <span style="font-size:0.85em; color:var(--text-muted);">${this.t('LTV', 'ن.ت')}: <strong>${i18n.formatPercent(result.ltv * 100, 0)}</strong></span>
+                            ${result.adminFeeRate > 0
+                ? `<span style="font-size:0.85em; color:var(--text-muted);">${this.t('Fees', 'رسوم')}: <strong>${i18n.formatPercent(result.adminFeeRate * 100, 0)}</strong></span>`
+                : `<span style="font-size:0.85em; color:var(--success, #16a34a);">${this.t('No admin fees', 'بدون مصاريف')}</span>`}
+                        </div>
+                        <div style="display:flex; gap:var(--spacing-sm); align-items:center;">
+                            <button id="mortgage-show-less-btn" class="btn-secondary" type="button" style="font-size:0.85em; padding:6px 14px;">
+                                <i class="fas fa-chevron-down"></i> ${this.t('Show More Details', 'عرض تفاصيل أكثر')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Full detail card (collapsed by default) ── -->
+            <div id="mortgage-extra-details" style="display:none;">
+
             <div class="card" style="margin-bottom:var(--spacing-lg);">
                 <div class="card-header">
                     <h3 class="card-title">
@@ -507,11 +541,11 @@ export class MortgagePage {
                             <table class="detail-table" style="width:100%; font-size:0.9em; border-collapse:collapse;">
                                 <tr><td class="dt-label">${this.t('Program', 'البرنامج')}</td>             <td class="dt-value"><strong>${result.programName}</strong></td></tr>
                                 <tr><td class="dt-label">${this.t('UBS Code', 'كود المنتج')}</td>          <td class="dt-value"><strong>${result.ubsCode ?? '—'}</strong></td></tr>
-                                <tr><td class="dt-label">${this.t('Interest Rate', 'سعر العائد')}</td>     <td class="dt-value">${this.pct(result.annualRate)}</td></tr>
-                                <tr><td class="dt-label">${this.t('LTV', 'نسبة التمويل')}</td>             <td class="dt-value">${this.pct(result.ltv)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Interest Rate', 'سعر العائد')}</td>     <td class="dt-value">${i18n.formatPercent(result.annualRate * 100, 0)}</td></tr>
+                                <tr><td class="dt-label">${this.t('LTV', 'نسبة التمويل')}</td>             <td class="dt-value">${i18n.formatPercent(result.ltv * 100, 0)}</td></tr>
                                 <tr><td class="dt-label">${this.t('Max Age', 'الحد الأقصى للسن')}</td>     <td class="dt-value">${result.maxAge ?? '—'}</td></tr>
-                                <tr><td class="dt-label">${this.t('Admin Fees', 'المصاريف الإدارية')}</td> <td class="dt-value">${result.adminFeeRate > 0 ? this.pct(result.adminFeeRate) : this.t('None', 'لا يوجد')}</td></tr>
-                                ${adminFeeAmt > 0 ? `<tr><td class="dt-label">${this.t('Fee Amount', 'قيمة الرسوم')}</td><td class="dt-value">${this.fmt(adminFeeAmt)}</td></tr>` : ''}
+                                <tr><td class="dt-label">${this.t('Admin Fees', 'المصاريف الإدارية')}</td> <td class="dt-value">${result.adminFeeRate > 0 ? i18n.formatPercent(result.adminFeeRate * 100, 0) : this.t('None', 'لا يوجد')}</td></tr>
+                                ${adminFeeAmt > 0 ? `<tr><td class="dt-label">${this.t('Fee Amount', 'قيمة الرسوم')}</td><td class="dt-value">${i18n.formatCurrency(adminFeeAmt)}</td></tr>` : ''}
                             </table>
                         </div>
 
@@ -521,17 +555,17 @@ export class MortgagePage {
                                 ${this.t('DBR Breakdown', 'تفاصيل عبء الدين')}
                             </h4>
                             <table class="detail-table" style="width:100%; font-size:0.9em; border-collapse:collapse;">
-                                <tr><td class="dt-label">${this.t('Monthly Income', 'الدخل الشهري')}</td>                           <td class="dt-value">${this.fmt(inputs.monthlyIncome)}</td></tr>
-                                <tr><td class="dt-label">${this.t('DBR Ratio', 'نسبة عبء الدين')}</td>                             <td class="dt-value">${this.pct(result.dbrRatio)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Max Monthly Burden', 'الحد الأقصى للأعباء')}</td>               <td class="dt-value">${this.fmt(result.maxMonthlyBurden)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Monthly Income', 'الدخل الشهري')}</td>                           <td class="dt-value">${i18n.formatCurrency(inputs.monthlyIncome)}</td></tr>
+                                <tr><td class="dt-label">${this.t('DBR Ratio', 'نسبة عبء الدين')}</td>                             <td class="dt-value">${i18n.formatPercent(result.dbrRatio * 100, 0)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Max Monthly Burden', 'الحد الأقصى للأعباء')}</td>               <td class="dt-value">${i18n.formatCurrency(result.maxMonthlyBurden)}</td></tr>
                                 <tr style="border-top:1px solid var(--border-color);">
-                                    <td class="dt-label">${this.t('Existing Installments', 'الأقساط الحالية')}</td>               <td class="dt-value">${this.fmt(inputs.monthlyObligations || 0)}</td></tr>
+                                    <td class="dt-label">${this.t('Existing Installments', 'الأقساط الحالية')}</td>               <td class="dt-value">${i18n.formatCurrency(inputs.monthlyObligations || 0)}</td></tr>
                                 ${result.creditCardObligation > 0 ? `
-                                <tr><td class="dt-label">${this.t('Credit Card Obligation', 'التزام البطاقة')}</td>                 <td class="dt-value">${this.fmt(result.creditCardObligation)}</td></tr>` : ''}
-                                <tr><td class="dt-label">${this.t('Total Obligations', 'إجمالي الالتزامات')}</td>                  <td class="dt-value">${this.fmt(result.totalObligations)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Credit Card Obligation', 'التزام البطاقة')}</td>                 <td class="dt-value">${i18n.formatCurrency(result.creditCardObligation)}</td></tr>` : ''}
+                                <tr><td class="dt-label">${this.t('Total Obligations', 'إجمالي الالتزامات')}</td>                  <td class="dt-value">${i18n.formatCurrency(result.totalObligations)}</td></tr>
                                 <tr style="background:var(--bg-highlight, var(--card-bg));">
                                     <td class="dt-label"><strong>${this.t('Available for Mortgage', 'المتاح للرهن العقاري')}</strong></td>
-                                    <td class="dt-value"><strong>${this.fmt(result.availableForMortgage)}</strong></td>
+                                    <td class="dt-value"><strong>${i18n.formatCurrency(result.availableForMortgage)}</strong></td>
                                 </tr>
                             </table>
                         </div>
@@ -542,33 +576,63 @@ export class MortgagePage {
                                 ${this.t('Loan Limits', 'حدود التمويل')}
                             </h4>
                             <table class="detail-table" style="width:100%; font-size:0.9em; border-collapse:collapse;">
-                                <tr><td class="dt-label">${this.t('Max by LTV', 'الحد بنسبة التمويل')}</td>          <td class="dt-value">${this.fmt(result.maxLoanByLtv)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Product Cap', 'الحد الأقصى للمنتج')}</td>         <td class="dt-value">${this.fmt(result.maxLoanCap)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Max by DBR', 'الحد وفق عبء الدين')}</td>          <td class="dt-value">${this.fmt(result.maxLoanByDbr)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Max by LTV', 'الحد بنسبة التمويل')}</td>          <td class="dt-value">${i18n.formatCurrency(result.maxLoanByLtv)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Product Cap', 'الحد الأقصى للمنتج')}</td>         <td class="dt-value">${i18n.formatCurrency(result.maxLoanCap)}</td></tr>
+                                <tr><td class="dt-label">${this.t('Max by DBR', 'الحد وفق عبء الدين')}</td>          <td class="dt-value">${i18n.formatCurrency(result.maxLoanByDbr)}</td></tr>
                                 <tr style="background:var(--bg-highlight, var(--card-bg));">
                                     <td class="dt-label"><strong>${this.t('Final Loan Amount', 'قيمة القرض النهائية')}</strong></td>
-                                    <td class="dt-value"><strong>${this.fmt(result.maxLoanAmount)}</strong></td>
+                                    <td class="dt-value"><strong>${i18n.formatCurrency(result.maxLoanAmount)}</strong></td>
                                 </tr>
                             </table>
                         </div>
 
                         <!-- Installment comparison -->
-                        <div>
+                        <div style="grid-column: 1 / -1;">
                             <h4 style="margin-bottom:var(--spacing-sm); font-size:0.85em; text-transform:uppercase; color:var(--text-muted); letter-spacing:.06em;">
                                 ${this.t('Installment Comparison', 'مقارنة الأقساط')}
                             </h4>
-                            <table class="detail-table" style="width:100%; font-size:0.9em; border-collapse:collapse;">
-                                <tr><td class="dt-label">${this.t('Fixed Monthly', 'القسط الثابت')}</td>                          <td class="dt-value">${this.fmt(result.fixedInstallment)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Total Payment (Fixed)', 'إجمالي السداد (ثابت)')}</td>           <td class="dt-value">${this.fmt(result.totalPaymentFixed)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Total Interest (Fixed)', 'إجمالي الفائدة (ثابت)')}</td>         <td class="dt-value">${this.fmt(result.totalInterestFixed)}</td></tr>
-                                <tr style="border-top:1px solid var(--border-color);">
-                                    <td class="dt-label">${this.t('Escalating Year 1', 'المتزايد - سنة 1')}</td>                  <td class="dt-value">${this.fmt(result.escalatingFirstInstallment)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Annual Increase Rate', 'نسبة الزيادة السنوية')}</td>            <td class="dt-value">${this.pct(result.annualIncrease)}</td></tr>
-                                <tr><td class="dt-label">${this.t('Increase Period', 'فترة الزيادة')}</td>                         <td class="dt-value">${result.initiative === '12'
-                ? this.t('First 10 years', 'أول 10 سنوات')
-                : this.t('Full term', 'طوال المدة')}</td>
-                                </tr>
-                            </table>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--spacing-md);">
+
+                                <!-- Fixed column -->
+                                <div style="border:2px solid ${inputs.installmentType === 'fixed' ? 'var(--primary)' : 'var(--border-color)'}; border-radius:var(--radius-md); padding:var(--spacing-md); background:${inputs.installmentType === 'fixed' ? 'var(--bg-highlight, var(--card-bg))' : 'transparent'};">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-sm);">
+                                        <strong style="font-size:0.9em;">${this.t('Fixed', 'ثابت')}</strong>
+                                        ${inputs.installmentType === 'fixed' ? `<span class="badge badge-info">${this.t('Selected', 'مختار')}</span>` : ''}
+                                    </div>
+                                    <table style="width:100%; font-size:0.9em; border-collapse:collapse;">
+                                        <tr><td class="dt-label">${this.t('Max Loan', 'قيمة التمويل')}</td>         <td class="dt-value">${i18n.formatCurrency(result.maxLoanFixed)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Monthly', 'القسط الشهري')}</td>         <td class="dt-value"><strong>${i18n.formatCurrency(result.fixedInstallment)}</strong></td></tr>
+                                        <tr><td class="dt-label">${this.t('Total Payment', 'إجمالي السداد')}</td>  <td class="dt-value">${i18n.formatCurrency(result.totalPaymentFixed)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Total Interest', 'إجمالي الفائدة')}</td><td class="dt-value">${i18n.formatCurrency(result.totalInterestFixed)}</td></tr>
+                                    </table>
+                                </div>
+
+                                <!-- Escalating column -->
+                                ${(() => {
+                const lastInstallment = result.escalatingSchedule[result.escalatingSchedule.length - 1]?.monthlyInstallment;
+                const totalEscalating = result.escalatingSchedule.reduce((sum, r) => sum + r.monthlyInstallment * 12, 0);
+                const totalInterestEscalating = totalEscalating - result.maxLoanEscalating;
+                const increasePeriod = result.initiative === '12'
+                    ? this.t('First 10 yrs', 'أول 10 سنوات')
+                    : this.t('Full term', 'طوال المدة');
+                return `
+                                <div style="border:2px solid ${inputs.installmentType === 'escalating' ? 'var(--primary)' : 'var(--border-color)'}; border-radius:var(--radius-md); padding:var(--spacing-md); background:${inputs.installmentType === 'escalating' ? 'var(--bg-highlight, var(--card-bg))' : 'transparent'};">
+                                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--spacing-sm);">
+                                        <strong style="font-size:0.9em;">${this.t('Escalating', 'متزايد')} (+${i18n.formatPercent(result.annualIncrease * 100, 0)}/yr)</strong>
+                                        ${inputs.installmentType === 'escalating' ? `<span class="badge badge-info">${this.t('Selected', 'مختار')}</span>` : ''}
+                                    </div>
+                                    <table style="width:100%; font-size:0.9em; border-collapse:collapse;">
+                                        <tr><td class="dt-label">${this.t('Max Loan', 'قيمة التمويل')}</td>         <td class="dt-value">${i18n.formatCurrency(result.maxLoanEscalating)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Year 1 (min)', 'سنة 1 (أدنى)')}</td>    <td class="dt-value"><strong>${i18n.formatCurrency(result.escalatingFirstInstallment)}</strong></td></tr>
+                                        <tr><td class="dt-label">${this.t('Last yr (max)', 'آخر سنة (أقصى)')}</td> <td class="dt-value">${i18n.formatCurrency(lastInstallment)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Total Payment', 'إجمالي السداد')}</td>  <td class="dt-value">${i18n.formatCurrency(totalEscalating)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Total Interest', 'إجمالي الفائدة')}</td><td class="dt-value">${i18n.formatCurrency(totalInterestEscalating)}</td></tr>
+                                        <tr><td class="dt-label">${this.t('Increases', 'الزيادة')}</td>            <td class="dt-value">${increasePeriod}</td></tr>
+                                    </table>
+                                </div>`;
+            })()}
+
+                            </div>
                         </div>
 
                     </div>
@@ -597,15 +661,32 @@ export class MortgagePage {
                             ${result.escalatingSchedule.map(row => `
                                 <tr>
                                     <td>${row.year}</td>
-                                    <td class="number-display">${this.fmt(row.monthlyInstallment)}</td>
-                                    <td class="number-display">${this.fmt(row.monthlyInstallment * 12)}</td>
+                                    <td class="number-display">${i18n.formatCurrency(row.monthlyInstallment)}</td>
+                                    <td class="number-display">${i18n.formatCurrency(row.monthlyInstallment * 12)}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
                     </table>
                 </div>
             </div>` : ''}
+
+            </div><!-- /#mortgage-extra-details -->
         `;
+    }
+
+    // ─── SHOW-LESS TOGGLE ────────────────────────────────────────────────────────
+    static attachShowLessToggle() {
+        const toggleBtn = document.getElementById('mortgage-show-less-btn');
+        const extraSection = document.getElementById('mortgage-extra-details');
+        if (!toggleBtn || !extraSection) return;
+
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = extraSection.style.display === 'none';
+            extraSection.style.display = isHidden ? '' : 'none';
+            toggleBtn.innerHTML = isHidden
+                ? `<i class="fas fa-chevron-up"></i> ${this.t('Show Less', 'عرض أقل')}`
+                : `<i class="fas fa-chevron-down"></i> ${this.t('Show More Details', 'عرض تفاصيل أكثر')}`;
+        });
     }
 
     // ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
@@ -627,11 +708,59 @@ export class MortgagePage {
                 creditCardLimit: Number(document.getElementById('credit-card-limit').value) || 0,
             };
             const showSchedule = document.getElementById('show-schedule').checked;
+
+            // ── Update URL params (same pattern as unsecured-loans) ───────────
+            const router = window.app?.router;
+            if (router) {
+                router.updateQueryParams({
+                    unitPrice: inputs.unitPrice,
+                    income: inputs.monthlyIncome,
+                    incomeType: inputs.incomeType,
+                    term: inputs.termYears,
+                    segment: inputs.segment,
+                    instType: inputs.installmentType,
+                    obligations: inputs.monthlyObligations || '',
+                    cc: inputs.creditCardLimit || '',
+                    schedule: showSchedule ? '1' : '',
+                });
+            }
+
             const result = this.calculateMortgage(inputs);
             results.innerHTML = this.renderResults(result, inputs, showSchedule);
+            this.attachShowLessToggle();
         });
 
-        form.addEventListener('reset', () => { results.innerHTML = ''; });
+        form.addEventListener('reset', () => {
+            results.innerHTML = '';
+            const router = window.app?.router;
+            if (router) router.updateQueryParams({});
+        });
+    }
+
+    // ─── AUTO-CALCULATE FROM URL ──────────────────────────────────────────────────
+    //
+    // Reads URL params and pre-fills the form, then fires the calculation.
+    // Mirrors the autoCalculateIfNeeded() pattern in unsecured-loans.js.
+    // ─────────────────────────────────────────────────────────────────────────────
+    static autoCalculateIfNeeded() {
+        const urlParams = window.app?.router?.getQueryParams() || {};
+
+        // Only proceed if the minimum required params are present
+        if (!urlParams.unitPrice || !urlParams.income) return;
+
+        if (urlParams.unitPrice) document.getElementById('unit-price').value = urlParams.unitPrice;
+        if (urlParams.income) document.getElementById('monthly-income').value = urlParams.income;
+        if (urlParams.incomeType) document.getElementById('income-type').value = urlParams.incomeType;
+        if (urlParams.term) document.getElementById('loan-term-years').value = urlParams.term;
+        if (urlParams.segment) document.getElementById('customer-segment').value = urlParams.segment;
+        if (urlParams.instType) document.getElementById('installment-type').value = urlParams.instType;
+        if (urlParams.obligations) document.getElementById('monthly-installments').value = urlParams.obligations;
+        if (urlParams.cc) document.getElementById('credit-card-limit').value = urlParams.cc;
+        if (urlParams.schedule) document.getElementById('show-schedule').checked = urlParams.schedule === '1';
+
+        // Trigger the form submit to run the calculation
+        document.getElementById('mortgage-form')
+            ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     }
 
     // ─── INIT ────────────────────────────────────────────────────────────────────
@@ -640,6 +769,7 @@ export class MortgagePage {
         if (router) {
             router.render(this.render());
             this.attachEventListeners();
+            this.autoCalculateIfNeeded();
         }
     }
 }

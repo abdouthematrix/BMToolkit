@@ -119,10 +119,10 @@ export class MortgagePage {
         }
 
         if (unitPrice <= 2500000) {
-            if (incomeType !== 'family') {
-                return { errors: [this.t('12% initiative uses family net income. Please switch income type to Family.', 'مبادرة 12% تعتمد على صافي دخل الأسرة. يرجى اختيار نوع دخل أسرة.')] };
-            }
-            if (income <= 50000) {
+            const is12IncomeEligible = (incomeType === 'individual' && income <= 40000)
+                || (incomeType === 'family' && income <= 50000);
+
+            if (is12IncomeEligible) {
                 return {
                     initiative: '12',
                     tranche: null,
@@ -133,7 +133,13 @@ export class MortgagePage {
                     adminFeeRate: 0
                 };
             }
-            return { errors: [this.t('Not eligible for 12% initiative due to income cap.', 'غير مؤهل لمبادرة 12% بسبب حد الدخل.')] };
+
+            return {
+                errors: [this.t(
+                    'Not eligible for 12% initiative due to income cap (max 40,000 individual / 50,000 family).',
+                    'غير مؤهل لمبادرة 12% بسبب حد الدخل (الحد الأقصى 40,000 للفرد / 50,000 للأسرة).'
+                )]
+            };
         }
 
         return { errors: [this.t('Unit price is outside the initiative range (max 2,500,000 EGP).', 'سعر الوحدة خارج نطاق المبادرة (الحد الأقصى 2,500,000 جنيه).')] };

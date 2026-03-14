@@ -17,7 +17,7 @@ A user-friendly financial web application for calculating and comparing bank loa
 - **Max Loan by Installment** - Calculate maximum loan based on desired monthly payment
 - **Loan Schedule** - Detailed payment breakdowns
 
-### 💼 Advancded Tools
+### 💼 Advanced Tools
 - **First Month Interest** - Calculate initial interest based on start date
 - **Amortization Schedule** - Full payment schedule with stamp duty
 
@@ -31,7 +31,7 @@ A user-friendly financial web application for calculating and comparing bank loa
 ### 🌐 Features
 - ✅ **Bilingual Support** - Full English/Arabic with RTL text direction
 - ✅ **Mobile-First Design** - Responsive across all devices
-- ✅ **Progressive Web App** - Works offline after first load
+- ✅ **Progressive Web App** - Works offline after first load using a service worker that pre-caches the app shell and key calculators
 - ✅ **Dark/Light Theme** - User preference support
 - ✅ **URL State Sharing** - Share calculations via URL parameters
 - ✅ **Real-Time Updates** - Query parameters sync with form inputs
@@ -46,6 +46,7 @@ A user-friendly financial web application for calculating and comparing bank loa
 - **Design**: Component-based, mobile-first responsive
 - **PWA**: Service Worker for offline support
 - **Internationalization**: Custom i18n system with full RTL support
+- **Offline Caching**: App shell assets, Firebase SDK files, and calculator pages are cached for faster repeat loads
 
 ## Setup Instructions
 
@@ -176,7 +177,7 @@ Upload all files to your web hosting service. Ensure the server supports:
 
 #### Advanced Tools
 1. Navigate to **Advanced Tools**
-2. **Broken Period Interest** - Calculate interest for partial first month based on loan start date
+2. **First Month Interest** - Calculate interest for partial first month based on loan start date
 3. **Full Amortization** - Complete payment schedule including:
    - Interest breakdown per payment
    - Stamp duty calculations (quarterly)
@@ -258,12 +259,16 @@ BMToolkit/
     │   ├── firestore.js   # Database operations
     │   └── financial-calculator.js # Calculations
     └── pages/
-        ├── home.js        # Home page
-        ├── secured-loans.js    # Secured loans
-        ├── unsecured-loans.js  # Unsecured loans
-        ├── advancedtools.js  # Advanced Tools
-        ├── login.js       # Login page
-        └── admin.js       # Admin panel
+        ├── home.js            # Home page
+        ├── credit-cards.js    # Credit cards page
+        ├── loans.js           # Loans landing page
+        ├── secured-loans.js   # Secured loans
+        ├── unsecured-loans.js # Unsecured loans
+        ├── cash-loans.js      # Cash loans
+        ├── mortgage.js        # Mortgage calculator
+        ├── advancedtools.js   # Advanced tools
+        ├── login.js           # Login page
+        └── admin.js           # Admin panel
 
 ```
 

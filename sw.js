@@ -1,7 +1,7 @@
 // sw.js - Service Worker for PWA
 
-const CACHE_NAME = 'bmtoolkit-v2';
-const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v2';
+const CACHE_NAME = 'bmtoolkit-v3';
+const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v3';
 // 1. Define the Firebase Modular SDKs to cache
 const FIREBASE_SDKS = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
@@ -11,6 +11,7 @@ const FIREBASE_SDKS = [
 const urlsToCache = [
     './',
     './index.html',
+    './favicon.ico',
     './manifest.json',
     './css/style.css',
     './css/rtl.css',
@@ -26,6 +27,8 @@ const urlsToCache = [
     './js/pages/loans.js',
     './js/pages/secured-loans.js',
     './js/pages/unsecured-loans.js',
+    './js/pages/cash-loans.js',
+    './js/pages/mortgage.js',
     './js/pages/advancedtools.js',
     './js/pages/login.js',
     './js/pages/admin.js',
@@ -92,8 +95,9 @@ self.addEventListener('fetch', (event) => {
                 }
                 return networkResponse;
             }).catch(() => {
-                // Fallback to index.html for navigation requests if offline and not in cache
-                if (event.request.mode === 'navigate') {
+                // Fallback to index.html for navigation requests if offline and not in cache.
+                // Also covers direct access to hash-routes while offline.
+                if (event.request.mode === 'navigate' || (event.request.destination === 'document' && url.startsWith(self.location.origin))) {
                     return caches.match('./index.html');
                 }
             });

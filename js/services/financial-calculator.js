@@ -556,4 +556,72 @@ export class FinancialCalculator {
             totalStampDuty,
         };
     }
+
+    // Collateral Utility - distribute collateral to support target loan balance
+    static calculateCollateralForLoan(inputs) {
+        const { currentLoanBalance = 0, tds = [] } = inputs;
+        let remainingLoan = Math.max(0, currentLoanBalance);
+
+        const normalizedRows = tds.map((row, index) => {
+            const totalAmount = Math.max(0, row.totalAmount || 0);
+            const redemptionAmount = Math.max(0, row.redemptionAmount || 0);
+            const currentCollateral = Math.max(0, row.currentCollateral || 0);
+            const maxCollateral = this.roundTo1000(totalAmount);
+            const loanPerCollateral = totalAmount > 0
+                ? Math.min(0.9, redemptionAmount / totalAmount)
+                : 0;
+
+            return {
+                tdNumber: row.tdNumber || index + 1,
+                totalAmount,
+                redemptionAmount,
+                currentCollateral,
+                maxCollateral,
+                loanPerCollateral
+            };
+        });
+
+        // Prioritize TDs that provide higher loan support per collateral unit.
+        const sortedRows = [...normalizedRows].sort((a, b) => b.loanPerCollateral - a.loanPerCollateral);
+
+        sortedRows.forEach((row) => {
+            if (remainingLoan <= 0 || row.maxCollateral <= 0 || row.loanPerCollateral <= 0) {
+                row.newCollateral = 0;
+                row.loanSupported = 0;
+                return;
+            }
+
+            const requiredCollateral = Math.ceil((remainingLoan / row.loanPerCollateral) / 1000) * 1000;
+            const newCollateral = Math.min(row.maxCollateral, Math.max(0, requiredCollateral));
+            const loanSupported = Math.min(
+                newCollateral * 0.9,
+                row.totalAmount > 0 ? (newCollateral / row.totalAmount) * row.redemptionAmount : 0
+            );
+
+            row.newCollateral = newCollateral;
+            row.loanSupported = loanSupported;
+            remainingLoan = Math.max(0, remainingLoan - loanSupported);
+        });
+
+        const rowsByOriginalOrder = normalizedRows.map((originalRow) => {
+            const match = sortedRows.find(item => item.tdNumber === originalRow.tdNumber);
+            return {
+                tdNumber: originalRow.tdNumber,
+                totalAmount: originalRow.totalAmount,
+                redemptionAmount: originalRow.redemptionAmount,
+                currentCollateral: originalRow.currentCollateral,
+                newCollateral: match?.newCollateral || 0,
+                loanSupported: match?.loanSupported || 0
+            };
+        });
+
+        const totalSupportedLoan = rowsByOriginalOrder.reduce((sum, row) => sum + row.loanSupported, 0);
+
+        return {
+            currentLoanBalance: Math.max(0, currentLoanBalance),
+            totalSupportedLoan,
+            shortfall: Math.max(0, Math.max(0, currentLoanBalance) - totalSupportedLoan),
+            rows: rowsByOriginalOrder
+        };
+    }
 }

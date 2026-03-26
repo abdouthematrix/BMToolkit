@@ -94,6 +94,10 @@ export class I18n {
                 'first-month-interest-desc': 'Calculate interest for the partial first month',
                 'amortization-schedule': 'Full Amortization',
                 'amortization-schedule-desc': 'Complete breakdown including stamp duties',
+                'collateral-utility-title': 'Collateral Utility',
+                'collateral-utility-desc': 'Compute new collateral distribution for a target loan balance.',
+                'collateral-utility-rules': 'Rules:',
+                'collateral-utility-rules-desc': 'Loan per TD is the lower of 90% of collateral and prorated redemption amount. Collateral is rounded up to 1,000 multiples.',
                 'first-month-calculation': 'Initial Payment Breakdown',
                 'first-payment-message': 'Your very first payment will be {payment}. This includes {interest} in extra interest covering the {days} days before your regular schedule starts.',
                 'stamp-duty-message': 'Government Stamp Duty is applied quarterly (every 3 months) on your remaining balance at {rate}‰.',
@@ -134,6 +138,16 @@ export class I18n {
                 'cc-installment-period': 'Installment Period',
                 'monthly-installment': 'Monthly Installment',
                 'months-vs-years': 'Duration in Months (default is Years)',
+                'current-loan-balance': 'Current Loan Balance',
+                'td-list': 'TD List',
+                'td-total-amount': 'Total Amount',
+                'td-redemption-amount': 'Total Redemption Amount',
+                'current-collateral-amount': 'Current Collateral Amount',
+                'new-collateral-amount': 'New Collateral Amount',
+                'supported-loan-amount': 'Supported Loan Amount',
+                'loan-shortfall': 'Loan Shortfall',
+                'loan-supported': 'Loan Supported',
+                'remove': 'Remove',
 
                 // Results
                 'scenario': 'Option',
@@ -340,6 +354,7 @@ export class I18n {
                 'tab-max-loan': 'Loan Limit',
                 'tab-first-month': 'First Month',
                 'tab-amortization': 'Amortization',
+                'tab-collateral': 'Collateral',
 
                 // Share
                 'share-btn-title': 'Share this page',
@@ -438,6 +453,10 @@ export class I18n {
                 'first-month-interest-desc': 'حساب الفائدة عن الأيام الأولى قبل انتظام الجدول',
                 'amortization-schedule': 'جدول الاستهلاك الكامل',
                 'amortization-schedule-desc': 'تفصيل كامل يشمل رسوم الدمغة الحكومية',
+                'collateral-utility-title': 'أداة الضمانات',
+                'collateral-utility-desc': 'حساب توزيع الضمانات الجديد لتغطية رصيد قرض محدد.',
+                'collateral-utility-rules': 'القواعد:',
+                'collateral-utility-rules-desc': 'قيمة القرض لكل وديعة هي الأقل بين 90٪ من الضمان وقيمة الاسترداد النسبية. يتم تقريب الضمان لأعلى لأقرب 1000.',
                 'first-month-calculation': 'تفاصيل الدفعة الأولى',
                 'first-payment-message': 'قيمة أول قسط ستكون {payment}، وهي تشمل {interest} كفائدة إضافية عن {days} يوماً قبل بدء جدول السداد المنتظم.',
                 'stamp-duty-message': 'يتم تحصيل رسوم الدمغة ربع سنوياً على الرصيد المتبقي بنسبة {rate}‰.',
@@ -478,6 +497,16 @@ export class I18n {
                 'cc-installment-period': 'فترة التقسيط',
                 'monthly-installment': 'القسط الشهري',
                 'months-vs-years': 'المدة بالشهور (بدلاً من السنوات)',
+                'current-loan-balance': 'الرصيد الحالي للقرض',
+                'td-list': 'قائمة الودائع',
+                'td-total-amount': 'إجمالي المبلغ',
+                'td-redemption-amount': 'إجمالي مبلغ الاسترداد',
+                'current-collateral-amount': 'الضمان الحالي',
+                'new-collateral-amount': 'الضمان الجديد',
+                'supported-loan-amount': 'إجمالي القرض المغطى',
+                'loan-shortfall': 'العجز في تغطية القرض',
+                'loan-supported': 'القرض المغطى',
+                'remove': 'حذف',
 
                 // Results
                 'scenario': 'الخيار',
@@ -685,6 +714,7 @@ export class I18n {
                 'tab-max-loan': 'الحد الأقصى',
                 'tab-first-month': 'الشهر الأول',
                 'tab-amortization': 'جدول الاستهلاك',
+                'tab-collateral': 'الضمانات',
 
                 // Share
                 'share-btn-title': 'مشاركة هذه الصفحة',

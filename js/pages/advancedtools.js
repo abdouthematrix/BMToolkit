@@ -322,6 +322,7 @@ export class AdvancedToolsPage {
 
             case 'collateral':
                 if (urlParams.loanBalance) document.getElementById('collateral-loan-balance').value = urlParams.loanBalance;
+                this.initializeCollateralRows(this.parseCollateralRowsFromUrl(urlParams.tds));
                 this.calculateCollateral();
                 break;
         }
@@ -502,20 +503,28 @@ export class AdvancedToolsPage {
         document.getElementById('amortization-results').style.display = 'block';
     }
 
-    static initializeCollateralRows() {
+    static initializeCollateralRows(initialRows = []) {
         const container = document.getElementById('collateral-rows');
         if (!container) return;
 
         container.innerHTML = '';
         this.collateralRowId = 0;
+        if (Array.isArray(initialRows) && initialRows.length) {
+            initialRows.forEach(row => this.addCollateralRow(row));
+            return;
+        }
+
         this.addCollateralRow();
     }
 
-    static addCollateralRow() {
+    static addCollateralRow(initialData = {}) {
         const container = document.getElementById('collateral-rows');
         if (!container) return;
 
         const rowId = this.collateralRowId++;
+        const totalAmount = Number(initialData.totalAmount) || 0;
+        const redemptionAmount = Number(initialData.redemptionAmount) || 0;
+        const currentCollateral = Number(initialData.currentCollateral) || 0;
         const row = document.createElement('div');
         row.className = 'card';
         row.dataset.rowId = String(rowId);
@@ -524,15 +533,15 @@ export class AdvancedToolsPage {
             <div class="grid grid-3">
                 <div class="form-group">
                     <label class="form-label" data-i18n="td-total-amount">Total Amount</label>
-                    <input type="number" class="form-input collateral-total-amount" min="0" step="1" value="0" required>
+                    <input type="number" class="form-input collateral-total-amount" min="0" step="1" value="${totalAmount}" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" data-i18n="td-redemption-amount">Total Redemption Amount</label>
-                    <input type="number" class="form-input collateral-redemption-amount" min="0" step="1" value="0" required>
+                    <input type="number" class="form-input collateral-redemption-amount" min="0" step="1" value="${redemptionAmount}" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label" data-i18n="current-collateral-amount">Current Collateral Amount</label>
-                    <input type="number" class="form-input collateral-current-amount" min="0" step="1000" value="0" required>
+                    <input type="number" class="form-input collateral-current-amount" min="0" step="1000" value="${currentCollateral}" required>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end;">
@@ -554,6 +563,23 @@ export class AdvancedToolsPage {
         i18n.updatePageText();
     }
 
+    static parseCollateralRowsFromUrl(serializedRows) {
+        if (!serializedRows) return [];
+
+        try {
+            const parsedRows = JSON.parse(serializedRows);
+            if (!Array.isArray(parsedRows)) return [];
+
+            return parsedRows.map(row => ({
+                totalAmount: Number(row.totalAmount) || 0,
+                redemptionAmount: Number(row.redemptionAmount) || 0,
+                currentCollateral: Number(row.currentCollateral) || 0
+            }));
+        } catch {
+            return [];
+        }
+    }
+
     static calculateCollateral() {
         const currentLoanBalance = parseFloat(document.getElementById('collateral-loan-balance').value) || 0;
         const rows = [...document.querySelectorAll('#collateral-rows [data-row-id]')];
@@ -568,7 +594,12 @@ export class AdvancedToolsPage {
         if (router) {
             router.updateQueryParams({
                 tab: 'collateral',
-                loanBalance: currentLoanBalance
+                loanBalance: currentLoanBalance,
+                tds: JSON.stringify(tds.map(td => ({
+                    totalAmount: td.totalAmount,
+                    redemptionAmount: td.redemptionAmount,
+                    currentCollateral: td.currentCollateral
+                })))
             });
         }
 

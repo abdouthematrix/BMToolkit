@@ -7,6 +7,7 @@ import { FirestoreService } from '../services/firestore.js';
 export class AdvancedToolsPage {
     static STORAGE_KEY = 'advancedtools-active-tab';
     static activeTab = 'first-month'; // Track active tab
+    static collateralRowId = 0;
 
     static async init() {
         const router = window.app?.router;
@@ -56,12 +57,17 @@ export class AdvancedToolsPage {
                             <i class="fas fa-table"></i>
                             <span data-i18n="tab-amortization">Amortization Schedule</span>
                         </button>
+                        <button class="tab-btn ${this.activeTab === 'collateral' ? 'active' : ''}" data-tab="collateral">
+                            <i class="fas fa-shield-alt"></i>
+                            <span data-i18n="tab-collateral">Collateral Utility</span>
+                        </button>
                     </div>
 
                     <!-- Tab Content -->
                     <div id="calculator-content">
                         ${this.renderFirstMonthTab()}
                         ${this.renderAmortizationTab()}
+                        ${this.renderCollateralTab()}
                     </div>
                 </div>
             </div>
@@ -182,6 +188,53 @@ export class AdvancedToolsPage {
         `;
     }
 
+    static renderCollateralTab() {
+        return `
+            <div class="tab-content ${this.activeTab === 'collateral' ? 'active' : ''}" data-tab-content="collateral">
+                <div class="card-body">
+                    <h3 data-i18n="collateral-utility-title">Collateral Utility</h3>
+                    <p class="text-muted" data-i18n="collateral-utility-desc">Compute new collateral distribution for a target loan balance.</p>
+
+                    <div class="info-box" style="margin-top: var(--spacing-lg);">
+                        <i class="fas fa-info-circle"></i>
+                        <strong data-i18n="collateral-utility-rules">Rules:</strong>
+                        <span data-i18n="collateral-utility-rules-desc">Loan per TD is the lower of 90% of collateral and prorated redemption amount. Collateral is rounded up to 1,000 multiples.</span>
+                    </div>
+
+                    <form id="collateral-form" style="margin-top: var(--spacing-lg);">
+                        <div class="form-group">
+                            <label class="form-label" data-i18n="current-loan-balance">Current Loan Balance</label>
+                            <input type="number" id="collateral-loan-balance" class="form-input" value="0" min="0" step="1" required>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin: var(--spacing-lg) 0 var(--spacing-sm);">
+                            <h4 style="margin: 0;" data-i18n="td-list">TD List</h4>
+                            <button type="button" class="btn-secondary" id="add-collateral-row">
+                                <i class="fas fa-plus"></i>
+                                <span data-i18n="add-td">Add TD</span>
+                            </button>
+                        </div>
+
+                        <div id="collateral-rows" style="display: grid; gap: var(--spacing-md);"></div>
+
+                        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-lg);">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-calculator"></i>
+                                <span data-i18n="calculate">Calculate</span>
+                            </button>
+                            <button type="reset" class="btn-secondary" id="reset-collateral-form">
+                                <i class="fas fa-redo"></i>
+                                <span data-i18n="reset">Reset</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="collateral-results" style="display: none; margin-top: var(--spacing-xl);"></div>
+                </div>
+            </div>
+        `;
+    }
+
     static attachEventListeners() {
         // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -203,6 +256,23 @@ export class AdvancedToolsPage {
             e.preventDefault();
             this.calculateAmortization();
         });
+
+        document.getElementById('collateral-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateCollateral();
+        });
+
+        document.getElementById('add-collateral-row').addEventListener('click', () => {
+            this.addCollateralRow();
+        });
+
+        document.getElementById('reset-collateral-form').addEventListener('click', () => {
+            setTimeout(() => {
+                this.initializeCollateralRows();
+            }, 0);
+        });
+
+        this.initializeCollateralRows();
     }
 
     static saveTabState(tab) {
@@ -248,6 +318,12 @@ export class AdvancedToolsPage {
                 if (urlParams.stampDuty) document.getElementById('stamp-duty-rate').value = urlParams.stampDuty;
                 if (urlParams.unit) document.getElementById('is-years-amort').checked = urlParams.unit === 'months';
                 this.calculateAmortization();
+                break;
+
+            case 'collateral':
+                if (urlParams.loanBalance) document.getElementById('collateral-loan-balance').value = urlParams.loanBalance;
+                this.initializeCollateralRows(this.parseCollateralRowsFromUrl(urlParams.tds));
+                this.calculateCollateral();
                 break;
         }
     }
@@ -425,5 +501,161 @@ export class AdvancedToolsPage {
 
         document.getElementById('amortization-results').innerHTML = resultsHtml;
         document.getElementById('amortization-results').style.display = 'block';
+    }
+
+    static initializeCollateralRows(initialRows = []) {
+        const container = document.getElementById('collateral-rows');
+        if (!container) return;
+
+        container.innerHTML = '';
+        this.collateralRowId = 0;
+        if (Array.isArray(initialRows) && initialRows.length) {
+            initialRows.forEach(row => this.addCollateralRow(row));
+            return;
+        }
+
+        this.addCollateralRow();
+    }
+
+    static addCollateralRow(initialData = {}) {
+        const container = document.getElementById('collateral-rows');
+        if (!container) return;
+
+        const rowId = this.collateralRowId++;
+        const totalAmount = Number(initialData.totalAmount) || 0;
+        const redemptionAmount = Number(initialData.redemptionAmount) || 0;
+        const currentCollateral = Number(initialData.currentCollateral) || 0;
+        const row = document.createElement('div');
+        row.className = 'card';
+        row.dataset.rowId = String(rowId);
+        row.style.padding = 'var(--spacing-md)';
+        row.innerHTML = `
+            <div class="grid grid-3">
+                <div class="form-group">
+                    <label class="form-label" data-i18n="td-total-amount">Total Amount</label>
+                    <input type="number" class="form-input collateral-total-amount" min="0" step="1" value="${totalAmount}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="td-redemption-amount">Total Redemption Amount</label>
+                    <input type="number" class="form-input collateral-redemption-amount" min="0" step="1" value="${redemptionAmount}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-i18n="current-collateral-amount">Current Collateral Amount</label>
+                    <input type="number" class="form-input collateral-current-amount" min="0" step="1000" value="${currentCollateral}" required>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn-secondary remove-collateral-row">
+                    <i class="fas fa-trash"></i>
+                    <span data-i18n="remove">Remove</span>
+                </button>
+            </div>
+        `;
+
+        row.querySelector('.remove-collateral-row').addEventListener('click', () => {
+            row.remove();
+            if (!container.children.length) {
+                this.addCollateralRow();
+            }
+        });
+
+        container.appendChild(row);
+        i18n.updatePageText();
+    }
+
+    static parseCollateralRowsFromUrl(serializedRows) {
+        if (!serializedRows) return [];
+
+        try {
+            const parsedRows = JSON.parse(serializedRows);
+            if (!Array.isArray(parsedRows)) return [];
+
+            return parsedRows.map(row => ({
+                totalAmount: Number(row.totalAmount) || 0,
+                redemptionAmount: Number(row.redemptionAmount) || 0,
+                currentCollateral: Number(row.currentCollateral) || 0
+            }));
+        } catch {
+            return [];
+        }
+    }
+
+    static calculateCollateral() {
+        const currentLoanBalance = parseFloat(document.getElementById('collateral-loan-balance').value) || 0;
+        const rows = [...document.querySelectorAll('#collateral-rows [data-row-id]')];
+        const tds = rows.map((row, index) => ({
+            tdNumber: index + 1,
+            totalAmount: parseFloat(row.querySelector('.collateral-total-amount')?.value) || 0,
+            redemptionAmount: parseFloat(row.querySelector('.collateral-redemption-amount')?.value) || 0,
+            currentCollateral: parseFloat(row.querySelector('.collateral-current-amount')?.value) || 0
+        }));
+
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                tab: 'collateral',
+                loanBalance: currentLoanBalance,
+                tds: JSON.stringify(tds.map(td => ({
+                    totalAmount: td.totalAmount,
+                    redemptionAmount: td.redemptionAmount,
+                    currentCollateral: td.currentCollateral
+                })))
+            });
+        }
+
+        const result = FinancialCalculator.calculateCollateralForLoan({
+            currentLoanBalance,
+            tds
+        });
+
+        const resultsHtml = `
+            <div class="info-box">
+                <h4><i class="fas fa-chart-pie"></i> ${i18n.t('summary')}</h4>
+                <div class="grid grid-3" style="margin-top: var(--spacing-md);">
+                    <div>
+                        <strong data-i18n="current-loan-balance">Current Loan Balance</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--primary);">${i18n.formatCurrency(result.currentLoanBalance)}</span>
+                    </div>
+                    <div>
+                        <strong data-i18n="supported-loan-amount">Supported Loan Amount</strong><br>
+                        <span style="font-size: 1.25rem; color: var(--secondary);">${i18n.formatCurrency(result.totalSupportedLoan)}</span>
+                    </div>
+                    <div>
+                        <strong data-i18n="loan-shortfall">Loan Shortfall</strong><br>
+                        <span style="font-size: 1.25rem; color: ${result.shortfall > 0 ? 'var(--danger)' : 'var(--success)'};">${i18n.formatCurrency(result.shortfall)}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="results-table-wrapper" style="overflow-x: auto; margin-top: var(--spacing-lg);">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>TD</th>
+                            <th data-i18n="td-total-amount">Total Amount</th>
+                            <th data-i18n="td-redemption-amount">Total Redemption Amount</th>
+                            <th data-i18n="current-collateral-amount">Current Collateral Amount</th>
+                            <th data-i18n="new-collateral-amount">New Collateral Amount</th>
+                            <th data-i18n="loan-supported">Loan Supported</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.rows.map(row => `
+                            <tr>
+                                <td>${row.tdNumber}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.totalAmount)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.redemptionAmount)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.currentCollateral)}</td>
+                                <td class="number-display font-bold">${i18n.formatCurrency(row.newCollateral)}</td>
+                                <td class="number-display">${i18n.formatCurrency(row.loanSupported)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        document.getElementById('collateral-results').innerHTML = resultsHtml;
+        document.getElementById('collateral-results').style.display = 'block';
+        i18n.updatePageText();
     }
 }

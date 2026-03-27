@@ -176,6 +176,10 @@ export class AdminPage {
                                     <i class="fas fa-file-import"></i>
                                     <span data-i18n="import-csv">Import CSV</span>
                                 </button>
+                                <button id="export-csv-btn" class="btn-secondary">
+                                    <i class="fas fa-file-export"></i>
+                                    <span data-i18n="export-csv">Export CSV</span>
+                                </button>
                                 <button id="add-product-btn" class="btn-primary">
                                     <i class="fas fa-plus"></i>
                                     <span data-i18n="add-product">Add Product</span>
@@ -265,6 +269,14 @@ export class AdminPage {
                                     <input type="text" id="product-rate-8-plus" class="form-input" placeholder="e.g., 24.25 or 24.25%">
                                 </div>
                                 <div class="form-group">
+                                    <label class="form-label" data-i18n="product-admin-fees-percent">Admin Fees %</label>
+                                    <input type="text" id="product-admin-fees-percent" class="form-input" placeholder="e.g., 1.00 or 1.00%">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" data-i18n="product-duty-stamp-percent">Duty Stamp %</label>
+                                    <input type="text" id="product-duty-stamp-percent" class="form-input" placeholder="e.g., 0.50 or 0.50%">
+                                </div>
+                                <div class="form-group">
                                     <label class="form-label">
                                         <input type="checkbox" id="product-active" checked>
                                         <span data-i18n="active">Active</span>
@@ -346,6 +358,8 @@ export class AdminPage {
         html += '<th><span data-i18n="rate-1-5">Rate 1-5</span></th>';
         html += '<th><span data-i18n="rate-5-8">Rate 5-8</span></th>';
         html += '<th><span data-i18n="rate-8-plus">Rate 8+</span></th>';
+        html += '<th><span data-i18n="product-admin-fees-percent">Admin Fees %</span></th>';
+        html += '<th><span data-i18n="product-duty-stamp-percent">Duty Stamp %</span></th>';
         html += '<th><span data-i18n="status">Status</span></th>';
         html += '<th><span data-i18n="actions">Actions</span></th>';
         html += '</tr></thead><tbody>';
@@ -364,6 +378,8 @@ export class AdminPage {
             html += `<td>${product.rate1_5 || '-'}</td>`;
             html += `<td>${product.rate5_8 || '-'}</td>`;
             html += `<td>${product.rate8Plus || '-'}</td>`;
+            html += `<td>${product.adminFeesPercent || '-'}</td>`;
+            html += `<td>${product.dutyStampPercent || '-'}</td>`;
             html += `<td>${isActive ? '<span style="color: var(--success);">●</span> <span data-i18n="active">Active</span>' : '<span style="color: var(--error);">●</span> <span data-i18n="inactive">Inactive</span>'}</td>`;
             html += `<td>`;
             html += `<button class="btn-icon" onclick="adminPage.editProduct('${product.id}')" title="Edit"><i class="fas fa-edit"></i></button>`;
@@ -400,6 +416,11 @@ export class AdminPage {
 
         document.getElementById('csv-file-input').addEventListener('change', (e) => {
             this.handleCsvImport(e);
+        });
+
+        // CSV Export
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            this.exportProductsCsv();
         });
 
         // Add Product
@@ -453,6 +474,8 @@ export class AdminPage {
         document.getElementById('product-rate-1-5').value = product.rate1_5 ? product.rate1_5.replace('%', '') : '';
         document.getElementById('product-rate-5-8').value = product.rate5_8 ? product.rate5_8.replace('%', '') : '';
         document.getElementById('product-rate-8-plus').value = product.rate8Plus ? product.rate8Plus.replace('%', '') : '';
+        document.getElementById('product-admin-fees-percent').value = product.adminFeesPercent ? product.adminFeesPercent.replace('%', '') : '';
+        document.getElementById('product-duty-stamp-percent').value = product.dutyStampPercent ? product.dutyStampPercent.replace('%', '') : '';
         document.getElementById('product-active').checked = product.active !== false;
     }
 
@@ -470,6 +493,8 @@ export class AdminPage {
             rate1_5: document.getElementById('product-rate-1-5').value.trim(),
             rate5_8: document.getElementById('product-rate-5-8').value.trim(),
             rate8Plus: document.getElementById('product-rate-8-plus').value.trim(),
+            adminFeesPercent: document.getElementById('product-admin-fees-percent').value.trim(),
+            dutyStampPercent: document.getElementById('product-duty-stamp-percent').value.trim(),
             active: document.getElementById('product-active').checked
         };
 
@@ -589,7 +614,11 @@ export class AdminPage {
             'Company_Segment': 'companySegment',
             'Interest_Rate_1_5_Years': 'rate1_5',
             'Interest_Rate_5_8_Years': 'rate5_8',
-            'Interest_Rate_8_Plus_Years': 'rate8Plus'
+            'Interest_Rate_8_Plus_Years': 'rate8Plus',
+            'Admin_Fees_Percent': 'adminFeesPercent',
+            'Duty_Stamp_Percent': 'dutyStampPercent',
+            'Admin_Fees_%': 'adminFeesPercent',
+            'Duty_Stamp_%': 'dutyStampPercent'
         };
 
         for (let i = 1; i < lines.length; i++) {
@@ -606,7 +635,7 @@ export class AdminPage {
                     let value = values[index].trim();
 
                     // Ensure interest rates always have % suffix
-                    if (mappedField.startsWith('rate') && value && !value.endsWith('%')) {
+                    if ((mappedField.startsWith('rate') || mappedField.endsWith('Percent')) && value && !value.endsWith('%')) {
                         value = value + '%';
                     }
 
@@ -621,6 +650,71 @@ export class AdminPage {
         }
 
         return products;
+    }
+
+    static exportProductsCsv() {
+        if (!this.products || this.products.length === 0) {
+            window.app.showToast(i18n.t('no-products'), 'warning');
+            return;
+        }
+
+        const headers = [
+            'Product_Name_AR',
+            'UBS_Code',
+            'Product_Name_EN',
+            'Sector',
+            'Payroll_Type',
+            'Company_Segment',
+            'Interest_Rate_1_5_Years',
+            'Interest_Rate_5_8_Years',
+            'Interest_Rate_8_Plus_Years',
+            'Admin_Fees_Percent',
+            'Duty_Stamp_Percent',
+            'Active'
+        ];
+
+        const csvRows = [headers.join(',')];
+        const sorted = [...this.products].sort((a, b) => (a.ubsCode || '').localeCompare(b.ubsCode || ''));
+
+        sorted.forEach((product) => {
+            const values = [
+                product.nameAr || '',
+                product.ubsCode || '',
+                product.nameEn || '',
+                product.sector || '',
+                product.payrollType || '',
+                product.companySegment || '',
+                product.rate1_5 || '',
+                product.rate5_8 || '',
+                product.rate8Plus || '',
+                product.adminFeesPercent || '',
+                product.dutyStampPercent || '',
+                product.active !== false ? 'true' : 'false'
+            ];
+            csvRows.push(values.map(this.escapeCsvValue).join(','));
+        });
+
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `products-export-${timestamp}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        window.app.showToast(i18n.t('export-csv-success', { count: this.products.length }), 'success');
+    }
+
+    static escapeCsvValue(value) {
+        const stringValue = String(value ?? '');
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+            return `"${stringValue.replace(/"/g, '""')}"`;
+        }
+        return stringValue;
     }
 
     static parseCsvLine(line) {

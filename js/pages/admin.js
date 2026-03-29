@@ -269,12 +269,12 @@ export class AdminPage {
                                     <input type="text" id="product-rate-8-plus" class="form-input" placeholder="e.g., 24.25 or 24.25%">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="product-admin-fees-percent">Admin Fees %</label>
-                                    <input type="text" id="product-admin-fees-percent" class="form-input" placeholder="e.g., 1.00 or 1.00%">
+                                    <label class="form-label" data-i18n="product-bank-stamp-percent">Bank Stamp %</label>
+                                    <input type="text" id="product-bank-stamp-percent" class="form-input" placeholder="e.g., 0.50 or 0.50%">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label" data-i18n="product-duty-stamp-percent">Duty Stamp %</label>
-                                    <input type="text" id="product-duty-stamp-percent" class="form-input" placeholder="e.g., 0.50 or 0.50%">
+                                    <label class="form-label" data-i18n="product-customer-stamp-percent">Customer Stamp %</label>
+                                    <input type="text" id="product-customer-stamp-percent" class="form-input" placeholder="e.g., 0.50 or 0.50%">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">
@@ -358,8 +358,8 @@ export class AdminPage {
         html += '<th><span data-i18n="rate-1-5">Rate 1-5</span></th>';
         html += '<th><span data-i18n="rate-5-8">Rate 5-8</span></th>';
         html += '<th><span data-i18n="rate-8-plus">Rate 8+</span></th>';
-        html += '<th><span data-i18n="product-admin-fees-percent">Admin Fees %</span></th>';
-        html += '<th><span data-i18n="product-duty-stamp-percent">Duty Stamp %</span></th>';
+        html += '<th><span data-i18n="product-bank-stamp-percent">Bank Stamp %</span></th>';
+        html += '<th><span data-i18n="product-customer-stamp-percent">Customer Stamp %</span></th>';
         html += '<th><span data-i18n="status">Status</span></th>';
         html += '<th><span data-i18n="actions">Actions</span></th>';
         html += '</tr></thead><tbody>';
@@ -378,8 +378,8 @@ export class AdminPage {
             html += `<td>${product.rate1_5 || '-'}</td>`;
             html += `<td>${product.rate5_8 || '-'}</td>`;
             html += `<td>${product.rate8Plus || '-'}</td>`;
-            html += `<td>${product.adminFeesPercent || '-'}</td>`;
-            html += `<td>${product.dutyStampPercent || '-'}</td>`;
+            html += `<td>${product.bankStampPercent || '-'}</td>`;
+            html += `<td>${product.customerStampPercent || '-'}</td>`;
             html += `<td>${isActive ? '<span style="color: var(--success);">●</span> <span data-i18n="active">Active</span>' : '<span style="color: var(--error);">●</span> <span data-i18n="inactive">Inactive</span>'}</td>`;
             html += `<td>`;
             html += `<button class="btn-icon" onclick="adminPage.editProduct('${product.id}')" title="Edit"><i class="fas fa-edit"></i></button>`;
@@ -474,8 +474,10 @@ export class AdminPage {
         document.getElementById('product-rate-1-5').value = product.rate1_5 ? product.rate1_5.replace('%', '') : '';
         document.getElementById('product-rate-5-8').value = product.rate5_8 ? product.rate5_8.replace('%', '') : '';
         document.getElementById('product-rate-8-plus').value = product.rate8Plus ? product.rate8Plus.replace('%', '') : '';
-        document.getElementById('product-admin-fees-percent').value = product.adminFeesPercent ? product.adminFeesPercent.replace('%', '') : '';
-        document.getElementById('product-duty-stamp-percent').value = product.dutyStampPercent ? product.dutyStampPercent.replace('%', '') : '';
+        const bankStampValue = product.bankStampPercent || product.adminFeesPercent || '';
+        const customerStampValue = product.customerStampPercent || product.dutyStampPercent || '';
+        document.getElementById('product-bank-stamp-percent').value = bankStampValue ? bankStampValue.replace('%', '') : '';
+        document.getElementById('product-customer-stamp-percent').value = customerStampValue ? customerStampValue.replace('%', '') : '';
         document.getElementById('product-active').checked = product.active !== false;
     }
 
@@ -493,8 +495,8 @@ export class AdminPage {
             rate1_5: document.getElementById('product-rate-1-5').value.trim(),
             rate5_8: document.getElementById('product-rate-5-8').value.trim(),
             rate8Plus: document.getElementById('product-rate-8-plus').value.trim(),
-            adminFeesPercent: document.getElementById('product-admin-fees-percent').value.trim(),
-            dutyStampPercent: document.getElementById('product-duty-stamp-percent').value.trim(),
+            bankStampPercent: document.getElementById('product-bank-stamp-percent').value.trim(),
+            customerStampPercent: document.getElementById('product-customer-stamp-percent').value.trim(),
             active: document.getElementById('product-active').checked
         };
 
@@ -615,10 +617,15 @@ export class AdminPage {
             'Interest_Rate_1_5_Years': 'rate1_5',
             'Interest_Rate_5_8_Years': 'rate5_8',
             'Interest_Rate_8_Plus_Years': 'rate8Plus',
-            'Admin_Fees_Percent': 'adminFeesPercent',
-            'Duty_Stamp_Percent': 'dutyStampPercent',
-            'Admin_Fees_%': 'adminFeesPercent',
-            'Duty_Stamp_%': 'dutyStampPercent'
+            'Bank_Stamp_Percent': 'bankStampPercent',
+            'Customer_Stamp_Percent': 'customerStampPercent',
+            'Bank_Stamp_%': 'bankStampPercent',
+            'Customer_Stamp_%': 'customerStampPercent',
+            // Backward compatibility with older CSV headers
+            'Admin_Fees_Percent': 'bankStampPercent',
+            'Duty_Stamp_Percent': 'customerStampPercent',
+            'Admin_Fees_%': 'bankStampPercent',
+            'Duty_Stamp_%': 'customerStampPercent'
         };
 
         for (let i = 1; i < lines.length; i++) {
@@ -668,8 +675,8 @@ export class AdminPage {
             'Interest_Rate_1_5_Years',
             'Interest_Rate_5_8_Years',
             'Interest_Rate_8_Plus_Years',
-            'Admin_Fees_Percent',
-            'Duty_Stamp_Percent',
+            'Bank_Stamp_Percent',
+            'Customer_Stamp_Percent',
             'Active'
         ];
 
@@ -687,8 +694,8 @@ export class AdminPage {
                 product.rate1_5 || '',
                 product.rate5_8 || '',
                 product.rate8Plus || '',
-                product.adminFeesPercent || '',
-                product.dutyStampPercent || '',
+                product.bankStampPercent || '',
+                product.customerStampPercent || '',
                 product.active !== false ? 'true' : 'false'
             ];
             csvRows.push(values.map(this.escapeCsvValue).join(','));

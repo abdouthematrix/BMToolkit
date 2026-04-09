@@ -221,6 +221,15 @@ export class FirestoreService {
             }
         });
 
+        ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+            if (productData[percentField] && productData[percentField] !== '') {
+                const normalized = this.normalizePercentage(productData[percentField]);
+                if (normalized === null) {
+                    errors.push(`Invalid ${percentField}: ${productData[percentField]}`);
+                }
+            }
+        });
+
         return {
             isValid: errors.length === 0,
             errors
@@ -249,6 +258,21 @@ export class FirestoreService {
         return `${parsed}%`;
     }
 
+    // Normalize percentage-style fields to always end with %
+    static normalizePercentage(value) {
+        if (!value || value === '') return '';
+
+        const trimmed = String(value).trim();
+        const numericValue = trimmed.replace('%', '');
+        const parsed = parseFloat(numericValue);
+
+        if (isNaN(parsed) || parsed < 0) {
+            return null;
+        }
+
+        return `${parsed}%`;
+    }
+
     // Add or update product with readable ID
     static async saveProduct(productData, existingId = null) {
         try {
@@ -265,6 +289,12 @@ export class FirestoreService {
             ['rate1_5', 'rate5_8', 'rate8Plus'].forEach(rateField => {
                 if (productData[rateField]) {
                     productData[rateField] = this.normalizeInterestRate(productData[rateField]);
+                }
+            });
+
+            ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+                if (productData[percentField]) {
+                    productData[percentField] = this.normalizePercentage(productData[percentField]);
                 }
             });
 
@@ -318,6 +348,11 @@ export class FirestoreService {
                 ['rate1_5', 'rate5_8', 'rate8Plus'].forEach(rateField => {
                     if (product[rateField]) {
                         product[rateField] = this.normalizeInterestRate(product[rateField]);
+                    }
+                });
+                ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+                    if (product[percentField]) {
+                        product[percentField] = this.normalizePercentage(product[percentField]);
                     }
                 });
                 validProducts.push(product);

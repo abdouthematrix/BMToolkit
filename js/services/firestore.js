@@ -221,7 +221,7 @@ export class FirestoreService {
             }
         });
 
-        ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+        ['adminFeesPercent', 'bankStampPercent', 'customerStampPercent'].forEach(percentField => {
             if (productData[percentField] && productData[percentField] !== '') {
                 const normalized = this.normalizePercentage(productData[percentField]);
                 if (normalized === null) {
@@ -292,7 +292,7 @@ export class FirestoreService {
                 }
             });
 
-            ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+            ['adminFeesPercent', 'bankStampPercent', 'customerStampPercent'].forEach(percentField => {
                 if (productData[percentField]) {
                     productData[percentField] = this.normalizePercentage(productData[percentField]);
                 }
@@ -350,7 +350,7 @@ export class FirestoreService {
                         product[rateField] = this.normalizeInterestRate(product[rateField]);
                     }
                 });
-                ['bankStampPercent', 'customerStampPercent'].forEach(percentField => {
+                ['adminFeesPercent', 'bankStampPercent', 'customerStampPercent'].forEach(percentField => {
                     if (product[percentField]) {
                         product[percentField] = this.normalizePercentage(product[percentField]);
                     }

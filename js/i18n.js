@@ -243,6 +243,7 @@ export class I18n {
                 'password': 'Password',
                 'unsecured-products': 'Product Catalog',
                 'import-csv': 'Import from CSV',
+                'export-csv': 'Export CSV',
                 'add-product': 'Create New Product',
                 'edit-product': 'Edit',
                 'delete-product': 'Remove',
@@ -252,6 +253,9 @@ export class I18n {
                 'rate-1-5': 'Rate (1-5 Yrs)',
                 'rate-5-8': 'Rate (5-8 Yrs)',
                 'rate-8-plus': 'Rate (8+ Yrs)',
+                'product-admin-fees-percent': 'Admin Fees %',
+                'product-bank-stamp-percent': 'Bank Stamp %',
+                'product-customer-stamp-percent': 'Customer Stamp %',
                 'save-product': 'Save Product',
                 'cancel': 'Cancel',
                 'actions': 'Actions',
@@ -321,6 +325,7 @@ export class I18n {
                 'importing-products': 'Importing products...',
                 'csv-import-success': 'Successfully imported {count} products',
                 'csv-import-partial': 'Imported {success} products, {failed} failed.',
+                'export-csv-success': 'Successfully exported {count} products to CSV',
                 'check-console': 'Check console for details.',
 
                 // Info Messages
@@ -603,6 +608,7 @@ export class I18n {
                 'password': 'كلمة المرور',
                 'unsecured-products': 'كتالوج المنتجات',
                 'import-csv': 'استيراد ملف CSV',
+                'export-csv': 'تصدير CSV',
                 'add-product': 'إضافة منتج جديد',
                 'edit-product': 'تعديل',
                 'delete-product': 'حذف',
@@ -612,6 +618,9 @@ export class I18n {
                 'rate-1-5': 'فائدة (1-5 سنوات)',
                 'rate-5-8': 'فائدة (5-8 سنوات)',
                 'rate-8-plus': 'فائدة (8+ سنوات)',
+                'product-admin-fees-percent': 'المصاريف الإدارية %',
+                'product-bank-stamp-percent': 'دمغة البنك %',
+                'product-customer-stamp-percent': 'دمغة العميل %',
                 'save-product': 'حفظ البيانات',
                 'cancel': 'إلغاء',
                 'actions': 'إجراءات',
@@ -681,6 +690,7 @@ export class I18n {
                 'importing-products': 'جاري استيراد المنتجات...',
                 'csv-import-success': 'تم استيراد {count} منتج بنجاح',
                 'csv-import-partial': 'تم استيراد {success} منتج، فشل {failed}.',
+                'export-csv-success': 'تم تصدير {count} منتج إلى CSV بنجاح',
                 'check-console': 'راجع وحدة التحكم للتفاصيل.',
 
                 // Info Messages

@@ -213,6 +213,13 @@ export class I18n {
                 'clear-search': 'Clear',
                 'clear-recent-searches': 'Clear recent',
 
+                // Product Info Card
+                'fees': 'Fees',
+                'admin-fees': 'Admin Fee',
+                'bank-stamp': 'Bank Stamp',
+                'customer-stamp': 'Cust. Stamp',
+                'max-tenor': 'Max',
+
                 // Admin
                 'admin-panel': 'System Settings',
                 'admin-desc': 'Configure global rates and calculation constants',
@@ -576,6 +583,13 @@ export class I18n {
                 'recent-searches': 'آخر عمليات البحث:',
                 'clear-search': 'مسح',
                 'clear-recent-searches': 'مسح آخر عمليات البحث',
+
+                // Product Info Card
+                'fees': 'الرسوم',
+                'admin-fees': 'مصاريف إدارية',
+                'bank-stamp': 'دمغة البنك',
+                'customer-stamp': 'دمغة العميل',
+                'max-tenor': 'أقصى مدة',
 
                 // Admin
                 'admin-panel': 'إعدادات النظام',

@@ -771,41 +771,98 @@ export class UnsecuredLoansPage {
             return segmentMap[segment] || null; // A/A+/B/C have no i18n key – use raw value
         };
 
-        // Build segment display (raw value for A/A+/B/C, i18n key for "Not Specified")
-        const segmentKey = getSegmentKey(product.companySegment);
-        const segmentDisplay = segmentKey
-            ? `<span data-i18n="${segmentKey}">${product.companySegment || 'N/A'}</span>`
-            : `<span>${product.companySegment || 'N/A'}</span>`;
+        // segmentKey is used inside the new infoHtml via getSegmentKey inline
+
+        // ---- helpers for rendering rate / fee stat boxes ----
+        const rateBox = (value, labelKey, labelFallback) => {
+            const isNA = !value || value === 'N/A' || value === '';
+            return `
+                <div class="product-info-stat-box">
+                    <div class="product-info-stat-label" data-i18n="${labelKey}">${labelFallback}</div>
+                    <div class="product-info-stat-value${isNA ? ' product-info-stat-na' : ''}">${isNA ? '—' : value}</div>
+                </div>`;
+        };
+
+        const feeBox = (value, labelKey, labelFallback) => {
+            const isNA = !value || value === 'N/A' || value === '';
+            return `
+                <div class="product-info-stat-box">
+                    <div class="product-info-stat-label" data-i18n="${labelKey}">${labelFallback}</div>
+                    <div class="product-info-stat-value product-info-stat-fee${isNA ? ' product-info-stat-na' : ''}">${isNA ? '—' : value}</div>
+                </div>`;
+        };
+
+        // ---- sector / payroll / segment badges ----
+        const sectorBadgeClass = {
+            'Government/Public': 'product-info-badge-gov',
+            'Private': 'product-info-badge-priv'
+        }[product.sector] || 'product-info-badge-ns';
+
+        const payrollBadgeClass = product.payrollType === 'Contracted'
+            ? 'product-info-badge-contracted'
+            : product.payrollType === 'Non-Contracted'
+                ? 'product-info-badge-noncontracted'
+                : 'product-info-badge-ns';
+
+        const segmentBadge = (product.companySegment && product.companySegment !== 'Not Specified')
+            ? `<span class="product-info-badge product-info-badge-seg">Seg ${product.companySegment}</span>`
+            : '';
+
+        // ---- max tenor chip ----
+        const maxTenorYears = this.getProductMaxTenorYears();
+        const maxTenorLabel = maxTenorYears > 0
+            ? `<span class="product-info-max-tenor"><i class="fas fa-clock"></i> ${i18n.t('max-tenor') || 'Max'} ${maxTenorYears} ${i18n.t('years') || 'yrs'}</span>`
+            : '';
+
+        // ---- primary / secondary name based on language ----
+        const primaryName = i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn;
+        const secondaryName = i18n.currentLanguage === 'ar' ? product.nameEn : product.nameAr;
 
         const infoHtml = `
-            <div class="info-box">
-                <h4>${i18n.currentLanguage === 'ar' ? product.nameAr : product.nameEn}</h4>
-                <div class="grid grid-3" style="margin-top: var(--spacing-md);">
-                    <div>
-                        <strong data-i18n="ubs-code">${i18n.t('ubs-code')}:</strong> ${product.ubsCode || 'N/A'}
+            <div class="product-info-card">
+                <!-- Header -->
+                <div class="product-info-header">
+                    <div class="product-info-header-left">
+                        <span class="product-info-ubs-badge">${product.ubsCode || 'N/A'}</span>
+                        <h4 class="product-info-name-primary">${primaryName}</h4>
+                        <p class="product-info-name-secondary" dir="${i18n.currentLanguage === 'ar' ? 'ltr' : 'rtl'}">${secondaryName}</p>
                     </div>
-                    <div>
-                        <strong data-i18n="sector">${i18n.t('sector')}:</strong>
-                        <span data-i18n="${product.sector ? getSectorKey(product.sector) : 'not-specified'}">${product.sector || 'N/A'}</span>
-                    </div>
-                    <div>
-                        <strong data-i18n="payroll">${i18n.t('payroll')}:</strong>
-                        <span data-i18n="${product.payrollType ? getPayrollKey(product.payrollType) : 'not-specified'}">${product.payrollType || 'N/A'}</span>
+                    <div class="product-info-header-right">
+                        ${maxTenorLabel}
                     </div>
                 </div>
-                <div class="grid grid-3" style="margin-top: var(--spacing-sm);">
-                    <div>
-                        <strong data-i18n="company-segment">${i18n.t('company-segment')}:</strong>
-                        ${segmentDisplay}
+
+                <!-- Attribute badges -->
+                <div class="product-info-badges">
+                    <span class="product-info-badge ${sectorBadgeClass}"
+                          data-i18n="${product.sector ? getSectorKey(product.sector) : 'not-specified'}">
+                        ${product.sector || i18n.t('not-specified') || 'N/A'}
+                    </span>
+                    <span class="product-info-badge ${payrollBadgeClass}"
+                          data-i18n="${product.payrollType ? getPayrollKey(product.payrollType) : 'not-specified'}">
+                        ${product.payrollType || i18n.t('not-specified') || 'N/A'}
+                    </span>
+                    ${segmentBadge}
+                </div>
+
+                <!-- Interest rates -->
+                <div class="product-info-section">
+                    <div class="product-info-section-label" data-i18n="rates">${i18n.t('rates') || 'Interest Rates'}</div>
+                    <div class="product-info-stat-row">
+                        ${rateBox(product.rate1_5, 'rate-1-5', '1–5 yrs')}
+                        ${rateBox(product.rate5_8, 'rate-5-8', '5–8 yrs')}
+                        ${rateBox(product.rate8Plus, 'rate-8-plus', '8+ yrs')}
                     </div>
                 </div>
-                <div style="margin-top: var(--spacing-md);">
-                    <strong data-i18n="rates">${i18n.t('rates')}:</strong>
-                    <ul style="margin: var(--spacing-sm) 0 0 0; padding-left: var(--spacing-lg);">
-                        ${product.rate1_5 ? `<li><span data-i18n="rate-1-5">${i18n.t('rate-1-5')}</span> ${product.rate1_5}</li>` : ''}
-                        ${product.rate5_8 ? `<li><span data-i18n="rate-5-8">${i18n.t('rate-5-8')}</span> ${product.rate5_8}</li>` : ''}
-                        ${product.rate8Plus ? `<li><span data-i18n="rate-8-plus">${i18n.t('rate-8-plus')}</span> ${product.rate8Plus}</li>` : ''}
-                    </ul>
+
+                <!-- Fees -->
+                <div class="product-info-section">
+                    <div class="product-info-section-label" data-i18n="fees">${i18n.t('fees') || 'Fees'}</div>
+                    <div class="product-info-stat-row">
+                        ${feeBox(product.adminFees, 'admin-fees', 'Admin')}
+                        ${feeBox(product.bankStamp, 'bank-stamp', 'Bank Stamp')}
+                        ${feeBox(product.customerStamp, 'customer-stamp', 'Cust. Stamp')}
+                    </div>
                 </div>
             </div>
         `;

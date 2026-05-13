@@ -1,6 +1,7 @@
 // router.js - Hash-based Router with URL Parameters
 
 import { AuthService } from './services/auth.js';
+import { AnalyticsService } from './services/analytics.js';
 
 export class Router {
     constructor() {
@@ -77,6 +78,7 @@ export class Router {
             this.currentRoute = path;
             this.currentRouteWithQuery = fullPath;
             await route.handler();
+            AnalyticsService.trackPageView(fullPath, route.title);
             this.updateNavigation();
         } catch (error) {
             console.error('Route handler error:', error);

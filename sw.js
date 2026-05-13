@@ -6,7 +6,9 @@ const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v3';
 const FIREBASE_SDKS = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js',
-    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js'
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js'
+
 ];
 const urlsToCache = [
     './',

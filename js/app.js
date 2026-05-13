@@ -3,6 +3,8 @@
 import { Router } from './router.js';
 import { i18n } from './i18n.js';
 import { AuthService } from './services/auth.js';
+import { FirestoreService } from './services/firestore.js';
+import { initAnalytics } from './firebase-config.js'; // deferred analytics bootstrapper
 import { HomePage } from './pages/home.js';
 import { LoansPage } from './pages/loans.js';
 import { CashLoansPage } from './pages/cash-loans.js';
@@ -23,104 +25,98 @@ class App {
     }
 
     async init() {
-        // Initialize Firebase Auth
-        await AuthService.init();
+        try {
+            // 1. Auth must be ready before routing so protected routes work
+            await AuthService.init();
 
-        // Initialize i18n
-        i18n.init();
+            // 2. Translations
+            i18n.init();
 
-        // Start routing
-        this.router.handleRoute(true);
+            // 3. Route to the correct page
+            this.router.handleRoute(true);
+
+            // 4. Fire-and-forget: Analytics deferred until 'load' event so it
+            //    never races with Firestore / IDB during startup
+            initAnalytics();
+
+        } catch (err) {
+            console.error('[App] init failed:', err);
+            this._renderCrashScreen(err);
+        }
+    }
+
+    /** Last-resort UI shown when init() throws. */
+    _renderCrashScreen(err) {
+        const content = document.getElementById('app-content');
+        if (!content) return;
+        content.innerHTML = `
+            <div class="container">
+                <div class="card" style="max-width:600px;margin:50px auto;text-align:center;">
+                    <div class="card-body">
+                        <i class="fas fa-exclamation-circle"
+                           style="font-size:4rem;color:var(--accent);margin-bottom:var(--spacing-lg);"></i>
+                        <h2>Failed to start</h2>
+                        <p>Something went wrong during startup. Please refresh the page.</p>
+                        <pre style="text-align:left;font-size:.75rem;opacity:.6;white-space:pre-wrap;">${err?.message ?? err}</pre>
+                        <button onclick="location.reload()" class="btn-primary" style="margin-top:1rem;">
+                            <i class="fas fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>`;
     }
 
     setupRoutes() {
-        // Public routes
-        this.router.register('home', () => HomePage.init(), {
-            title: 'BMToolkit - Home'
-        });
+        this.router.register('home', () => HomePage.init(), { title: 'BMToolkit - Home' });
+        this.router.register('secured-loans', () => SecuredLoansPage.init(), { title: 'BMToolkit - Secured Loans' });
+        this.router.register('loans', () => LoansPage.init(), { title: 'BMToolkit - Loans' });
+        this.router.register('cash-loans', () => CashLoansPage.init(), { title: 'BMToolkit - Cash Loans' });
+        this.router.register('unsecured-loans', () => UnsecuredLoansPage.init(), { title: 'BMToolkit - Unsecured Loans' });
+        this.router.register('mortgage', () => MortgagePage.init(), { title: 'BMToolkit - Mortgage' });
+        this.router.register('credit-cards', () => CreditCardsPage.init(), { title: 'BMToolkit - Credit Cards' });
+        this.router.register('advancedtools', () => AdvancedToolsPage.init(), { title: 'BMToolkit - Advanced Tools' });
+        this.router.register('login', () => LoginPage.init(), { title: 'BMToolkit - Login' });
 
-        this.router.register('secured-loans', () => SecuredLoansPage.init(), {
-            title: 'BMToolkit - Secured Loans'
-        });
-
-        this.router.register('loans', () => LoansPage.init(), {
-            title: 'BMToolkit - Loans'
-        });
-
-        this.router.register('cash-loans', () => CashLoansPage.init(), {
-            title: 'BMToolkit - Cash Loans'
-        });
-
-        this.router.register('unsecured-loans', () => UnsecuredLoansPage.init(), {
-            title: 'BMToolkit - Unsecured Loans'
-        });
-
-        this.router.register('mortgage', () => MortgagePage.init(), {
-            title: 'BMToolkit - Mortgage'
-        });
-
-        this.router.register('credit-cards', () => CreditCardsPage.init(), {
-            title: 'BMToolkit - Credit Cards'
-        });
-
-        this.router.register('advancedtools', () => AdvancedToolsPage.init(), {
-            title: 'BMToolkit - Advanced Tools'
-        });
-
-        this.router.register('login', () => LoginPage.init(), {
-            title: 'BMToolkit - Login'
-        });
-
-        // Protected routes
+        // Protected
         this.router.register('admin', () => AdminPage.init(), {
             title: 'BMToolkit - Admin Panel',
             requireAuth: true
         });
 
-        // 404 route
+        // 404
         this.router.register('404', () => {
             this.router.render(`
                 <div class="container">
-                    <div class="card" style="max-width: 600px; margin: 50px auto; text-align: center;">
+                    <div class="card" style="max-width:600px;margin:50px auto;text-align:center;">
                         <div class="card-body">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: var(--accent); margin-bottom: var(--spacing-lg);"></i>
+                            <i class="fas fa-exclamation-triangle"
+                               style="font-size:4rem;color:var(--accent);margin-bottom:var(--spacing-lg);"></i>
                             <h2>Page Not Found</h2>
                             <p>The page you're looking for doesn't exist.</p>
                             <button onclick="window.location.hash='home'" class="btn-primary">
-                                <i class="fas fa-home"></i>
-                                Go Home
+                                <i class="fas fa-home"></i> Go Home
                             </button>
                         </div>
                     </div>
-                </div>
-            `);
-        }, {
-            title: 'BMToolkit - Not Found'
-        });
+                </div>`);
+        }, { title: 'BMToolkit - Not Found' });
     }
 
     setupEventListeners() {
-        // Theme toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => this.toggleTheme());
-        }
+        // Theme
+        document.getElementById('theme-toggle')
+            ?.addEventListener('click', () => this.toggleTheme());
 
-        // Share button
-        const shareBtn = document.getElementById('share-btn');
-        if (shareBtn) {
-            shareBtn.addEventListener('click', () => this.handleShare());
-        }
+        // Share
+        document.getElementById('share-btn')
+            ?.addEventListener('click', () => this.handleShare());
 
-        // Language toggle
-        const langToggle = document.getElementById('lang-toggle');
-        if (langToggle) {
-            langToggle.addEventListener('click', () => {
+        // Language
+        document.getElementById('lang-toggle')
+            ?.addEventListener('click', () => {
                 i18n.toggleLanguage();
-                // Refresh current page to update translations
                 this.router.handleRoute(true);
             });
-        }
 
         // User menu dropdown
         const userMenuBtn = document.getElementById('user-menu-btn');
@@ -130,56 +126,42 @@ class App {
                 e.stopPropagation();
                 userMenuDropdown.classList.toggle('show');
             });
-
-            // Close dropdown when clicking outside
             document.addEventListener('click', () => {
                 userMenuDropdown.classList.remove('show');
             });
         }
 
-        // Logout button
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async () => {
-                await this.handleLogout();
-            });
-        }
+        // Logout
+        document.getElementById('logout-btn')
+            ?.addEventListener('click', () => this.handleLogout());
 
-        // Login button (when not logged in)
-        const loginBtn = document.getElementById('login-btn');
-        if (loginBtn) {
-            loginBtn.addEventListener('click', () => {
-                window.location.hash = 'login';
-            });
-        }
+        // Login
+        document.getElementById('login-btn')
+            ?.addEventListener('click', () => { window.location.hash = 'login'; });
 
-        // Mobile menu toggle
-        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        // Mobile menu
+        const mobileToggle = document.getElementById('mobile-menu-toggle');
         const mainNav = document.getElementById('main-nav');
-        if (mobileMenuToggle && mainNav) {
-            mobileMenuToggle.addEventListener('click', () => {
-                mainNav.classList.toggle('show');
-            });
-
-            // Close mobile menu when clicking a link
+        if (mobileToggle && mainNav) {
+            mobileToggle.addEventListener('click', () => mainNav.classList.toggle('show'));
             mainNav.querySelectorAll('.nav-link').forEach(link => {
-                link.addEventListener('click', () => {
-                    mainNav.classList.remove('show');
-                });
+                link.addEventListener('click', () => mainNav.classList.remove('show'));
             });
         }
 
-        // Listen for the moment the user comes back online
+        // Connectivity
         window.addEventListener('online', async () => {
-            console.log("Internet restored. Refreshing cache in background...");
-
-            // Silently fetch fresh data to prime the cache
-            await FirestoreService.getConstants();
-            await FirestoreService.getProducts();
+            console.log('[App] Online — refreshing cache...');
+            try {
+                await FirestoreService.getConstants();
+                await FirestoreService.getProducts();
+            } catch (err) {
+                console.warn('[App] Background cache refresh failed:', err);
+            }
         });
 
         window.addEventListener('offline', () => {
-            console.log("Working offline: Using cached data.");
+            console.log('[App] Offline — using cached data.');
         });
     }
 
@@ -197,26 +179,18 @@ class App {
         const shareData = {
             title: document.title || i18n.t('app-name'),
             text: i18n.t('share-text'),
-            url: window.location.href,
+            url: window.location.href
         };
 
-        // Use native Web Share API if available (ideal for PWA / mobile)
         if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-                return;
-            } catch (err) {
-                // User cancelled or share failed — fall through to clipboard
-                if (err.name === 'AbortError') return;
-            }
+            try { await navigator.share(shareData); return; }
+            catch (err) { if (err.name === 'AbortError') return; }
         }
 
-        // Fallback: copy URL to clipboard
         try {
             await navigator.clipboard.writeText(shareData.url);
             this.showShareFeedback(true);
         } catch {
-            // Last resort: prompt for manual copy
             window.prompt(i18n.t('share-copy-prompt'), shareData.url);
         }
     }
@@ -226,47 +200,39 @@ class App {
         const icon = document.getElementById('share-icon');
         if (!btn || !icon) return;
 
-        const originalClass = icon.className;
-        const originalTitle = btn.title;
+        const origClass = icon.className;
+        const origTitle = btn.title;
 
+        icon.className = success ? 'fas fa-check' : 'fas fa-xmark';
+        btn.classList.add(success ? 'share-btn--copied' : 'share-btn--error');
         if (success) {
-            icon.className = 'fas fa-check';
-            btn.classList.add('share-btn--copied');
             btn.title = i18n.t('share-copied');
             this.showToast(i18n.t('share-copied'), 'success');
         } else {
-            icon.className = 'fas fa-xmark';
-            btn.classList.add('share-btn--error');
             this.showToast(i18n.t('share-failed'), 'error');
         }
 
         setTimeout(() => {
-            icon.className = originalClass;
-            btn.title = originalTitle;
+            icon.className = origClass;
+            btn.title = origTitle;
             btn.classList.remove('share-btn--copied', 'share-btn--error');
         }, 2000);
     }
 
     setupTheme() {
-        // Load saved theme or default to light
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        this.setTheme(savedTheme);
+        this.setTheme(localStorage.getItem('theme') || 'light');
     }
 
     toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        this.setTheme(newTheme);
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
+        this.setTheme(current === 'light' ? 'dark' : 'light');
     }
 
     setTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
-
-        const themeIcon = document.getElementById('theme-icon');
-        if (themeIcon) {
-            themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-        }
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
     }
 
     showToast(message, type = 'info') {
@@ -276,39 +242,31 @@ class App {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: var(--spacing-sm);">
-                <i class="fas fa-${this.getToastIcon(type)}"></i>
+            <div style="display:flex;align-items:center;gap:var(--spacing-sm);">
+                <i class="fas fa-${this._toastIcon(type)}"></i>
                 <span>${message}</span>
-            </div>
-        `;
-
+            </div>`;
         container.appendChild(toast);
 
-        // Auto remove after 3 seconds
         setTimeout(() => {
             toast.style.opacity = '0';
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
+            setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
 
-    getToastIcon(type) {
-        const icons = {
-            success: 'check-circle',
-            error: 'exclamation-circle',
-            warning: 'exclamation-triangle',
-            info: 'info-circle'
-        };
-        return icons[type] || 'info-circle';
+    _toastIcon(type) {
+        return {
+            success: 'check-circle', error: 'exclamation-circle',
+            warning: 'exclamation-triangle', info: 'info-circle'
+        }[type] ?? 'info-circle';
     }
 }
 
-// Initialize app when DOM is ready
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
     window.app.init();
 });
 
-// Make app globally accessible
 export default App;

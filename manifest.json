@@ -52,7 +52,11 @@
       "type": "image/png"
     }
   ],
-  "categories": ["finance", "business", "productivity"],
+  "categories": [
+    "finance",
+    "business",
+    "productivity"
+  ],
   "screenshots": [],
   "related_applications": [],
   "prefer_related_applications": false,
@@ -84,10 +88,23 @@
       ]
     },
     {
-      "name": "Advanced Tools",
-      "short_name": "Advanced",
-      "description": "Access advanced financial calculation tools",
-      "url": "./index.html#advancedtools",
+      "name": "Mortgage",
+      "short_name": "Mortgage",
+      "description": "Calculate mortgage payments and loan details",
+      "url": "./index.html#mortgage",
+      "icons": [
+        {
+          "src": "./icons/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Credit Cards",
+      "short_name": "Credit card",
+      "description": "Open credit cards calculator page",
+      "url": "./index.html#credit-cards",
       "icons": [
         {
           "src": "./icons/icon-96x96.png",

@@ -39,6 +39,7 @@ export class SecuredLoansPage {
         // Update form defaults
         document.getElementById('cd-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
         document.getElementById('cd-rate-optimizer').value = (this.constants.CD_RATE * 100).toFixed(2);
+        document.getElementById('td-90-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
 
         // Set admin fee field defaults from constants
         const adminFeePct = ((this.constants.SECURED_LOAN_ADMIN_FEE ?? 0.01) * 100).toFixed(2);
@@ -62,6 +63,13 @@ export class SecuredLoansPage {
         if (tdYearsInput) {
             tdYearsInput.min = Math.ceil(minMonths / 12);
             tdYearsInput.max = maxYears;
+        }
+
+        // 90% Loan Against TD - years input
+        const td90YearsInput = document.getElementById('td-90-years');
+        if (td90YearsInput) {
+            td90YearsInput.min = Math.ceil(minMonths / 12);
+            td90YearsInput.max = maxYears;
         }
 
         // Smart Optimizer - months input
@@ -205,6 +213,10 @@ export class SecuredLoansPage {
                             <i class="fas fa-sliders-h"></i>
                             <span data-i18n="smart-optimizer">Smart Loan Optimizer</span>
                         </button>
+                        <button class="tab-btn ${this.activeTab === 'td-90-loan' ? 'active' : ''}" data-tab="td-90-loan">
+                            <i class="fas fa-money-bill-transfer"></i>
+                            <span data-i18n="tab-td-90-loan">90% Against TD</span>
+                        </button>
                         <button class="tab-btn ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab="td-secured-loan">
                             <i class="fas fa-piggy-bank"></i>
                             <span data-i18n="tab-td-secured-loan">TD Secured Loan</span>
@@ -223,6 +235,7 @@ export class SecuredLoansPage {
                     <div id="calculator-content">
                         ${this.renderSmartInvestmentTab()}
                         ${this.renderSmartOptimizerTab()}
+                        ${this.renderTd90LoanTab()}
                         ${this.renderTdSecuredLoanTab()}
                         ${this.renderLoanCalculatorTab()}
                         ${this.renderMaxLoanTab()}
@@ -334,6 +347,47 @@ export class SecuredLoansPage {
 
                     <!-- Results -->
                     <div id="smart-optimizer-results" style="display: none; margin-top: var(--spacing-xl);"></div>
+                </div>
+            </div>
+        `;
+    }
+
+
+    static renderTd90LoanTab() {
+        return `
+            <div class="tab-content ${this.activeTab === 'td-90-loan' ? 'active' : ''}" data-tab-content="td-90-loan">
+                <div class="card-body">
+                    <h3 data-i18n="td-90-loan-title">90% Loan Against TD</h3>
+                    <p class="text-muted" data-i18n="td-90-loan-desc">Get immediate cash while keeping your TD principal protected.</p>
+
+                    <form id="td-90-loan-form" style="margin-top: var(--spacing-lg);">
+                        <div class="grid grid-3">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="td-amount">Certificate Amount</label>
+                                <input type="number" id="td-90-amount" class="form-input" value="100000" min="0" step="1000" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="cd-rate">Certificate Rate (%)</label>
+                                <input type="number" id="td-90-rate" class="form-input" value="16" min="0" max="100" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="loan-term-years">Loan Term (Years)</label>
+                                <input type="number" id="td-90-years" class="form-input" value="3" min="1" max="10" step="1" required>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-calculator"></i>
+                                <span data-i18n="calculate">Calculate</span>
+                            </button>
+                            <button type="reset" class="btn-secondary">
+                                <i class="fas fa-redo"></i>
+                                <span data-i18n="reset">Reset</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="td-90-loan-results" style="display: none; margin-top: var(--spacing-xl);"></div>
                 </div>
             </div>
         `;
@@ -551,6 +605,11 @@ export class SecuredLoansPage {
             this.calculateSmartOptimizer();
         });
 
+        document.getElementById('td-90-loan-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateTd90Loan();
+        });
+
         document.getElementById('loan-calculator-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.calculateLoan();
@@ -712,6 +771,13 @@ export class SecuredLoansPage {
                 this.calculateSmartOptimizer();
                 break;
 
+            case 'td-90-loan':
+                if (urlParams.amount) document.getElementById('td-90-amount').value = urlParams.amount;
+                if (urlParams.rate) document.getElementById('td-90-rate').value = urlParams.rate;
+                if (urlParams.years) document.getElementById('td-90-years').value = urlParams.years;
+                this.calculateTd90Loan();
+                break;
+
             case 'loan-calculator':
                 if (urlParams.principal) document.getElementById('principal-loan').value = urlParams.principal;
                 if (urlParams.rate) document.getElementById('rate-loan').value = urlParams.rate;
@@ -756,6 +822,112 @@ export class SecuredLoansPage {
                 this.calculateTdSecuredLoan();
                 break;
         }
+    }
+
+
+    static calculateTd90Loan() {
+        const tdAmount = parseFloat(document.getElementById('td-90-amount').value);
+        const tdRate = parseFloat(document.getElementById('td-90-rate').value) / 100;
+        const years = parseInt(document.getElementById('td-90-years').value);
+
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const minYears = Math.ceil(minMonths / 12);
+
+        if (!Number.isFinite(tdAmount) || tdAmount <= 0) {
+            window.app.showToast('Please enter a valid certificate amount.', 'error');
+            return;
+        }
+
+        if (!Number.isFinite(tdRate) || tdRate < 0) {
+            window.app.showToast('Please enter a valid certificate rate.', 'error');
+            return;
+        }
+
+        if (!Number.isFinite(years) || years < minYears || years > maxYears) {
+            window.app.showToast(`Tenor must be between ${minYears} and ${maxYears} years.`, 'error');
+            return;
+        }
+
+        const result = FinancialCalculator.calculateLoanAgainstTd90(tdAmount, tdRate, years, this.constants);
+
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                tab: 'td-90-loan',
+                amount: tdAmount,
+                rate: (tdRate * 100).toFixed(2),
+                years
+            });
+        }
+
+        const resultsHtml = `
+            <div class="td-90-summary-card">
+                <div class="td-90-header">
+                    <h4 data-i18n="td-90-summary-title">Immediate Cash Scenario</h4>
+                    <p>${i18n.t('td-90-summary-desc')}</p>
+                </div>
+                <div class="td-90-steps">
+                    <div class="td-90-step td-90-cash">
+                        <i class="fas fa-arrow-down"></i>
+                        <div>
+                            <span data-i18n="td-90-cash-now">Cash Now</span>
+                            <strong>${i18n.formatCurrency(result.loanAmount)}</strong>
+                        </div>
+                    </div>
+                    <div class="td-90-step td-90-extra">
+                        <i class="fas fa-arrow-up"></i>
+                        <div>
+                            <span data-i18n="td-90-extra-monthly">Monthly payment above TD interest</span>
+                            <strong>${i18n.formatCurrency(result.monthlyExtraPayment)}</strong>
+                        </div>
+                    </div>
+                    <div class="td-90-step td-90-effective">
+                        <i class="fas fa-credit-card"></i>
+                        <div>
+                            <span data-i18n="td-90-effective-payments">Effective payments</span>
+                            <strong>${i18n.formatCurrency(result.totalEffectivePayment)}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="td-90-save-badge">
+                    <i class="fas fa-star"></i>
+                    <span data-i18n="td-90-save">Save</span>
+                    <strong>${i18n.formatCurrency(result.cashSavedVsLoan)}</strong>
+                </div>
+            </div>
+
+            <div class="grid grid-3" style="margin-top: var(--spacing-lg);">
+                <div class="metric">
+                    <span class="text-muted" data-i18n="loan-amount">Loan Principal</span>
+                    <div class="metric-value">${i18n.formatCurrency(result.loanAmount)}</div>
+                </div>
+                <div class="metric">
+                    <span class="text-muted" data-i18n="calculated-loan-rate">Calculated Loan Rate</span>
+                    <div class="metric-value">${i18n.formatPercent(result.loanRate * 100)}</div>
+                </div>
+                <div class="metric">
+                    <span class="text-muted" data-i18n="monthly-payment">Monthly Installment</span>
+                    <div class="metric-value">${i18n.formatCurrency(result.monthlyInstallment)}</div>
+                </div>
+                <div class="metric">
+                    <span class="text-muted" data-i18n="monthly-interest">Est. Monthly Interest</span>
+                    <div class="metric-value">${i18n.formatCurrency(result.monthlyTdInterest)}</div>
+                </div>
+                <div class="metric">
+                    <span class="text-muted" data-i18n="td-90-protected-principal">Protected TD Principal</span>
+                    <div class="metric-value">${i18n.formatCurrency(result.protectedPrincipal)}</div>
+                </div>
+                <div class="metric">
+                    <span class="text-muted" data-i18n="loan-term-years">Loan Term (Years)</span>
+                    <div class="metric-value">${result.years}</div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('td-90-loan-results').innerHTML = resultsHtml;
+        document.getElementById('td-90-loan-results').style.display = 'block';
+        i18n.updatePageText();
     }
 
     static calculateSmartInvestment() {

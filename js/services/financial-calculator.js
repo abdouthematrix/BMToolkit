@@ -88,6 +88,46 @@ export class FinancialCalculator {
         };
     }
 
+    // 90% Loan Against TD - cash-now scenario
+    static calculateLoanAgainstTd90(tdAmount, tdRate, years, constants = {}) {
+        const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
+            ? constants.MAX_LOAN_PERCENT
+            : 0.90;
+        const tdMargin = constants.TD_MARGIN !== undefined ? constants.TD_MARGIN : 0.02;
+        const minRate = constants.MIN_RATE !== undefined ? constants.MIN_RATE : 0.18;
+
+        const loanAmount = this.roundTo100(tdAmount * maxLoanPercent);
+        const loanRate = Math.max(tdRate + tdMargin, minRate);
+        const months = years * 12;
+        const monthlyTdInterest = (tdAmount * tdRate) / 12;
+        const monthlyInstallment = loanAmount > 0 ? this.PMT(loanRate / 12, months, loanAmount) : 0;
+        const monthlyExtraPayment = monthlyInstallment - monthlyTdInterest;
+        const totalInstallments = monthlyInstallment * months;
+        const totalTdInterest = monthlyTdInterest * months;
+        const totalEffectivePayment = monthlyExtraPayment * months;
+        const totalInterest = totalInstallments - loanAmount;
+        const cashSavedVsLoan = loanAmount - totalEffectivePayment;
+
+        return {
+            tdAmount,
+            tdRate,
+            years,
+            months,
+            loanPercent: maxLoanPercent,
+            loanAmount,
+            loanRate,
+            monthlyTdInterest,
+            monthlyInstallment,
+            monthlyExtraPayment,
+            totalInstallments,
+            totalTdInterest,
+            totalEffectivePayment,
+            totalInterest,
+            cashSavedVsLoan,
+            protectedPrincipal: tdAmount
+        };
+    }
+
     // Smart Investment Tool - All 4 scenarios
     static calculateAllScenarios(tdAmount, tdRate, years, constants = {}, adminFeeRate = 0) {
         // Use constants with fallback defaults

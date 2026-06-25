@@ -1,7 +1,7 @@
 // sw.js - Service Worker for PWA
 
-const CACHE_NAME = 'bmtoolkit-v4';
-const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v4';
+const CACHE_NAME = 'bmtoolkit-v7';
+const FONTS_CACHE_NAME = 'bmtoolkit-fonts-v7';
 // 1. Define the Firebase Modular SDKs to cache
 const FIREBASE_SDKS = [
     'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',

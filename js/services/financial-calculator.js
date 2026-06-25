@@ -113,7 +113,7 @@ export class FinancialCalculator {
             tdRate,
             years,
             months,
-            loanPercent: maxLoanPercent,
+            loanPercent: requestedLoanPercent,
             loanAmount,
             loanRate,
             monthlyTdInterest,
@@ -127,6 +127,63 @@ export class FinancialCalculator {
             protectedPrincipal: tdAmount
         };
     }
+
+    // Loan Against TD - reinvest net loan into a new TD using the configured reinvest scenario percent
+    static calculateLoanAgainstTdReinvest(tdAmount, tdRate, years, constants = {}, adminFeeRate = 0, loanPercent = null) {
+        const maxLoanPercent = constants.MAX_LOAN_PERCENT !== undefined
+            ? constants.MAX_LOAN_PERCENT
+            : 0.90;
+        const tdMargin = constants.TD_MARGIN !== undefined ? constants.TD_MARGIN : 0.02;
+        const minRate = constants.MIN_RATE !== undefined ? constants.MIN_RATE : 0.18;
+
+        const scenarioLoanPercent = constants.SCENARIOS?.LOAN_CERTIFICATE_PERCENT !== undefined
+            ? constants.SCENARIOS.LOAN_CERTIFICATE_PERCENT / 100
+            : maxLoanPercent;
+        const requestedLoanPercent = loanPercent !== null && loanPercent !== undefined
+            ? Math.min(Math.max(loanPercent, 0), maxLoanPercent)
+            : Math.min(Math.max(scenarioLoanPercent, 0), maxLoanPercent);
+
+        const loanAmount = this.roundTo100((tdAmount * requestedLoanPercent) + 0.000001);
+        const adminFee = loanAmount * adminFeeRate;
+        const reinvestedLoanAmount = this.roundTo1000(loanAmount - adminFee);
+        const loanRate = Math.max(tdRate + tdMargin, minRate);
+        const months = years * 12;
+
+        const originalMonthlyTdInterest = (tdAmount * tdRate) / 12;
+        const reinvestedMonthlyTdInterest = (reinvestedLoanAmount * tdRate) / 12;
+        const totalMonthlyTdInterest = originalMonthlyTdInterest + reinvestedMonthlyTdInterest;
+        const monthlyInstallment = loanAmount > 0 ? this.PMT(loanRate / 12, months, loanAmount) : 0;
+        const netMonthlyProfit = totalMonthlyTdInterest - monthlyInstallment;
+        const totalInstallments = monthlyInstallment * months;
+        const totalTdInterest = totalMonthlyTdInterest * months;
+        const loanInterest = totalInstallments - loanAmount;
+        const netProfit = totalTdInterest - loanInterest - adminFee;
+        const finalAmount = tdAmount + reinvestedLoanAmount + netProfit;
+
+        return {
+            tdAmount,
+            tdRate,
+            years,
+            months,
+            loanPercent: requestedLoanPercent,
+            loanAmount,
+            adminFee,
+            reinvestedLoanAmount,
+            loanRate,
+            originalMonthlyTdInterest,
+            reinvestedMonthlyTdInterest,
+            totalMonthlyTdInterest,
+            monthlyInstallment,
+            netMonthlyProfit,
+            totalInstallments,
+            totalTdInterest,
+            loanInterest,
+            netProfit,
+            finalAmount,
+            protectedPrincipal: tdAmount
+        };
+    }
+
 
     // Smart Investment Tool - All 4 scenarios
     static calculateAllScenarios(tdAmount, tdRate, years, constants = {}, adminFeeRate = 0) {
@@ -150,7 +207,7 @@ export class FinancialCalculator {
             {
                 title: 'الحد الاقصى للقرض',
                 titleEn: 'Maximum Loan',
-                loanPercent: maxLoanPercent,
+                loanPercent: requestedLoanPercent,
                 reinvest: false
             },
             {

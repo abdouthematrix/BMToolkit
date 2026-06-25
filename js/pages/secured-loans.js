@@ -40,12 +40,14 @@ export class SecuredLoansPage {
         document.getElementById('cd-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
         document.getElementById('cd-rate-optimizer').value = (this.constants.CD_RATE * 100).toFixed(2);
         document.getElementById('td-90-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
+        document.getElementById('td-reinvest-rate').value = (this.constants.CD_RATE * 100).toFixed(2);
 
         // Set admin fee field defaults from constants
         const adminFeePct = ((this.constants.SECURED_LOAN_ADMIN_FEE ?? 0.01) * 100).toFixed(2);
         document.getElementById('smart-admin-fee-rate').value = adminFeePct;
         document.getElementById('optimizer-admin-fee-rate').value = adminFeePct;
         document.getElementById('td-admin-fee-rate').value = adminFeePct;
+        document.getElementById('td-reinvest-admin-fee-rate').value = adminFeePct;
 
         // Update tenor input limits based on constants
         this.updateTenorLimits();
@@ -70,6 +72,13 @@ export class SecuredLoansPage {
         if (td90YearsInput) {
             td90YearsInput.min = Math.ceil(minMonths / 12);
             td90YearsInput.max = maxYears;
+        }
+
+        // TD Reinvest Loan - years input
+        const tdReinvestYearsInput = document.getElementById('td-reinvest-years');
+        if (tdReinvestYearsInput) {
+            tdReinvestYearsInput.min = Math.ceil(minMonths / 12);
+            tdReinvestYearsInput.max = maxYears;
         }
 
         // Smart Optimizer - months input
@@ -217,6 +226,10 @@ export class SecuredLoansPage {
                             <i class="fas fa-money-bill-transfer"></i>
                             <span data-i18n="tab-td-90-loan">90% Against TD</span>
                         </button>
+                        <button class="tab-btn ${this.activeTab === 'td-reinvest-loan' ? 'active' : ''}" data-tab="td-reinvest-loan">
+                            <i class="fas fa-arrows-rotate"></i>
+                            <span data-i18n="tab-td-reinvest-loan">Reinvest TD</span>
+                        </button>
                         <button class="tab-btn ${this.activeTab === 'td-secured-loan' ? 'active' : ''}" data-tab="td-secured-loan">
                             <i class="fas fa-piggy-bank"></i>
                             <span data-i18n="tab-td-secured-loan">TD Secured Loan</span>
@@ -236,6 +249,7 @@ export class SecuredLoansPage {
                         ${this.renderSmartInvestmentTab()}
                         ${this.renderSmartOptimizerTab()}
                         ${this.renderTd90LoanTab()}
+                        ${this.renderTdReinvestLoanTab()}
                         ${this.renderTdSecuredLoanTab()}
                         ${this.renderLoanCalculatorTab()}
                         ${this.renderMaxLoanTab()}
@@ -388,6 +402,45 @@ export class SecuredLoansPage {
                     </form>
 
                     <div id="td-90-loan-results" style="display: none; margin-top: var(--spacing-xl);"></div>
+                </div>
+            </div>
+        `;
+    }
+
+
+    static renderTdReinvestLoanTab() {
+        return `
+            <div class="tab-content ${this.activeTab === 'td-reinvest-loan' ? 'active' : ''}" data-tab-content="td-reinvest-loan">
+                <div class="card-body">
+                    <h3 data-i18n="td-reinvest-loan-title">Loan Against TD + Reinvest</h3>
+                    <p class="text-muted" data-i18n="td-reinvest-loan-desc">Use the configured reinvest scenario percentage, deduct fees, and reinvest the net loan into another TD.</p>
+
+                    <form id="td-reinvest-loan-form" style="margin-top: var(--spacing-lg);">
+                        <div class="grid grid-3">
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="td-amount">Certificate Amount</label>
+                                <input type="number" id="td-reinvest-amount" class="form-input" value="100000" min="0" step="1000" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="cd-rate">Certificate Rate (%)</label>
+                                <input type="number" id="td-reinvest-rate" class="form-input" value="16" min="0" max="100" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" data-i18n="loan-term-years">Loan Term (Years)</label>
+                                <input type="number" id="td-reinvest-years" class="form-input" value="3" min="1" max="10" step="1" required>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top: var(--spacing-md);">
+                            <label class="form-label" data-i18n="admin-fee-rate">Admin Fee (%)</label>
+                            <input type="number" id="td-reinvest-admin-fee-rate" class="form-input" value="1" min="0" max="10" step="0.01" style="max-width: 200px;">
+                        </div>
+                        <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                            <button type="submit" class="btn-primary"><i class="fas fa-calculator"></i> <span data-i18n="calculate">Calculate</span></button>
+                            <button type="reset" class="btn-secondary"><i class="fas fa-redo"></i> <span data-i18n="reset">Reset</span></button>
+                        </div>
+                    </form>
+
+                    <div id="td-reinvest-loan-results" style="display: none; margin-top: var(--spacing-xl);"></div>
                 </div>
             </div>
         `;
@@ -610,6 +663,11 @@ export class SecuredLoansPage {
             this.calculateTd90Loan();
         });
 
+        document.getElementById('td-reinvest-loan-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.calculateTdReinvestLoan();
+        });
+
         document.getElementById('loan-calculator-form').addEventListener('submit', (e) => {
             e.preventDefault();
             this.calculateLoan();
@@ -778,6 +836,14 @@ export class SecuredLoansPage {
                 this.calculateTd90Loan();
                 break;
 
+            case 'td-reinvest-loan':
+                if (urlParams.amount) document.getElementById('td-reinvest-amount').value = urlParams.amount;
+                if (urlParams.rate) document.getElementById('td-reinvest-rate').value = urlParams.rate;
+                if (urlParams.years) document.getElementById('td-reinvest-years').value = urlParams.years;
+                if (urlParams.adminFee) document.getElementById('td-reinvest-admin-fee-rate').value = urlParams.adminFee;
+                this.calculateTdReinvestLoan();
+                break;
+
             case 'loan-calculator':
                 if (urlParams.principal) document.getElementById('principal-loan').value = urlParams.principal;
                 if (urlParams.rate) document.getElementById('rate-loan').value = urlParams.rate;
@@ -929,6 +995,85 @@ export class SecuredLoansPage {
         document.getElementById('td-90-loan-results').style.display = 'block';
         i18n.updatePageText();
     }
+
+    static calculateTdReinvestLoan() {
+        const tdAmount = parseFloat(document.getElementById('td-reinvest-amount').value);
+        const tdRate = parseFloat(document.getElementById('td-reinvest-rate').value) / 100;
+        const years = parseInt(document.getElementById('td-reinvest-years').value);
+        const adminFeeRate = (parseFloat(document.getElementById('td-reinvest-admin-fee-rate').value) || 0) / 100;
+
+        const minMonths = this.constants.SECURED_MIN_TENOR_MONTHS || 6;
+        const maxYears = this.constants.SECURED_MAX_TENOR_YEARS || 10;
+        const minYears = Math.ceil(minMonths / 12);
+
+        if (!Number.isFinite(tdAmount) || tdAmount <= 0) {
+            window.app.showToast('Please enter a valid certificate amount.', 'error');
+            return;
+        }
+        if (!Number.isFinite(tdRate) || tdRate < 0) {
+            window.app.showToast('Please enter a valid certificate rate.', 'error');
+            return;
+        }
+        if (!Number.isFinite(years) || years < minYears || years > maxYears) {
+            window.app.showToast(`Tenor must be between ${minYears} and ${maxYears} years.`, 'error');
+            return;
+        }
+        const result = FinancialCalculator.calculateLoanAgainstTdReinvest(tdAmount, tdRate, years, this.constants, adminFeeRate);
+
+        const router = window.app?.router;
+        if (router) {
+            router.updateQueryParams({
+                tab: 'td-reinvest-loan',
+                amount: tdAmount,
+                rate: (tdRate * 100).toFixed(2),
+                years,
+                adminFee: (adminFeeRate * 100).toFixed(2)
+            });
+        }
+
+        const resultsHtml = `
+            <div class="td-90-summary-card">
+                <div class="td-90-header">
+                    <h4 data-i18n="td-reinvest-summary-title">Loan Reinvested into TD</h4>
+                    <p>${i18n.t('td-reinvest-summary-desc')}</p>
+                </div>
+                <div class="td-90-steps">
+                    <div class="td-90-step td-90-cash">
+                        <i class="fas fa-money-bill-transfer"></i>
+                        <div><span data-i18n="loan-amount">Loan Principal</span><strong>${i18n.formatCurrency(result.loanAmount)}</strong></div>
+                    </div>
+                    <div class="td-90-step td-90-extra">
+                        <i class="fas fa-piggy-bank"></i>
+                        <div><span data-i18n="net-reinvested-amount">Net Reinvested Amount</span><strong>${i18n.formatCurrency(result.reinvestedLoanAmount)}</strong></div>
+                    </div>
+                    <div class="td-90-step td-90-effective">
+                        <i class="fas fa-chart-line"></i>
+                        <div><span data-i18n="net-monthly-profit">Net Monthly Income</span><strong>${i18n.formatCurrency(result.netMonthlyProfit)}</strong></div>
+                    </div>
+                </div>
+                <div class="td-90-save-badge">
+                    <i class="fas fa-star"></i>
+                    <span data-i18n="grand-total">Total Return</span>
+                    <strong>${i18n.formatCurrency(result.finalAmount)}</strong>
+                </div>
+            </div>
+
+            <div class="grid grid-3" style="margin-top: var(--spacing-lg);">
+                <div class="metric"><span class="text-muted" data-i18n="loan-percent">Loan Percentage (%)</span><div class="metric-value">${i18n.formatPercent(result.loanPercent * 100)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="loan-amount">Loan Principal</span><div class="metric-value">${i18n.formatCurrency(result.loanAmount)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="admin-fee-rate">Admin Fee (%)</span><div class="metric-value">${i18n.formatCurrency(result.adminFee)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="calculated-loan-rate">Calculated Loan Rate</span><div class="metric-value">${i18n.formatPercent(result.loanRate * 100)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="monthly-interest">Est. Monthly Interest</span><div class="metric-value">${i18n.formatCurrency(result.totalMonthlyTdInterest)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="monthly-payment">Monthly Installment</span><div class="metric-value">${i18n.formatCurrency(result.monthlyInstallment)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="loan-interest">Loan Interest Cost</span><div class="metric-value">${i18n.formatCurrency(result.loanInterest)}</div></div>
+            </div>
+        `;
+
+        document.getElementById('td-reinvest-loan-results').innerHTML = resultsHtml;
+        document.getElementById('td-reinvest-loan-results').style.display = 'block';
+        i18n.updatePageText();
+    }
+
 
     static calculateSmartInvestment() {
         const tdAmount = parseFloat(document.getElementById('td-amount').value);

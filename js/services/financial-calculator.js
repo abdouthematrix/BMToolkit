@@ -113,7 +113,7 @@ export class FinancialCalculator {
             tdRate,
             years,
             months,
-            loanPercent: requestedLoanPercent,
+            loanPercent: maxLoanPercent,
             loanAmount,
             loanRate,
             monthlyTdInterest,

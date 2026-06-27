@@ -192,9 +192,11 @@ export class FinancialCalculator {
             ? constants.MAX_LOAN_PERCENT * 100
             : 90;
 
-        const scenarios = constants.SCENARIOS || {
+        const scenarios = {
+            MAX_LOAN_PERCENT: maxLoanPercent,
             INTEREST_UPFRONT_PERCENT: 36,
-            LOAN_CERTIFICATE_PERCENT: 58
+            LOAN_CERTIFICATE_PERCENT: 58,
+            ...(constants.SCENARIOS || {})
         };
 
         const scenariosList = [
@@ -207,7 +209,7 @@ export class FinancialCalculator {
             {
                 title: 'الحد الاقصى للقرض',
                 titleEn: 'Maximum Loan',
-                loanPercent: requestedLoanPercent,
+                loanPercent: scenarios.MAX_LOAN_PERCENT,
                 reinvest: false
             },
             {

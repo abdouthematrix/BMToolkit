@@ -1050,11 +1050,14 @@ export class SecuredLoansPage {
                         <i class="fas fa-chart-line"></i>
                         <div><span data-i18n="net-monthly-profit">Net Monthly Income</span><strong>${i18n.formatCurrency(result.netMonthlyProfit)}</strong></div>
                     </div>
-                </div>
-                <div class="td-90-save-badge">
-                    <i class="fas fa-star"></i>
-                    <span data-i18n="grand-total">Total Return</span>
-                    <strong>${i18n.formatCurrency(result.finalAmount)}</strong>
+                    <div class="td-90-step td-90-cash">
+                        <i class="fas fa-star"></i>
+                        <div><span data-i18n="grand-total">Total Return</span><strong>${i18n.formatCurrency(result.finalAmount)}</strong></div>
+                    </div>
+                    <div class="td-90-step td-90-extra">
+                        <i class="fas fa-percent"></i>
+                        <div><span data-i18n="total-return-percent">Total Return %</span><strong>${i18n.formatPercent(result.annualReturnPercent * 100)}</strong></div>
+                    </div>
                 </div>
             </div>
 
@@ -1066,6 +1069,7 @@ export class SecuredLoansPage {
                 <div class="metric"><span class="text-muted" data-i18n="monthly-interest">Est. Monthly Interest</span><div class="metric-value">${i18n.formatCurrency(result.totalMonthlyTdInterest)}</div></div>
                 <div class="metric"><span class="text-muted" data-i18n="monthly-payment">Monthly Installment</span><div class="metric-value">${i18n.formatCurrency(result.monthlyInstallment)}</div></div>
                 <div class="metric"><span class="text-muted" data-i18n="loan-interest">Loan Interest Cost</span><div class="metric-value">${i18n.formatCurrency(result.loanInterest)}</div></div>
+                <div class="metric"><span class="text-muted" data-i18n="total-return-percent">Total Return %</span><div class="metric-value">${i18n.formatPercent(result.annualReturnPercent * 100)}</div></div>
             </div>
         `;
 

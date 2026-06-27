@@ -157,8 +157,11 @@ export class FinancialCalculator {
         const totalInstallments = monthlyInstallment * months;
         const totalTdInterest = totalMonthlyTdInterest * months;
         const loanInterest = totalInstallments - loanAmount;
-        const netProfit = totalTdInterest - loanInterest - adminFee;
+        const netProfit = totalTdInterest - totalInstallments - adminFee;
         const finalAmount = tdAmount + reinvestedLoanAmount + netProfit;
+        const totalReturn = finalAmount - tdAmount;
+        const annualReturnAmount = years > 0 ? totalReturn / years : 0;
+        const annualReturnPercent = tdAmount > 0 ? annualReturnAmount / tdAmount : 0;
 
         return {
             tdAmount,
@@ -180,6 +183,9 @@ export class FinancialCalculator {
             loanInterest,
             netProfit,
             finalAmount,
+            totalReturn,
+            annualReturnAmount,
+            annualReturnPercent,
             protectedPrincipal: tdAmount
         };
     }
